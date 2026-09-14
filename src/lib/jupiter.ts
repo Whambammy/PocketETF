@@ -199,12 +199,22 @@ export async function getJupiterQuote(params: {
   amountAtomic: number;
   slippageBps?: number;
   ticker: string;
+  maxAccounts?: number;
+  onlyDirectRoutes?: boolean;
 }): Promise<JupiterQuoteResponse> {
-  const { inputMint, outputMint, amountAtomic, slippageBps = DEFAULT_SLIPPAGE_BPS, ticker } = params;
+  const { inputMint, outputMint, amountAtomic, slippageBps = DEFAULT_SLIPPAGE_BPS, ticker, maxAccounts, onlyDirectRoutes } = params;
 
-  const path = `/quote?inputMint=${encodeURIComponent(inputMint)}&outputMint=${encodeURIComponent(
+  let path = `/quote?inputMint=${encodeURIComponent(inputMint)}&outputMint=${encodeURIComponent(
     outputMint
   )}&amount=${amountAtomic}&slippageBps=${slippageBps}`;
+
+  if (maxAccounts && maxAccounts > 0) {
+    path += `&maxAccounts=${maxAccounts}`;
+  }
+
+  if (onlyDirectRoutes) {
+    path += `&onlyDirectRoutes=true`;
+  }
 
   let res: Response;
   try {
@@ -339,21 +349,8 @@ export async function buildBasketTransaction(
   // 2. Prepend Compute Budget instructions (1.2M CU + 50k priority fee)
   const allInstructions: TransactionInstruction[] = [...createComputeBudgetInstructions()];
 
-  // 3. Prepend Idempotent ATA creation instructions for each target stock mint
-  for (const item of allocations) {
-    try {
-      const outputMintPubkey = new PublicKey(item.asset.mint);
-      const { instruction: ataIx } = createIdempotentAtaInstruction(
-        payerKey,
-        payerKey,
-        outputMintPubkey
-      );
-      allInstructions.push(ataIx);
-    } catch (err: unknown) {
-      const error = err as Error;
-      throw new Error(`Invalid mint address for asset ${item.asset.ticker}: ${error.message}`);
-    }
-  }
+  // 3. Jupiter automatically manages ATA creation via setupInstructions.
+  // We omit manual ATA instructions here to preserve precious MTU packet space (<= 1232 bytes).
 
   const allAltAddresses: string[] = [];
 
@@ -374,14 +371,38 @@ export async function buildBasketTransaction(
       continue;
     }
 
-    // Live Jupiter Route Query
-    const quote = await getJupiterQuote({
-      inputMint: USDC_MINT_ADDRESS,
-      outputMint: item.asset.mint,
-      amountAtomic: item.subAmountAtomic,
-      slippageBps: DEFAULT_SLIPPAGE_BPS,
-      ticker: item.asset.ticker,
-    });
+    // Live Jupiter Route Query: for multi-asset baskets, prefer direct routes or restricted accounts
+    // to strictly respect Solana's 1232-byte MTU packet limit.
+    let quote: JupiterQuoteResponse;
+    if (allocations.length > 1) {
+      try {
+        quote = await getJupiterQuote({
+          inputMint: USDC_MINT_ADDRESS,
+          outputMint: item.asset.mint,
+          amountAtomic: item.subAmountAtomic,
+          slippageBps: DEFAULT_SLIPPAGE_BPS,
+          ticker: item.asset.ticker,
+          onlyDirectRoutes: true,
+        });
+      } catch {
+        quote = await getJupiterQuote({
+          inputMint: USDC_MINT_ADDRESS,
+          outputMint: item.asset.mint,
+          amountAtomic: item.subAmountAtomic,
+          slippageBps: DEFAULT_SLIPPAGE_BPS,
+          ticker: item.asset.ticker,
+          maxAccounts: 20,
+        });
+      }
+    } else {
+      quote = await getJupiterQuote({
+        inputMint: USDC_MINT_ADDRESS,
+        outputMint: item.asset.mint,
+        amountAtomic: item.subAmountAtomic,
+        slippageBps: DEFAULT_SLIPPAGE_BPS,
+        ticker: item.asset.ticker,
+      });
+    }
 
     const swapIxs = await getJupiterSwapInstructions({
       quoteResponse: quote,

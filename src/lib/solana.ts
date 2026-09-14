@@ -242,8 +242,20 @@ export async function compileAndValidateV0Transaction(params: {
     instructions,
   }).compileToV0Message(lookupTableAccounts);
 
-  const transaction = new VersionedTransaction(messageV0);
-  const serialized = transaction.serialize();
+  let transaction: VersionedTransaction;
+  let serialized: Uint8Array;
+  try {
+    transaction = new VersionedTransaction(messageV0);
+    serialized = transaction.serialize();
+  } catch (err: unknown) {
+    const error = err as Error;
+    if (error.message && error.message.includes('encoding overruns Uint8Array')) {
+      throw new Error(
+        `Transaction size limit exceeded: serialized transaction exceeds Solana 1232B MTU packet limit. Reduce basket asset count or instructions.`
+      );
+    }
+    throw error;
+  }
   const byteLength = serialized.length;
 
   // Strict 1232-byte MTU check
