@@ -464,8 +464,8 @@ export const DEFAULT_SLIPPAGE_BPS = 100; // 1.00% slippage
 /**
  * Jupiter API Endpoints
  */
-export const JUPITER_API_URL = process.env.JUPITER_API_URL || 'https://api.jup.ag/swap/v1';
-export const JUPITER_API_FALLBACK_URL = 'https://quote-api.jup.ag/v6';
+export const JUPITER_API_URL = process.env.JUPITER_API_URL || 'https://lite-api.jup.ag/swap/v1';
+export const JUPITER_API_FALLBACK_URL = 'https://api.jup.ag/swap/v1';
 
 /**
  * Solana RPC Endpoint

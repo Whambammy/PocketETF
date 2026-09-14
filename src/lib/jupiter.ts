@@ -112,6 +112,83 @@ export interface JupiterSwapInstructionsResponse {
   [key: string]: unknown;
 }
 
+function getJupiterEndpoints(): string[] {
+  const custom = process.env.JUPITER_API_URL?.trim();
+  const apiKey = process.env.JUPITER_API_KEY?.trim();
+
+  // If a custom URL is provided AND it's not the public api.jup.ag (or an API key is provided)
+  if (custom && (apiKey || !custom.includes('api.jup.ag/swap/v1'))) {
+    return Array.from(new Set([custom, 'https://lite-api.jup.ag/swap/v1', 'https://api.jup.ag/swap/v1']));
+  }
+
+  // lite-api.jup.ag is Jupiter's high-throughput gateway without 5-req/10s burst limits
+  return ['https://lite-api.jup.ag/swap/v1', 'https://api.jup.ag/swap/v1'];
+}
+
+/**
+ * Resilient Jupiter API fetcher:
+ * - Directs to lite-api.jup.ag (high throughput, no 5-req burst limit)
+ * - Fails over across endpoints instantly if rate-limited (429) or unreachable
+ * - Retries with backoff if all endpoints are congested
+ * - Attaches x-api-key if JUPITER_API_KEY is configured
+ */
+async function fetchJupiterApi(
+  path: string,
+  options: RequestInit = {},
+  maxPasses = 2
+): Promise<Response> {
+  const headers: Record<string, string> = {
+    Accept: 'application/json',
+    ...(options.headers as Record<string, string> || {}),
+  };
+
+  const apiKey = process.env.JUPITER_API_KEY?.trim();
+  if (apiKey) {
+    headers['x-api-key'] = apiKey;
+  }
+
+  const endpoints = getJupiterEndpoints();
+  let lastError: Error | null = null;
+  let lastStatus: number | null = null;
+  let lastStatusText = '';
+
+  for (let pass = 0; pass < maxPasses; pass++) {
+    for (const baseUrl of endpoints) {
+      const cleanBase = baseUrl.replace(/\/+$/, '');
+      const cleanPath = path.startsWith('/') ? path : `/${path}`;
+      const fullUrl = `${cleanBase}${cleanPath}`;
+
+      try {
+        const res = await fetch(fullUrl, { ...options, headers });
+
+        if (res.status !== 429) {
+          return res;
+        }
+
+        lastStatus = 429;
+        lastStatusText = res.statusText;
+        console.warn(`[Jupiter 429] Rate limit hit on ${baseUrl}, instantly failing over to next endpoint...`);
+      } catch (err: unknown) {
+        lastError = err as Error;
+        console.warn(`[Jupiter Fetch Error] ${fullUrl}: ${(err as Error).message}`);
+      }
+    }
+
+    // If all endpoints were rate-limited in this pass, wait briefly before retrying
+    if (pass < maxPasses - 1) {
+      const waitMs = 1000 * (pass + 1);
+      console.warn(`[Jupiter All Rate-Limited] Waiting ${waitMs}ms before retry pass...`);
+      await new Promise((r) => setTimeout(r, waitMs));
+    }
+  }
+
+  if (lastError) {
+    throw lastError;
+  }
+
+  throw new Error(`All Jupiter API endpoints failed or were rate-limited (HTTP ${lastStatus || 429}: ${lastStatusText || 'Too Many Requests'}).`);
+}
+
 /**
  * Fetches quote from Jupiter v6 / swap API with slippageBps = 100 (1%).
  * Returns clean RouteLiquidityError if no route is found.
@@ -125,18 +202,13 @@ export async function getJupiterQuote(params: {
 }): Promise<JupiterQuoteResponse> {
   const { inputMint, outputMint, amountAtomic, slippageBps = DEFAULT_SLIPPAGE_BPS, ticker } = params;
 
-  const url = `${JUPITER_API_URL}/quote?inputMint=${encodeURIComponent(inputMint)}&outputMint=${encodeURIComponent(
+  const path = `/quote?inputMint=${encodeURIComponent(inputMint)}&outputMint=${encodeURIComponent(
     outputMint
   )}&amount=${amountAtomic}&slippageBps=${slippageBps}`;
 
   let res: Response;
   try {
-    res = await fetch(url, {
-      method: 'GET',
-      headers: {
-        Accept: 'application/json',
-      },
-    });
+    res = await fetchJupiterApi(path, { method: 'GET' });
   } catch (err: unknown) {
     const error = err as Error;
     throw new Error(`Failed to contact Jupiter Quote API: ${error.message}`);
@@ -180,15 +252,12 @@ export async function getJupiterSwapInstructions(params: {
 }): Promise<JupiterSwapInstructionsResponse> {
   const { quoteResponse, userPublicKey } = params;
 
-  const url = `${JUPITER_API_URL}/swap-instructions`;
-
   let res: Response;
   try {
-    res = await fetch(url, {
+    res = await fetchJupiterApi('/swap-instructions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Accept: 'application/json',
       },
       body: JSON.stringify({
         quoteResponse,
