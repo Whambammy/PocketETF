@@ -29,25 +29,78 @@ export interface RawJupiterInstruction {
   data: string;
 }
 
-const RPC_ENDPOINTS: string[] = [
-  process.env.SOLANA_RPC_URL,
-  process.env.NEXT_PUBLIC_SOLANA_RPC_URL,
-  'https://api.mainnet-beta.solana.com',
-].filter((url): url is string => Boolean(url && url.trim().length > 0));
+/**
+ * Safely sanitizes an RPC candidate URL.
+ * Automatically prepends https:// if protocol was omitted (e.g. mainnet.helius-rpc.com/?api-key=xyz).
+ * Filters out accidental non-RPC domains (e.g. vercel.app app domains).
+ */
+function sanitizeRpcUrl(raw?: string): string | null {
+  if (!raw) return null;
+  let trimmed = raw.trim();
+  if (!trimmed) return null;
+
+  // Prepend https:// if protocol is missing
+  if (!trimmed.startsWith('http://') && !trimmed.startsWith('https://')) {
+    trimmed = `https://${trimmed}`;
+  }
+
+  try {
+    const parsed = new URL(trimmed);
+    // Discard accidental deployment domain inputs
+    if (parsed.hostname.endsWith('vercel.app')) {
+      console.warn(`[Solana RPC] Ignored deployment domain in RPC configuration: ${parsed.hostname}`);
+      return null;
+    }
+    return parsed.toString();
+  } catch {
+    return null;
+  }
+}
+
+const DEFAULT_MAINNET_RPC = 'https://api.mainnet-beta.solana.com';
+
+function buildEndpointsList(): string[] {
+  const candidates = [
+    process.env.SOLANA_RPC_URL,
+    process.env.NEXT_PUBLIC_SOLANA_RPC_URL,
+  ];
+
+  const valid = candidates
+    .map(sanitizeRpcUrl)
+    .filter((url): url is string => Boolean(url));
+
+  if (!valid.includes(DEFAULT_MAINNET_RPC)) {
+    valid.push(DEFAULT_MAINNET_RPC);
+  }
+  return valid;
+}
 
 let sharedConnection: Connection | null = null;
 let currentRpcIndex = 0;
+
+function createConnectionSafely(endpoint: string): Connection {
+  try {
+    return new Connection(endpoint, {
+      commitment: 'confirmed',
+      confirmTransactionInitialTimeout: 30000,
+    });
+  } catch (err) {
+    console.error(`[Solana RPC] Failed to create connection for ${endpoint}, falling back to default:`, err);
+    return new Connection(DEFAULT_MAINNET_RPC, {
+      commitment: 'confirmed',
+      confirmTransactionInitialTimeout: 30000,
+    });
+  }
+}
 
 /**
  * Returns a resilient Solana RPC Connection with fallback capability
  */
 export function getSolanaConnection(): Connection {
   if (!sharedConnection) {
-    const endpoint = RPC_ENDPOINTS[currentRpcIndex] || 'https://api.mainnet-beta.solana.com';
-    sharedConnection = new Connection(endpoint, {
-      commitment: 'confirmed',
-      confirmTransactionInitialTimeout: 30000,
-    });
+    const endpoints = buildEndpointsList();
+    const endpoint = endpoints[currentRpcIndex] || DEFAULT_MAINNET_RPC;
+    sharedConnection = createConnectionSafely(endpoint);
   }
   return sharedConnection;
 }
@@ -56,14 +109,12 @@ export function getSolanaConnection(): Connection {
  * Rotates to the next available RPC endpoint if the current one experiences 429 rate limits or errors
  */
 export function rotateRpcConnection(): Connection {
-  if (RPC_ENDPOINTS.length > 1) {
-    currentRpcIndex = (currentRpcIndex + 1) % RPC_ENDPOINTS.length;
-    const nextEndpoint = RPC_ENDPOINTS[currentRpcIndex];
+  const endpoints = buildEndpointsList();
+  if (endpoints.length > 1) {
+    currentRpcIndex = (currentRpcIndex + 1) % endpoints.length;
+    const nextEndpoint = endpoints[currentRpcIndex];
     console.warn(`[Solana RPC] Switching to fallback RPC endpoint: ${nextEndpoint}`);
-    sharedConnection = new Connection(nextEndpoint, {
-      commitment: 'confirmed',
-      confirmTransactionInitialTimeout: 30000,
-    });
+    sharedConnection = createConnectionSafely(nextEndpoint);
   }
   return getSolanaConnection();
 }

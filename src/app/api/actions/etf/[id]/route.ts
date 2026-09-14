@@ -144,14 +144,27 @@ export async function GET(
     }
 
     // Determine absolute HTTPS origin for the icon
-    const host =
-      request.headers.get('x-forwarded-host') ||
-      request.headers.get('host') ||
-      url.host;
-    const proto =
-      request.headers.get('x-forwarded-proto') ||
-      (url.protocol.startsWith('https') ? 'https' : 'http');
-    const absoluteIconUrl = `${proto}://${host}${etf.iconPath}`;
+    const envBaseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.BASE_URL;
+    let baseOrigin: string;
+
+    if (envBaseUrl && envBaseUrl.trim()) {
+      let trimmed = envBaseUrl.trim();
+      if (!trimmed.startsWith('http://') && !trimmed.startsWith('https://')) {
+        trimmed = `https://${trimmed}`;
+      }
+      baseOrigin = trimmed.replace(/\/+$/, '');
+    } else {
+      const host =
+        request.headers.get('x-forwarded-host') ||
+        request.headers.get('host') ||
+        url.host;
+      const proto =
+        request.headers.get('x-forwarded-proto') ||
+        (url.protocol.startsWith('https') ? 'https' : 'http');
+      baseOrigin = `${proto}://${host}`;
+    }
+
+    const absoluteIconUrl = `${baseOrigin}${etf.iconPath}`;
 
     const baseActionHref = url.pathname + url.search;
 
