@@ -22,6 +22,8 @@ import {
   Database,
   BarChart3,
   Search,
+  Wallet,
+  Share2,
 } from 'lucide-react';
 import { CURATED_ETFS, ETFDefinition, TOKEN_CATALOG } from '@/lib/constants';
 
@@ -73,6 +75,33 @@ export default function HomePage() {
     return () => clearInterval(interval);
   }, []);
 
+  const [walletAddress, setWalletAddress] = useState<string | null>(null);
+  const [walletConnecting, setWalletConnecting] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && (window as any).solana?.isConnected) {
+      setWalletAddress((window as any).solana.publicKey?.toString() || null);
+    }
+  }, []);
+
+  const handleConnectWallet = async () => {
+    if (typeof window === 'undefined') return;
+    const solana = (window as any).solana;
+    if (!solana) {
+      window.open('https://phantom.app/', '_blank');
+      return;
+    }
+    setWalletConnecting(true);
+    try {
+      const resp = await solana.connect();
+      setWalletAddress(resp.publicKey.toString());
+    } catch (err) {
+      console.warn('Wallet connection cancelled', err);
+    } finally {
+      setWalletConnecting(false);
+    }
+  };
+
   const handleCopyBlink = async (id: string) => {
     const actionUrl = `${origin}/api/actions/etf/${id}`;
     await navigator.clipboard.writeText(actionUrl);
@@ -85,10 +114,80 @@ export default function HomePage() {
     return `https://dial.to/?action=solana-action:${encodeURIComponent(actionUrl)}`;
   };
 
+  const handleLiveBuy = async (etfId: string) => {
+    setSimulationState((prev) => ({
+      ...prev,
+      [etfId]: { loading: true, error: undefined, result: undefined },
+    }));
+
+    try {
+      const solana = typeof window !== 'undefined' ? (window as any).solana : null;
+      if (!solana) {
+        throw new Error('Solana wallet not detected. Install Phantom, Backpack, or Solflare to execute live on Solana Mainnet.');
+      }
+
+      let activeAccount = walletAddress;
+      if (!activeAccount) {
+        const resp = await solana.connect();
+        activeAccount = resp.publicKey.toString();
+        setWalletAddress(activeAccount);
+      }
+
+      const amount = selectedAmounts[etfId] || 50;
+
+      // 1. Fetch real live VersionedTransaction from the API
+      const res = await fetch(`/api/actions/etf/${etfId}?amount=${amount}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ account: activeAccount }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.transaction) {
+        throw new Error(data.message || 'Failed to assemble live execution transaction.');
+      }
+
+      // 2. Deserialize transaction with @solana/web3.js
+      const { VersionedTransaction } = await import('@solana/web3.js');
+      const txBuffer = Buffer.from(data.transaction, 'base64');
+      const transaction = VersionedTransaction.deserialize(txBuffer);
+
+      // 3. Request user signature & broadcast via wallet
+      let txid: string;
+      if (solana.signAndSendTransaction) {
+        const sendRes = await solana.signAndSendTransaction(transaction);
+        txid = sendRes.signature;
+      } else {
+        const signed = await solana.signTransaction(transaction);
+        const { getSolanaConnection } = await import('@/lib/solana');
+        const conn = getSolanaConnection();
+        txid = await conn.sendRawTransaction(signed.serialize());
+      }
+
+      setSimulationState((prev) => ({
+        ...prev,
+        [etfId]: {
+          loading: false,
+          result: {
+            isLive: true,
+            signature: txid,
+            message: `1-Click execution broadcast to Solana Mainnet!`,
+          },
+        },
+      }));
+    } catch (err: unknown) {
+      const error = err as Error;
+      setSimulationState((prev) => ({
+        ...prev,
+        [etfId]: { loading: false, error: error.message },
+      }));
+    }
+  };
+
   const handleSimulateSwap = async (etfId: string) => {
     setSimulationState((prev) => ({
       ...prev,
-      [etfId]: { loading: true },
+      [etfId]: { loading: true, error: undefined, result: undefined },
     }));
 
     try {
@@ -263,34 +362,62 @@ export default function HomePage() {
       <section id="etfs" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 scroll-mt-20">
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
           <div>
-            <div className="text-xs font-mono font-bold text-[#00D69F] tracking-widest uppercase mb-2">
-              Verified Solana Actions
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-xs font-mono font-bold text-[#00D69F] tracking-widest uppercase">
+                Verified Solana Actions &amp; Blinks
+              </span>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-[#00D69F]/15 text-[#00D69F] border border-[#00D69F]/30 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#00D69F] animate-ping" />
+                MAINNET LIVE
+              </span>
             </div>
             <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight">
               Curated PocketETFs
             </h2>
             <p className="text-xs sm:text-sm text-slate-400 mt-2 max-w-xl leading-relaxed">
-              Pre-baked tokenized equity and index portfolios compiled into atomic Solana Actions.
-              Click &ldquo;Copy Blink URL&rdquo; to paste directly into Twitter/X feeds or test in Dialect.
+              Pre-baked tokenized equity portfolios compiled into atomic Solana Actions. Execute live in 1-click with your connected wallet, or copy the Blink URL to share on Twitter/X, Dialect, and Discord.
             </p>
           </div>
 
-          {/* Category Filter Pills */}
-          <div className="flex flex-wrap gap-1.5 p-1 rounded-xl bg-black/40 border border-white/[0.06]">
-            {categories.map((cat) => (
-              <button
-                key={cat}
-                type="button"
-                onClick={() => setSelectedCategory(cat)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                  selectedCategory === cat
-                    ? 'bg-[#146EF5] text-white font-semibold shadow-md shadow-blue-500/25'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
-                }`}
-              >
-                {cat}
-              </button>
-            ))}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+            {/* Wallet Connect Button */}
+            <button
+              type="button"
+              onClick={handleConnectWallet}
+              disabled={walletConnecting}
+              className={`px-3.5 py-2 rounded-xl text-xs font-mono font-bold flex items-center gap-2 transition-all ${
+                walletAddress
+                  ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20'
+                  : 'bg-gradient-to-r from-[#146EF5] to-[#0D63F8] text-white hover:scale-105 shadow-md shadow-blue-500/25 border border-blue-400/30'
+              }`}
+            >
+              <Wallet className="w-3.5 h-3.5 text-[#00D69F]" />
+              <span>
+                {walletAddress
+                  ? `${walletAddress.slice(0, 4)}...${walletAddress.slice(-4)} (Connected)`
+                  : walletConnecting
+                  ? 'Connecting...'
+                  : 'Connect Wallet'}
+              </span>
+            </button>
+
+            {/* Category Filter Pills */}
+            <div className="flex flex-wrap gap-1.5 p-1 rounded-xl bg-black/40 border border-white/[0.06]">
+              {categories.map((cat) => (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => setSelectedCategory(cat)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                    selectedCategory === cat
+                      ? 'bg-[#146EF5] text-white font-semibold shadow-md shadow-blue-500/25'
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -428,20 +555,35 @@ export default function HomePage() {
 
                 {/* Action Buttons */}
                 <div className="mt-auto space-y-2">
+                  {/* Primary 1-Click Live Execution */}
+                  <button
+                    type="button"
+                    onClick={() => handleLiveBuy(etf.id)}
+                    disabled={sim?.loading}
+                    className="w-full py-2.5 rounded-xl bg-gradient-to-r from-[#146EF5] via-[#0D63F8] to-[#00D69F] hover:from-[#257BF6] hover:to-[#14F195] text-white font-bold text-xs transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-500/25 active:scale-98 border border-blue-400/30"
+                  >
+                    <Zap className={`w-3.5 h-3.5 text-[#00D69F] ${sim?.loading ? 'animate-bounce' : ''}`} />
+                    <span>
+                      {sim?.loading
+                        ? 'Awaiting Wallet Approval...'
+                        : `1-Click Buy $${currentAmount} ETF`}
+                    </span>
+                  </button>
+
                   <button
                     type="button"
                     onClick={() => handleCopyBlink(etf.id)}
-                    className="w-full py-2.5 rounded-xl bg-gradient-to-r from-[#146EF5] to-[#0D63F8] hover:from-[#257BF6] hover:to-[#146EF5] text-white font-semibold text-xs transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-500/25 active:scale-98 border border-blue-400/25"
+                    className="w-full py-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-slate-200 hover:text-white font-semibold text-xs transition-all flex items-center justify-center gap-2 border border-white/10"
                   >
                     {copiedId === etf.id ? (
                       <>
                         <Check className="w-3.5 h-3.5 text-[#00D69F]" />
-                        <span className="text-[#00D69F] font-bold">Action URL Copied!</span>
+                        <span className="text-[#00D69F] font-bold">Blink Action URL Copied!</span>
                       </>
                     ) : (
                       <>
-                        <Copy className="w-3.5 h-3.5" />
-                        <span>Copy Blink Action URL</span>
+                        <Share2 className="w-3.5 h-3.5 text-slate-400" />
+                        <span>Share as Solana Blink</span>
                       </>
                     )}
                   </button>
@@ -451,7 +593,7 @@ export default function HomePage() {
                       href={getDialectInspectorUrl(etf.id)}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="py-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.06] hover:border-blue-500/40 text-xs font-semibold text-slate-300 hover:text-white transition-all flex items-center justify-center gap-1.5 font-mono"
+                      className="py-1.5 rounded-lg bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.06] hover:border-blue-500/40 text-[11px] font-semibold text-slate-300 hover:text-white transition-all flex items-center justify-center gap-1.5 font-mono"
                     >
                       <span>Dialect</span>
                       <ExternalLink className="w-3 h-3 text-[#00D69F]" />
@@ -459,34 +601,40 @@ export default function HomePage() {
 
                     <button
                       type="button"
-                      onClick={() => setActiveJsonETF(etf)}
-                      className="py-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.06] hover:border-blue-500/40 text-xs font-semibold text-slate-300 hover:text-white transition-all flex items-center justify-center gap-1.5 font-mono"
+                      onClick={() => handleSimulateSwap(etf.id)}
+                      disabled={sim?.loading}
+                      className="py-1.5 rounded-lg bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.06] hover:border-cyan-500/40 text-[11px] font-semibold text-slate-300 hover:text-white transition-all flex items-center justify-center gap-1.5 font-mono"
                     >
-                      <Code2 className="w-3 h-3 text-[#38BDF8]" />
-                      <span>Spec JSON</span>
+                      <Activity className="w-3 h-3 text-[#38BDF8]" />
+                      <span>Dry Run Tx</span>
                     </button>
                   </div>
 
-                  {/* Simulate Execution */}
-                  <button
-                    type="button"
-                    onClick={() => handleSimulateSwap(etf.id)}
-                    disabled={sim?.loading}
-                    className="w-full py-1.5 rounded-lg bg-[#00D69F]/10 hover:bg-[#00D69F]/20 text-[#00D69F] border border-[#00D69F]/25 text-[10px] font-mono font-semibold transition-all flex items-center justify-center gap-1.5"
-                  >
-                    <Activity className={`w-3 h-3 ${sim?.loading ? 'animate-spin' : ''}`} />
-                    <span>
-                      {sim?.loading ? 'Assembling v0 Tx...' : 'Simulate 1-Click Execution'}
-                    </span>
-                  </button>
-
-                  {sim?.result && (
-                    <div className="p-2 rounded-lg bg-emerald-950/40 border border-emerald-500/30 text-[10px] text-emerald-300 font-mono break-all animate-fadeIn">
-                      <div className="font-bold flex items-center gap-1 mb-0.5">
-                        <Check className="w-3 h-3 text-emerald-400" />
-                        <span>v0 Transaction Assembled:</span>
+                  {sim?.result?.signature && (
+                    <div className="p-2.5 rounded-lg bg-emerald-950/60 border border-emerald-500/40 text-[10px] text-emerald-300 font-mono break-all animate-fadeIn">
+                      <div className="font-bold flex items-center gap-1.5 mb-1 text-emerald-400">
+                        <Check className="w-3.5 h-3.5" />
+                        <span>Execution Broadcast Live!</span>
                       </div>
-                      <p className="text-slate-300 text-[9px]">{sim.result.message}</p>
+                      <a
+                        href={`https://solscan.io/tx/${sim.result.signature}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[#00D69F] hover:underline flex items-center gap-1 pt-1 font-mono text-[9px]"
+                      >
+                        <span>View on Solscan</span>
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    </div>
+                  )}
+
+                  {sim?.result && !sim?.result?.signature && (
+                    <div className="p-2 rounded-lg bg-slate-900/60 border border-blue-500/30 text-[10px] text-slate-300 font-mono break-all animate-fadeIn">
+                      <div className="font-bold flex items-center gap-1 mb-0.5 text-blue-400">
+                        <Check className="w-3 h-3" />
+                        <span>v0 Transaction Assembled (Dry Run):</span>
+                      </div>
+                      <p className="text-slate-400 text-[9px]">{sim.result.message}</p>
                     </div>
                   )}
 
@@ -494,7 +642,7 @@ export default function HomePage() {
                     <div className="p-2 rounded-lg bg-red-950/40 border border-red-500/30 text-[10px] text-red-300 font-mono animate-fadeIn">
                       <div className="font-bold flex items-center gap-1 mb-0.5">
                         <Info className="w-3 h-3 text-red-400" />
-                        <span>Note:</span>
+                        <span>Notice:</span>
                       </div>
                       <p className="text-red-200 text-[9px]">{sim.error}</p>
                     </div>
