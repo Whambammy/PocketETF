@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgGradSpy" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1f1403" />
+      <stop offset="50%" stop-color="#3b2505" />
+      <stop offset="100%" stop-color="#140c01" />
+    </linearGradient>
+    <linearGradient id="neonGold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F59E0B" />
+      <stop offset="50%" stop-color="#FBBF24" />
+      <stop offset="100%" stop-color="#EF4444" />
+    </linearGradient>
+    <filter id="glowGold" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="6" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+  <!-- Background -->
+  <rect width="400" height="400" rx="40" fill="url(#bgGradSpy)" />
+  <rect x="10" y="10" width="380" height="380" rx="30" fill="none" stroke="url(#neonGold)" stroke-width="2" opacity="0.4" />
+
+  <!-- Trending Graph Path -->
+  <path d="M 60 250 Q 120 220, 160 230 T 250 170 T 340 110" fill="none" stroke="url(#neonGold)" stroke-width="4" filter="url(#glowGold)" />
+  
+  <!-- Central Emblem -->
+  <circle cx="200" cy="180" r="75" fill="#2d1c04" stroke="url(#neonGold)" stroke-width="3" filter="url(#glowGold)" />
+  <circle cx="200" cy="180" r="62" fill="#1f1302" stroke="#F59E0B" stroke-width="1.5" stroke-dasharray="4 2" />
+
+  <text x="200" y="172" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="28" fill="#FBBF24" text-anchor="middle" letter-spacing="1">S&amp;P 500</text>
+  <text x="200" y="196" font-family="system-ui, -apple-system, sans-serif" font-weight="800" font-size="14" fill="#ffffff" text-anchor="middle" letter-spacing="2">PROXY (SPY)</text>
+  <text x="200" y="214" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="11" fill="#10B981" text-anchor="middle">100% ALLOCATION</text>
+
+  <!-- Bottom Badge -->
+  <rect x="80" y="325" width="240" height="38" rx="19" fill="#2d1c04" stroke="url(#neonGold)" stroke-width="1.5" />
+  <text x="200" y="349" font-family="system-ui, -apple-system, sans-serif" font-weight="800" font-size="14" fill="#ffffff" text-anchor="middle" letter-spacing="2">S&amp;P 500 INDEX PROXY</text>
+</svg>

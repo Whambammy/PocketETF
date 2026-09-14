@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#061814" />
+      <stop offset="50%" stop-color="#0a2e24" />
+      <stop offset="100%" stop-color="#02100d" />
+    </linearGradient>
+    <linearGradient id="neonGreen" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#14F195" />
+      <stop offset="100%" stop-color="#00F0FF" />
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="6" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+  <!-- Background -->
+  <rect width="400" height="400" rx="40" fill="url(#bgGrad)" />
+  <rect x="10" y="10" width="380" height="380" rx="30" fill="none" stroke="url(#neonGreen)" stroke-width="2" opacity="0.4" />
+  
+  <!-- Circuit Traces -->
+  <g stroke="#14F195" stroke-width="2" opacity="0.3" fill="none">
+    <path d="M 50 100 H 130 V 160" />
+    <circle cx="50" cy="100" r="4" fill="#14F195" />
+    <path d="M 350 100 H 270 V 160" />
+    <circle cx="350" cy="100" r="4" fill="#14F195" />
+    <path d="M 50 300 H 130 V 240" />
+    <circle cx="50" cy="300" r="4" fill="#14F195" />
+    <path d="M 350 300 H 270 V 240" />
+    <circle cx="350" cy="300" r="4" fill="#14F195" />
+  </g>
+
+  <!-- Central Chip -->
+  <rect x="130" y="130" width="140" height="140" rx="20" fill="#0d1b17" stroke="url(#neonGreen)" stroke-width="3" filter="url(#glow)" />
+  <rect x="145" y="145" width="110" height="110" rx="14" fill="#052018" stroke="#14F195" stroke-width="1.5" stroke-dasharray="4 2" />
+
+  <!-- Chip Pins -->
+  <g fill="#14F195">
+    <rect x="155" y="118" width="10" height="12" rx="2" />
+    <rect x="175" y="118" width="10" height="12" rx="2" />
+    <rect x="195" y="118" width="10" height="12" rx="2" />
+    <rect x="215" y="118" width="10" height="12" rx="2" />
+    <rect x="235" y="118" width="10" height="12" rx="2" />
+
+    <rect x="155" y="270" width="10" height="12" rx="2" />
+    <rect x="175" y="270" width="10" height="12" rx="2" />
+    <rect x="195" y="270" width="10" height="12" rx="2" />
+    <rect x="215" y="270" width="10" height="12" rx="2" />
+    <rect x="235" y="270" width="10" height="12" rx="2" />
+
+    <rect x="118" y="155" width="12" height="10" rx="2" />
+    <rect x="118" y="175" width="12" height="10" rx="2" />
+    <rect x="118" y="195" width="12" height="10" rx="2" />
+    <rect x="118" y="215" width="12" height="10" rx="2" />
+    <rect x="118" y="235" width="12" height="10" rx="2" />
+
+    <rect x="270" y="155" width="12" height="10" rx="2" />
+    <rect x="270" y="175" width="12" height="10" rx="2" />
+    <rect x="270" y="195" width="12" height="10" rx="2" />
+    <rect x="270" y="215" width="12" height="10" rx="2" />
+    <rect x="270" y="235" width="12" height="10" rx="2" />
+  </g>
+
+  <!-- Typography & Tickers -->
+  <text x="200" y="188" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="22" fill="#14F195" text-anchor="middle" letter-spacing="1.5">NVDA</text>
+  <text x="200" y="208" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="12" fill="#ffffff" text-anchor="middle" opacity="0.7">50% / 50%</text>
+  <text x="200" y="230" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="22" fill="#00F0FF" text-anchor="middle" letter-spacing="1.5">TSM</text>
+
+  <!-- Bottom Badge -->
+  <rect x="90" y="325" width="220" height="38" rx="19" fill="#0c231c" stroke="url(#neonGreen)" stroke-width="1.5" />
+  <text x="200" y="349" font-family="system-ui, -apple-system, sans-serif" font-weight="800" font-size="14" fill="#ffffff" text-anchor="middle" letter-spacing="2">AI CHIPSET BASKET</text>
+</svg>

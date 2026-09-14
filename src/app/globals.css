@@ -1,0 +1,103 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --brand-primary: #146EF5;     /* Electric Cobalt Blue */
+  --brand-primary-dark: #0D63F8;
+  --brand-accent: #00D69F;      /* Neon Mint / Solana Turquoise */
+  --brand-accent-bright: #14F195;
+  --brand-base: #0A1128;        /* Deep Midnight Navy */
+  --brand-base-dark: #060A17;
+  --brand-surface: #0F172A;
+  --brand-card: #111A36;
+}
+
+body {
+  background-color: var(--brand-base);
+  color: #f8fafc;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+  overflow-x: hidden;
+  background-image: 
+    radial-gradient(circle at 12% 10%, rgba(20, 110, 245, 0.12) 0%, transparent 45%),
+    radial-gradient(circle at 88% 12%, rgba(0, 214, 159, 0.10) 0%, transparent 45%),
+    radial-gradient(circle at 50% 85%, rgba(13, 99, 248, 0.08) 0%, transparent 50%),
+    linear-gradient(rgba(255, 255, 255, 0.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.018) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 100% 100%, 48px 48px, 48px 48px;
+  background-attachment: fixed;
+}
+
+code, pre, .font-mono {
+  font-family: 'JetBrains Mono', monospace;
+  font-feature-settings: 'tnum' on, 'zero' on;
+}
+
+/* Precision Fintech Glass Surfaces */
+.fintech-card {
+  background: rgba(15, 23, 42, 0.82);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(20, 110, 245, 0.18);
+  box-shadow: 0 8px 32px -4px rgba(6, 10, 23, 0.6);
+}
+
+.fintech-card-hover {
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.fintech-card-hover:hover {
+  transform: translateY(-3px);
+  border-color: rgba(0, 214, 159, 0.35);
+  box-shadow: 0 16px 40px -10px rgba(20, 110, 245, 0.2);
+}
+
+/* Brand Text Gradient */
+.brand-text-gradient {
+  background: linear-gradient(135deg, #00D69F 0%, #146EF5 60%, #0D63F8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Cobalt Shimmer Button */
+.btn-cobalt {
+  background: linear-gradient(135deg, #146EF5, #0D63F8);
+  box-shadow: 0 4px 20px -2px rgba(20, 110, 245, 0.4);
+}
+
+.btn-cobalt:hover {
+  background: linear-gradient(135deg, #257BF6, #146EF5);
+  box-shadow: 0 6px 24px -2px rgba(20, 110, 245, 0.55);
+}
+
+/* Mint Accent Button */
+.btn-mint {
+  background: linear-gradient(135deg, #00D69F, #14F195);
+  box-shadow: 0 4px 20px -2px rgba(0, 214, 159, 0.35);
+}
+
+.btn-mint:hover {
+  background: linear-gradient(135deg, #10E5AE, #00D69F);
+  box-shadow: 0 6px 24px -2px rgba(0, 214, 159, 0.5);
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0A1128;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1E293B;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #146EF5;
+}

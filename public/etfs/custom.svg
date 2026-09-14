@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgCustomEtf" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#080e1a" />
+      <stop offset="50%" stop-color="#121829" />
+      <stop offset="100%" stop-color="#05070e" />
+    </linearGradient>
+    <linearGradient id="cyanPurpleEtf" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10B981" />
+      <stop offset="50%" stop-color="#00F0FF" />
+      <stop offset="100%" stop-color="#9945FF" />
+    </linearGradient>
+  </defs>
+  <rect width="400" height="400" rx="36" fill="url(#bgCustomEtf)" />
+  <rect x="12" y="12" width="376" height="376" rx="28" fill="none" stroke="url(#cyanPurpleEtf)" stroke-width="1.5" opacity="0.4" />
+
+  <circle cx="200" cy="180" r="75" fill="#101a2e" stroke="url(#cyanPurpleEtf)" stroke-width="2.5" />
+  <path d="M 170 180 L 230 180 M 200 150 L 200 210" stroke="#10B981" stroke-width="5" stroke-linecap="round" />
+  
+  <rect x="70" y="325" width="260" height="38" rx="19" fill="#121a2d" stroke="url(#cyanPurpleEtf)" stroke-width="1.5" />
+  <text x="200" y="349" font-family="system-ui, -apple-system, sans-serif" font-weight="800" font-size="13" fill="#ffffff" text-anchor="middle" letter-spacing="2">POCKETETF • CUSTOM BLINK</text>
+</svg>
