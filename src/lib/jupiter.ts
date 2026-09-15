@@ -346,107 +346,140 @@ export async function buildBasketTransaction(
   // 1. Dust elimination and atomic allocation
   const { totalUsdcAtomic, allocations } = calculateAssetAllocations(usdcAmount, assets);
 
-  // 2. Prepend Compute Budget instructions (1.2M CU + 50k priority fee)
-  const allInstructions: TransactionInstruction[] = [...createComputeBudgetInstructions()];
+  // Helper to compile the entire multi-swap basket with a given maxAccounts limit
+  const assembleBasket = async (maxAccountsLimit: number, preferDirectRoutes: boolean) => {
+    const allInstructions: TransactionInstruction[] = [...createComputeBudgetInstructions()];
+    const allAltAddresses: string[] = [];
 
-  // 3. Jupiter automatically manages ATA creation via setupInstructions.
-  // We omit manual ATA instructions here to preserve precious MTU packet space (<= 1232 bytes).
+    for (const item of allocations) {
+      if (item.subAmountAtomic <= 0) continue;
 
-  const allAltAddresses: string[] = [];
+      if (isSimulation) {
+        allInstructions.push(
+          new TransactionInstruction({
+            programId: new PublicKey('ComputeBudget111111111111111111111111111111'),
+            keys: [{ pubkey: payerKey, isSigner: true, isWritable: true }],
+            data: Buffer.from([0, 0, 0, 0]),
+          })
+        );
+        continue;
+      }
 
-  // 4. Fetch Jupiter quotes & swap instructions for each asset
-  for (const item of allocations) {
-    if (item.subAmountAtomic <= 0) continue;
-
-    if (isSimulation) {
-      // In simulation mode (e.g. for testing environments without pool liquidity),
-      // we insert a lightweight mock instruction to test transaction compilation
-      allInstructions.push(
-        new TransactionInstruction({
-          programId: new PublicKey('ComputeBudget111111111111111111111111111111'),
-          keys: [{ pubkey: payerKey, isSigner: true, isWritable: true }],
-          data: Buffer.from([0, 0, 0, 0]),
-        })
-      );
-      continue;
-    }
-
-    // Live Jupiter Route Query: for multi-asset baskets, prefer direct routes or restricted accounts
-    // to strictly respect Solana's 1232-byte MTU packet limit.
-    let quote: JupiterQuoteResponse;
-    if (allocations.length > 1) {
-      try {
+      let quote: JupiterQuoteResponse;
+      if (allocations.length > 1) {
+        if (preferDirectRoutes) {
+          try {
+            quote = await getJupiterQuote({
+              inputMint: USDC_MINT_ADDRESS,
+              outputMint: item.asset.mint,
+              amountAtomic: item.subAmountAtomic,
+              slippageBps: DEFAULT_SLIPPAGE_BPS,
+              ticker: item.asset.ticker,
+              onlyDirectRoutes: true,
+            });
+          } catch {
+            quote = await getJupiterQuote({
+              inputMint: USDC_MINT_ADDRESS,
+              outputMint: item.asset.mint,
+              amountAtomic: item.subAmountAtomic,
+              slippageBps: DEFAULT_SLIPPAGE_BPS,
+              ticker: item.asset.ticker,
+              maxAccounts: maxAccountsLimit,
+            });
+          }
+        } else {
+          quote = await getJupiterQuote({
+            inputMint: USDC_MINT_ADDRESS,
+            outputMint: item.asset.mint,
+            amountAtomic: item.subAmountAtomic,
+            slippageBps: DEFAULT_SLIPPAGE_BPS,
+            ticker: item.asset.ticker,
+            maxAccounts: maxAccountsLimit,
+          });
+        }
+      } else {
         quote = await getJupiterQuote({
           inputMint: USDC_MINT_ADDRESS,
           outputMint: item.asset.mint,
           amountAtomic: item.subAmountAtomic,
           slippageBps: DEFAULT_SLIPPAGE_BPS,
           ticker: item.asset.ticker,
-          onlyDirectRoutes: true,
-        });
-      } catch {
-        quote = await getJupiterQuote({
-          inputMint: USDC_MINT_ADDRESS,
-          outputMint: item.asset.mint,
-          amountAtomic: item.subAmountAtomic,
-          slippageBps: DEFAULT_SLIPPAGE_BPS,
-          ticker: item.asset.ticker,
-          maxAccounts: 20,
         });
       }
-    } else {
-      quote = await getJupiterQuote({
-        inputMint: USDC_MINT_ADDRESS,
-        outputMint: item.asset.mint,
-        amountAtomic: item.subAmountAtomic,
-        slippageBps: DEFAULT_SLIPPAGE_BPS,
-        ticker: item.asset.ticker,
+
+      const swapIxs = await getJupiterSwapInstructions({
+        quoteResponse: quote,
+        userPublicKey: payerKey.toBase58(),
       });
+
+      // Append setup instructions (if any)
+      if (swapIxs.setupInstructions && swapIxs.setupInstructions.length > 0) {
+        for (const rawSetup of swapIxs.setupInstructions) {
+          allInstructions.push(deserializeInstruction(rawSetup));
+        }
+      }
+
+      // Append main swap instruction
+      allInstructions.push(deserializeInstruction(swapIxs.swapInstruction));
+
+      // Append cleanup instruction (if any)
+      if (swapIxs.cleanupInstruction) {
+        allInstructions.push(deserializeInstruction(swapIxs.cleanupInstruction));
+      }
+
+      // Collect ALTs
+      if (swapIxs.addressLookupTableAddresses && swapIxs.addressLookupTableAddresses.length > 0) {
+        allAltAddresses.push(...swapIxs.addressLookupTableAddresses);
+      }
     }
 
-    const swapIxs = await getJupiterSwapInstructions({
-      quoteResponse: quote,
-      userPublicKey: payerKey.toBase58(),
+    const connection = getSolanaConnection();
+    const lookupTableAccounts = await resolveAddressLookupTables(connection, allAltAddresses);
+
+    const compiled = await compileAndValidateV0Transaction({
+      connection,
+      payerKey,
+      instructions: allInstructions,
+      lookupTableAccounts,
     });
 
-    // Append setup instructions (if any)
-    if (swapIxs.setupInstructions && swapIxs.setupInstructions.length > 0) {
-      for (const rawSetup of swapIxs.setupInstructions) {
-        allInstructions.push(deserializeInstruction(rawSetup));
-      }
-    }
+    return {
+      ...compiled,
+      altCount: lookupTableAccounts.length,
+    };
+  };
 
-    // Append main swap instruction
-    allInstructions.push(deserializeInstruction(swapIxs.swapInstruction));
+  // Execution with automatic MTU auto-compression retry
+  let result: {
+    serializedBase64: string;
+    byteLength: number;
+    altCount: number;
+  };
 
-    // Append cleanup instruction (if any)
-    if (swapIxs.cleanupInstruction) {
-      allInstructions.push(deserializeInstruction(swapIxs.cleanupInstruction));
-    }
+  try {
+    // Attempt 1: Direct routes preferred, maxAccounts: 10
+    result = await assembleBasket(10, true);
+  } catch (err: any) {
+    const isMtuError =
+      err.message &&
+      (err.message.includes('1232') ||
+        err.message.includes('encoding overruns Uint8Array') ||
+        err.message.includes('packet limit'));
 
-    // Collect ALTs
-    if (swapIxs.addressLookupTableAddresses && swapIxs.addressLookupTableAddresses.length > 0) {
-      allAltAddresses.push(...swapIxs.addressLookupTableAddresses);
+    if (isMtuError && !isSimulation && allocations.length > 1) {
+      console.warn('[Jupiter] Transaction exceeded 1232B MTU, auto-compressing with maxAccounts: 8...');
+      // Attempt 2: Strict compact routes with maxAccounts: 8
+      result = await assembleBasket(8, false);
+    } else {
+      throw err;
     }
   }
 
-  // 5. Deduplicate and resolve Address Lookup Tables
-  const connection = getSolanaConnection();
-  const lookupTableAccounts = await resolveAddressLookupTables(connection, allAltAddresses);
-
-  // 6. Compile to v0 and validate MTU limit <= 1232 bytes
-  const { serializedBase64, byteLength } = await compileAndValidateV0Transaction({
-    connection,
-    payerKey,
-    instructions: allInstructions,
-    lookupTableAccounts,
-  });
-
   return {
-    base64Tx: serializedBase64,
-    byteLength,
+    base64Tx: result.serializedBase64,
+    byteLength: result.byteLength,
     allocations,
     totalUsdcAtomic,
-    altCount: lookupTableAccounts.length,
+    altCount: result.altCount,
   };
 }

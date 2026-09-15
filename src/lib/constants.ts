@@ -457,8 +457,8 @@ export const ACTIONS_CORS_HEADERS: Record<string, string> = {
  */
 export const MAX_BASKET_ASSETS = 3; // 1232 Bytes MTU Guardrail
 export const MAX_ETF_ASSETS = 3;
-export const COMPUTE_UNIT_LIMIT = 1_200_000; // Multi-swap budget
-export const COMPUTE_UNIT_PRICE_MICRO_LAMPORTS = 50_000; // 0.05 lamports/CU priority
+export const COMPUTE_UNIT_LIMIT = 1_000_000; // Multi-swap budget
+export const COMPUTE_UNIT_PRICE_MICRO_LAMPORTS = 25_000; // 0.025 lamports/CU priority
 export const DEFAULT_SLIPPAGE_BPS = 100; // 1.00% slippage
 
 /**
