@@ -146,7 +146,8 @@ export default function HomePage() {
 
   const handleCopyBlink = async (id: string) => {
     const actionUrl = `${origin}/api/actions/etf/${id}`;
-    await navigator.clipboard.writeText(actionUrl);
+    const dialToUrl = `https://dial.to/?action=solana-action:${encodeURIComponent(actionUrl)}`;
+    await navigator.clipboard.writeText(dialToUrl);
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 2500);
   };
@@ -668,36 +669,36 @@ export default function HomePage() {
                     {copiedId === etf.id ? (
                       <>
                         <Check className="w-3.5 h-3.5 text-[#00D69F]" />
-                        <span className="text-[#00D69F] font-bold">Blink Action URL Copied!</span>
+                        <span className="text-[#00D69F] font-bold">dial.to Blink Link Copied!</span>
                       </>
                     ) : (
                       <>
                         <Share2 className="w-3.5 h-3.5 text-slate-400" />
-                        <span>Share as Solana Blink</span>
+                        <span>Copy dial.to Blink Link</span>
                       </>
                     )}
                   </button>
 
                   <div className="grid grid-cols-2 gap-2">
                     <a
-                      href={getDialectInspectorUrl(etf.id)}
+                      href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(
+                        `Invest in ${etf.name} with 1-click on @solana via @PocketETF!\n\n${origin}/etf/${etf.id}\n\n#Solana #Blinks #PocketETF`
+                      )}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="py-1.5 rounded-lg bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.06] hover:border-blue-500/40 text-[11px] font-semibold text-slate-300 hover:text-white transition-all flex items-center justify-center gap-1.5 font-mono"
+                      className="py-1.5 rounded-lg bg-[#146EF5]/15 hover:bg-[#146EF5]/25 border border-[#146EF5]/30 text-[11px] font-semibold text-blue-300 hover:text-white transition-all flex items-center justify-center gap-1.5 font-mono"
                     >
-                      <span>Dialect</span>
-                      <ExternalLink className="w-3 h-3 text-[#00D69F]" />
+                      <Share2 className="w-3 h-3 text-[#146EF5]" />
+                      <span>Post on X</span>
                     </a>
 
-                    <button
-                      type="button"
-                      onClick={() => handleSimulateSwap(etf.id)}
-                      disabled={sim?.loading}
-                      className="py-1.5 rounded-lg bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.06] hover:border-cyan-500/40 text-[11px] font-semibold text-slate-300 hover:text-white transition-all flex items-center justify-center gap-1.5 font-mono"
+                    <Link
+                      href={`/etf/${etf.id}`}
+                      className="py-1.5 rounded-lg bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.06] hover:border-emerald-500/40 text-[11px] font-semibold text-slate-300 hover:text-white transition-all flex items-center justify-center gap-1.5 font-mono"
                     >
-                      <Activity className="w-3 h-3 text-[#38BDF8]" />
-                      <span>Dry Run Tx</span>
-                    </button>
+                      <span>ETF Page</span>
+                      <ExternalLink className="w-3 h-3 text-[#00D69F]" />
+                    </Link>
                   </div>
 
                   {sim?.result?.signature && (
