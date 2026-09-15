@@ -206,7 +206,7 @@ export async function getJupiterQuote(params: {
 
   let path = `/quote?inputMint=${encodeURIComponent(inputMint)}&outputMint=${encodeURIComponent(
     outputMint
-  )}&amount=${amountAtomic}&slippageBps=${slippageBps}`;
+  )}&amount=${amountAtomic}&slippageBps=${slippageBps}&asLegacyTransaction=false`;
 
   if (maxAccounts && maxAccounts > 0) {
     path += `&maxAccounts=${maxAccounts}`;
@@ -274,6 +274,7 @@ export async function getJupiterSwapInstructions(params: {
         userPublicKey,
         wrapAndUnwrapSol: false,
         useSharedAccounts: true,
+        asLegacyTransaction: false,
       }),
     });
   } catch (err: unknown) {
@@ -376,6 +377,7 @@ export async function buildBasketTransaction(
               slippageBps: DEFAULT_SLIPPAGE_BPS,
               ticker: item.asset.ticker,
               onlyDirectRoutes: true,
+              maxAccounts: maxAccountsLimit,
             });
           } catch {
             quote = await getJupiterQuote({
@@ -449,7 +451,7 @@ export async function buildBasketTransaction(
     };
   };
 
-  // Execution with automatic MTU auto-compression retry
+  // Execution with 3-stage adaptive MTU auto-compression retry
   let result: {
     serializedBase64: string;
     byteLength: number;
@@ -457,7 +459,7 @@ export async function buildBasketTransaction(
   };
 
   try {
-    // Attempt 1: Direct routes preferred, maxAccounts: 10
+    // Stage 1: Direct routes preferred, maxAccounts: 10
     result = await assembleBasket(10, true);
   } catch (err: any) {
     const isMtuError =
@@ -467,9 +469,25 @@ export async function buildBasketTransaction(
         err.message.includes('packet limit'));
 
     if (isMtuError && !isSimulation && allocations.length > 1) {
-      console.warn('[Jupiter] Transaction exceeded 1232B MTU, auto-compressing with maxAccounts: 8...');
-      // Attempt 2: Strict compact routes with maxAccounts: 8
-      result = await assembleBasket(8, false);
+      console.warn('[Jupiter] Transaction exceeded 1232B MTU, auto-compressing with Stage 2 (maxAccounts: 7)...');
+      try {
+        // Stage 2: Direct routes preferred, maxAccounts: 7
+        result = await assembleBasket(7, true);
+      } catch (stage2Err: any) {
+        const isStage2Mtu =
+          stage2Err.message &&
+          (stage2Err.message.includes('1232') ||
+            stage2Err.message.includes('encoding overruns Uint8Array') ||
+            stage2Err.message.includes('packet limit'));
+
+        if (isStage2Mtu) {
+          console.warn('[Jupiter] Stage 2 exceeded MTU, auto-compressing with Stage 3 (maxAccounts: 5)...');
+          // Stage 3: Direct routes preferred, maxAccounts: 5
+          result = await assembleBasket(5, true);
+        } else {
+          throw stage2Err;
+        }
+      }
     } else {
       throw err;
     }
