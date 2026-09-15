@@ -6,6 +6,7 @@ import {
   DEFAULT_SLIPPAGE_BPS,
   JUPITER_API_URL,
   MAX_BASKET_ASSETS,
+  COMPACT_ROUTING_DEXES,
 } from './constants';
 import {
   getSolanaConnection,
@@ -201,8 +202,9 @@ export async function getJupiterQuote(params: {
   ticker: string;
   maxAccounts?: number;
   onlyDirectRoutes?: boolean;
+  dexes?: string;
 }): Promise<JupiterQuoteResponse> {
-  const { inputMint, outputMint, amountAtomic, slippageBps = DEFAULT_SLIPPAGE_BPS, ticker, maxAccounts, onlyDirectRoutes } = params;
+  const { inputMint, outputMint, amountAtomic, slippageBps = DEFAULT_SLIPPAGE_BPS, ticker, maxAccounts, onlyDirectRoutes, dexes } = params;
 
   let path = `/quote?inputMint=${encodeURIComponent(inputMint)}&outputMint=${encodeURIComponent(
     outputMint
@@ -214,6 +216,10 @@ export async function getJupiterQuote(params: {
 
   if (onlyDirectRoutes) {
     path += `&onlyDirectRoutes=true`;
+  }
+
+  if (dexes) {
+    path += `&dexes=${encodeURIComponent(dexes)}`;
   }
 
   let res: Response;
@@ -377,6 +383,41 @@ export async function buildBasketTransaction(
               slippageBps: DEFAULT_SLIPPAGE_BPS,
               ticker: item.asset.ticker,
               onlyDirectRoutes: true,
+              dexes: COMPACT_ROUTING_DEXES,
+              maxAccounts: maxAccountsLimit,
+            });
+          } catch {
+            try {
+              quote = await getJupiterQuote({
+                inputMint: USDC_MINT_ADDRESS,
+                outputMint: item.asset.mint,
+                amountAtomic: item.subAmountAtomic,
+                slippageBps: DEFAULT_SLIPPAGE_BPS,
+                ticker: item.asset.ticker,
+                onlyDirectRoutes: true,
+                maxAccounts: maxAccountsLimit,
+              });
+            } catch {
+              quote = await getJupiterQuote({
+                inputMint: USDC_MINT_ADDRESS,
+                outputMint: item.asset.mint,
+                amountAtomic: item.subAmountAtomic,
+                slippageBps: DEFAULT_SLIPPAGE_BPS,
+                ticker: item.asset.ticker,
+                dexes: COMPACT_ROUTING_DEXES,
+                maxAccounts: maxAccountsLimit,
+              });
+            }
+          }
+        } else {
+          try {
+            quote = await getJupiterQuote({
+              inputMint: USDC_MINT_ADDRESS,
+              outputMint: item.asset.mint,
+              amountAtomic: item.subAmountAtomic,
+              slippageBps: DEFAULT_SLIPPAGE_BPS,
+              ticker: item.asset.ticker,
+              dexes: COMPACT_ROUTING_DEXES,
               maxAccounts: maxAccountsLimit,
             });
           } catch {
@@ -389,15 +430,6 @@ export async function buildBasketTransaction(
               maxAccounts: maxAccountsLimit,
             });
           }
-        } else {
-          quote = await getJupiterQuote({
-            inputMint: USDC_MINT_ADDRESS,
-            outputMint: item.asset.mint,
-            amountAtomic: item.subAmountAtomic,
-            slippageBps: DEFAULT_SLIPPAGE_BPS,
-            ticker: item.asset.ticker,
-            maxAccounts: maxAccountsLimit,
-          });
         }
       } else {
         quote = await getJupiterQuote({
@@ -451,7 +483,7 @@ export async function buildBasketTransaction(
     };
   };
 
-  // Execution with 3-stage adaptive MTU auto-compression retry
+  // Execution with 2-stage adaptive MTU auto-compression retry
   let result: {
     serializedBase64: string;
     byteLength: number;
@@ -459,7 +491,7 @@ export async function buildBasketTransaction(
   };
 
   try {
-    // Stage 1: Direct routes preferred, maxAccounts: 10
+    // Stage 1: Standard compact DEXes + Direct routes, maxAccounts: 10
     result = await assembleBasket(10, true);
   } catch (err: any) {
     const isMtuError =
@@ -469,25 +501,9 @@ export async function buildBasketTransaction(
         err.message.includes('packet limit'));
 
     if (isMtuError && !isSimulation && allocations.length > 1) {
-      console.warn('[Jupiter] Transaction exceeded 1232B MTU, auto-compressing with Stage 2 (maxAccounts: 7)...');
-      try {
-        // Stage 2: Direct routes preferred, maxAccounts: 7
-        result = await assembleBasket(7, true);
-      } catch (stage2Err: any) {
-        const isStage2Mtu =
-          stage2Err.message &&
-          (stage2Err.message.includes('1232') ||
-            stage2Err.message.includes('encoding overruns Uint8Array') ||
-            stage2Err.message.includes('packet limit'));
-
-        if (isStage2Mtu) {
-          console.warn('[Jupiter] Stage 2 exceeded MTU, auto-compressing with Stage 3 (maxAccounts: 5)...');
-          // Stage 3: Direct routes preferred, maxAccounts: 5
-          result = await assembleBasket(5, true);
-        } else {
-          throw stage2Err;
-        }
-      }
+      console.warn('[Jupiter] Transaction exceeded 1232B MTU, auto-compressing with Stage 2...');
+      // Stage 2: Strict compact fallback with maxAccounts: 8
+      result = await assembleBasket(8, true);
     } else {
       throw err;
     }

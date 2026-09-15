@@ -460,6 +460,7 @@ export const MAX_ETF_ASSETS = 3;
 export const COMPUTE_UNIT_LIMIT = 1_000_000; // Multi-swap budget
 export const COMPUTE_UNIT_PRICE_MICRO_LAMPORTS = 25_000; // 0.025 lamports/CU priority
 export const DEFAULT_SLIPPAGE_BPS = 100; // 1.00% slippage
+export const COMPACT_ROUTING_DEXES = 'Raydium,Raydium+CP,Whirlpool,Meteora,Meteora+DLMM'; // Standard AMMs indexed in Jupiter ALTs
 
 /**
  * Jupiter API Endpoints
