@@ -178,9 +178,8 @@ export default function ETFDetailClient({ etf }: Props) {
   };
 
   const actionUrl = `${origin}/api/actions/etf/${etf.id}`;
-  const dialToUrl = `https://dial.to/?action=solana-action:${encodeURIComponent(actionUrl)}`;
   const shareTweetUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
-    `Invest in the ${etf.name} with 1-click on @solana via @PocketETF!\n\n${dialToUrl}\n\n#Solana #Blinks #PocketETF`
+    `Invest in the ${etf.name} with 1-click on @solana via @PocketETF!\n\n${origin}/etf/${etf.id}\n\n#Solana #Blinks #PocketETF`
   )}`;
 
   return (
@@ -331,7 +330,7 @@ export default function ETFDetailClient({ etf }: Props) {
                 <button
                   type="button"
                   onClick={async () => {
-                    await navigator.clipboard.writeText(dialToUrl);
+                    await navigator.clipboard.writeText(actionUrl);
                     setCopiedLink(true);
                     setTimeout(() => setCopiedLink(false), 2500);
                   }}
@@ -340,23 +339,23 @@ export default function ETFDetailClient({ etf }: Props) {
                   {copiedLink ? (
                     <>
                       <Check className="w-3.5 h-3.5 text-[#00D69F]" />
-                      <span className="text-[#00D69F]">dial.to Link Copied!</span>
+                      <span className="text-[#00D69F]">Action URL Copied!</span>
                     </>
                   ) : (
                     <>
-                      <ExternalLink className="w-3.5 h-3.5 text-slate-300" />
-                      <span>Copy dial.to Blink Link</span>
+                      <Share2 className="w-3.5 h-3.5 text-slate-300" />
+                      <span>Copy Solana Action URL</span>
                     </>
                   )}
                 </button>
 
                 <a
-                  href={dialToUrl}
+                  href={actionUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="px-3.5 py-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-slate-300 hover:text-white font-mono text-xs transition-all flex items-center gap-1.5"
                 >
-                  <span>Open in dial.to</span>
+                  <span>View Action JSON</span>
                   <ExternalLink className="w-3 h-3 text-[#00D69F]" />
                 </a>
               </div>

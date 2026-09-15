@@ -193,6 +193,10 @@ export async function GET(
             href: `${baseActionHref}${baseActionHref.includes('?') ? '&' : '?'}amount=10`,
           },
           {
+            label: '$25 USDC',
+            href: `${baseActionHref}${baseActionHref.includes('?') ? '&' : '?'}amount=25`,
+          },
+          {
             label: '$50 USDC',
             href: `${baseActionHref}${baseActionHref.includes('?') ? '&' : '?'}amount=50`,
           },

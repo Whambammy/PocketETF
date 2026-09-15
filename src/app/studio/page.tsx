@@ -261,8 +261,7 @@ export default function StudioPage() {
   const actionUrl = `${origin}/api/actions/etf/custom?assets=${encodeURIComponent(
     assetQuery
   )}&name=${encodeURIComponent(etfName)}&description=${encodeURIComponent(etfDescription)}`;
-  const dialectUrl = `https://dial.to/?action=solana-action:${encodeURIComponent(actionUrl)}`;
-  const tweetText = `Check out my custom tokenized stock ETF "${etfName}" on Solana! Execute 1-click with @JupiterExchange & Blinks:`;
+  const tweetText = `Check out my custom tokenized stock ETF "${etfName}" on Solana! Execute 1-click with @JupiterExchange & @PocketETF:`;
   const twitterIntentUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
     tweetText
   )}&url=${encodeURIComponent(actionUrl)}`;
@@ -566,12 +565,12 @@ export default function StudioPage() {
 
                 <div className="grid grid-cols-2 gap-3 pt-2">
                   <a
-                    href={dialectUrl}
+                    href={actionUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="py-2.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-xs font-mono font-semibold text-slate-200 flex items-center justify-center gap-2 transition-all hover:border-[#00D69F]/40"
                   >
-                    <span>Dialect Inspector</span>
+                    <span>View Action JSON</span>
                     <ExternalLink className="w-3.5 h-3.5 text-[#00D69F]" />
                   </a>
 
@@ -581,7 +580,7 @@ export default function StudioPage() {
                     rel="noopener noreferrer"
                     className="py-2.5 rounded-xl bg-[#1DA1F2]/20 hover:bg-[#1DA1F2]/30 border border-[#1DA1F2]/40 text-xs font-mono font-semibold text-[#1DA1F2] flex items-center justify-center gap-2 transition-all"
                   >
-                    <span>Share Blink on X</span>
+                    <span>Share Action on X</span>
                     <Share2 className="w-3.5 h-3.5" />
                   </a>
                 </div>
@@ -686,26 +685,17 @@ export default function StudioPage() {
                   </div>
                 </div>
 
-                {/* Preset Buttons */}
-                <div className="grid grid-cols-3 gap-2 pt-1 font-mono">
-                  <button
-                    type="button"
-                    className="py-2 rounded-xl bg-gradient-to-r from-[#146EF5] to-[#0D63F8] hover:brightness-110 text-white text-xs font-bold transition-all shadow-md shadow-blue-500/20"
-                  >
-                    $10 USDC
-                  </button>
-                  <button
-                    type="button"
-                    className="py-2 rounded-xl bg-gradient-to-r from-[#146EF5] to-[#0D63F8] hover:brightness-110 text-white text-xs font-bold transition-all shadow-md shadow-blue-500/20"
-                  >
-                    $50 USDC
-                  </button>
-                  <button
-                    type="button"
-                    className="py-2 rounded-xl bg-gradient-to-r from-[#146EF5] to-[#0D63F8] hover:brightness-110 text-white text-xs font-bold transition-all shadow-md shadow-blue-500/20"
-                  >
-                    $100 USDC
-                  </button>
+                {/* Preset Buttons (All 5 Presets) */}
+                <div className="grid grid-cols-5 gap-1.5 pt-1 font-mono">
+                  {['$5', '$10', '$25', '$50', '$100'].map((amt) => (
+                    <button
+                      key={amt}
+                      type="button"
+                      className="py-2 rounded-xl bg-gradient-to-r from-[#146EF5] to-[#0D63F8] hover:brightness-110 text-white text-xs font-bold transition-all shadow-md shadow-blue-500/20 text-center"
+                    >
+                      {amt}
+                    </button>
+                  ))}
                 </div>
 
                 <div className="flex gap-2">

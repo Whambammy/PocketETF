@@ -146,15 +146,9 @@ export default function HomePage() {
 
   const handleCopyBlink = async (id: string) => {
     const actionUrl = `${origin}/api/actions/etf/${id}`;
-    const dialToUrl = `https://dial.to/?action=solana-action:${encodeURIComponent(actionUrl)}`;
-    await navigator.clipboard.writeText(dialToUrl);
+    await navigator.clipboard.writeText(actionUrl);
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 2500);
-  };
-
-  const getDialectInspectorUrl = (id: string) => {
-    const actionUrl = `${origin}/api/actions/etf/${id}`;
-    return `https://dial.to/?action=solana-action:${encodeURIComponent(actionUrl)}`;
   };
 
   const handleLiveBuy = async (etfId: string) => {
@@ -686,12 +680,12 @@ export default function HomePage() {
                     {copiedId === etf.id ? (
                       <>
                         <Check className="w-3.5 h-3.5 text-[#00D69F]" />
-                        <span className="text-[#00D69F] font-bold">dial.to Blink Link Copied!</span>
+                        <span className="text-[#00D69F] font-bold">Action URL Copied!</span>
                       </>
                     ) : (
                       <>
                         <Share2 className="w-3.5 h-3.5 text-slate-400" />
-                        <span>Copy dial.to Blink Link</span>
+                        <span>Copy Solana Action URL</span>
                       </>
                     )}
                   </button>
