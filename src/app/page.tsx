@@ -24,19 +24,28 @@ import {
   Search,
   Wallet,
   Share2,
+  HelpCircle,
+  AlertCircle,
 } from 'lucide-react';
 import { CURATED_ETFS, ETFDefinition, TOKEN_CATALOG } from '@/lib/constants';
 
 export default function HomePage() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [activeJsonETF, setActiveJsonETF] = useState<ETFDefinition | null>(null);
+  const [showBlinkGuide, setShowBlinkGuide] = useState<boolean>(false);
+  const [walletBalance, setWalletBalance] = useState<{
+    sol: number;
+    usdc: number;
+    formattedSol: string;
+    formattedUsdc: string;
+  } | null>(null);
   const [selectedAmounts, setSelectedAmounts] = useState<Record<string, number>>({
-    'silicon-ai': 50,
-    'mag-titans': 50,
-    'spy-benchmark': 100,
-    'nasdaq-growth': 50,
-    'hard-assets': 100,
-    'crypto-frontier': 50,
+    'silicon-ai': 10,
+    'mag-titans': 10,
+    'spy-benchmark': 10,
+    'nasdaq-growth': 10,
+    'hard-assets': 10,
+    'crypto-frontier': 10,
   });
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [origin, setOrigin] = useState<string>('https://pocketetf.solana.app');
@@ -78,11 +87,42 @@ export default function HomePage() {
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [walletConnecting, setWalletConnecting] = useState<boolean>(false);
 
+  const fetchBalance = async (account: string) => {
+    try {
+      const res = await fetch(`/api/wallet/balance?account=${account}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) {
+          setWalletBalance({
+            sol: data.sol,
+            usdc: data.usdc,
+            formattedSol: data.formattedSol,
+            formattedUsdc: data.formattedUsdc,
+          });
+        }
+      }
+    } catch {
+      // ignore
+    }
+  };
+
   useEffect(() => {
     if (typeof window !== 'undefined' && (window as any).solana?.isConnected) {
-      setWalletAddress((window as any).solana.publicKey?.toString() || null);
+      const addr = (window as any).solana.publicKey?.toString() || null;
+      setWalletAddress(addr);
+      if (addr) fetchBalance(addr);
     }
   }, []);
+
+  useEffect(() => {
+    if (walletAddress) {
+      fetchBalance(walletAddress);
+      const timer = setInterval(() => fetchBalance(walletAddress), 15000);
+      return () => clearInterval(timer);
+    } else {
+      setWalletBalance(null);
+    }
+  }, [walletAddress]);
 
   const handleConnectWallet = async () => {
     if (typeof window === 'undefined') return;
@@ -94,7 +134,9 @@ export default function HomePage() {
     setWalletConnecting(true);
     try {
       const resp = await solana.connect();
-      setWalletAddress(resp.publicKey.toString());
+      const addr = resp.publicKey.toString();
+      setWalletAddress(addr);
+      fetchBalance(addr);
     } catch (err) {
       console.warn('Wallet connection cancelled', err);
     } finally {
@@ -133,7 +175,20 @@ export default function HomePage() {
         setWalletAddress(activeAccount);
       }
 
-      const amount = selectedAmounts[etfId] || 50;
+      if (!activeAccount) {
+        throw new Error('Could not retrieve active wallet address.');
+      }
+
+      fetchBalance(activeAccount);
+
+      const amount = selectedAmounts[etfId] || 10;
+
+      // Check if wallet has sufficient USDC on mainnet before initiating transaction
+      if (walletBalance && walletBalance.usdc < amount) {
+        throw new Error(
+          `Insufficient USDC balance: Your wallet has ${walletBalance.formattedUsdc} USDC, but this ETF buy requires $${amount}.00 USDC on Solana Mainnet. Please swap SOL to USDC in Phantom or choose a smaller amount like $5.`
+        );
+      }
 
       // 1. Fetch real live VersionedTransaction from the API
       const res = await fetch(`/api/actions/etf/${etfId}?amount=${amount}`, {
@@ -394,11 +449,21 @@ export default function HomePage() {
               <Wallet className="w-3.5 h-3.5 text-[#00D69F]" />
               <span>
                 {walletAddress
-                  ? `${walletAddress.slice(0, 4)}...${walletAddress.slice(-4)} (Connected)`
+                  ? `${walletAddress.slice(0, 4)}...${walletAddress.slice(-4)}${walletBalance ? ` • ${walletBalance.formattedUsdc}` : ''}`
                   : walletConnecting
                   ? 'Connecting...'
                   : 'Connect Wallet'}
               </span>
+            </button>
+
+            {/* How to Test Blinks Guide Button */}
+            <button
+              type="button"
+              onClick={() => setShowBlinkGuide(true)}
+              className="px-3 py-2 rounded-xl text-xs font-mono font-semibold text-slate-300 hover:text-white bg-white/[0.05] hover:bg-white/[0.09] border border-white/10 flex items-center gap-1.5 transition-all"
+            >
+              <HelpCircle className="w-3.5 h-3.5 text-[#38BDF8]" />
+              <span>How to Test Blinks</span>
             </button>
 
             {/* Category Filter Pills */}
@@ -514,15 +579,15 @@ export default function HomePage() {
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-1.5">
-                    {[10, 50, 100].map((amt) => (
+                  <div className="grid grid-cols-5 gap-1">
+                    {[5, 10, 25, 50, 100].map((amt) => (
                       <button
                         key={amt}
                         type="button"
                         onClick={() =>
                           setSelectedAmounts((prev) => ({ ...prev, [etf.id]: amt }))
                         }
-                        className={`py-1.5 rounded-lg text-xs font-mono font-semibold transition-all ${
+                        className={`py-1.5 rounded-lg text-[11px] font-mono font-semibold transition-all ${
                           currentAmount === amt
                             ? 'bg-[#146EF5] text-white shadow-md shadow-blue-500/25 font-bold'
                             : 'bg-white/[0.04] hover:bg-white/[0.08] text-slate-300'
@@ -552,6 +617,31 @@ export default function HomePage() {
                     })}
                   </div>
                 </div>
+
+                {/* Wallet Balance Check Indicator */}
+                {walletAddress && walletBalance && (
+                  <div
+                    className={`mb-2 p-2 rounded-xl text-[10px] font-mono flex items-center justify-between border ${
+                      walletBalance.usdc >= currentAmount
+                        ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+                        : 'bg-amber-500/10 border-amber-500/30 text-amber-300'
+                    }`}
+                  >
+                    <span className="flex items-center gap-1">
+                      {walletBalance.usdc >= currentAmount ? (
+                        <Check className="w-3 h-3 text-[#00D69F]" />
+                      ) : (
+                        <AlertCircle className="w-3 h-3 text-amber-400" />
+                      )}
+                      <span>Balance: {walletBalance.formattedUsdc}</span>
+                    </span>
+                    <span className="font-bold">
+                      {walletBalance.usdc >= currentAmount
+                        ? '✓ Ready to Buy'
+                        : `Need +$${(currentAmount - walletBalance.usdc).toFixed(2)} USDC`}
+                    </span>
+                  </div>
+                )}
 
                 {/* Action Buttons */}
                 <div className="mt-auto space-y-2">
@@ -850,6 +940,113 @@ export default function HomePage() {
                 className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-[#146EF5] to-[#0D63F8] hover:from-[#257BF6] hover:to-[#146EF5] text-white font-semibold transition-all shadow-md shadow-blue-500/25 border border-blue-400/25"
               >
                 Copy Action Endpoint
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Blinks & Dialect Testing Guide Modal */}
+      {showBlinkGuide && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
+          <div className="fintech-card bg-[#0A1128] border border-[#146EF5]/40 rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+            <div className="p-5 border-b border-white/10 flex items-center justify-between bg-black/30">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-[#146EF5]/20 border border-[#146EF5]/40 flex items-center justify-center text-[#00D69F]">
+                  <HelpCircle className="w-4 h-4 text-[#00D69F]" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-white">How to Test PocketETF Blinks &amp; Social Links</h4>
+                  <p className="text-[11px] text-slate-400 font-mono">Guide to Dialect, Twitter/X, and Live Wallet Swaps</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowBlinkGuide(false)}
+                className="text-slate-400 hover:text-white text-xs px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 font-mono transition-all"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="p-6 overflow-y-auto space-y-6 text-xs text-slate-300">
+              {/* 1. Why JSON in browser */}
+              <div className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.08] space-y-2">
+                <div className="flex items-center gap-2 text-white font-bold text-sm">
+                  <Code2 className="w-4 h-4 text-[#38BDF8]" />
+                  <span>1. Why does visiting the link in Chrome show a JSON payload?</span>
+                </div>
+                <p className="text-slate-400 leading-relaxed">
+                  Solana Action URLs (e.g. <code className="text-[#00D69F] font-mono">/api/actions/etf/silicon-ai</code>) are standard REST API endpoints compliant with the <strong>Solana Actions v2.1.3 Specification</strong>. Normal web browsers don't have built-in Solana wallet renderers, so they display the raw JSON metadata.
+                </p>
+                <p className="text-slate-400 leading-relaxed">
+                  <strong>Blinks (Blockchain Links)</strong> are the <em>visual rendering</em> of that JSON created by client apps (like Twitter/X, Discord, and Dialect) when a user has a compatible wallet extension.
+                </p>
+              </div>
+
+              {/* 2. Testing in Dialect (dial.to) */}
+              <div className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.08] space-y-2">
+                <div className="flex items-center gap-2 text-white font-bold text-sm">
+                  <ExternalLink className="w-4 h-4 text-[#00D69F]" />
+                  <span>2. How to test on Dialect Blinks Inspector (dial.to)</span>
+                </div>
+                <p className="text-slate-400 leading-relaxed">
+                  Dialect verifies all actions against their central registry. While your registry request is in review by Dialect, you can test and interact with your Blink immediately in <strong>Developer Mode</strong>:
+                </p>
+                <ol className="list-decimal list-inside space-y-1 text-slate-300 font-mono text-[11px] bg-black/40 p-3 rounded-lg border border-white/5">
+                  <li>Open <a href="https://dial.to" target="_blank" rel="noreferrer" className="text-[#00D69F] underline">dial.to</a> in your browser.</li>
+                  <li>Click the <strong>Settings (⚙️ Gear icon)</strong> in the top right corner.</li>
+                  <li>Toggle ON <strong>&quot;Allow unregistered actions&quot;</strong> (or Developer Mode).</li>
+                  <li>Paste your Blink URL: <span className="text-cyan-300 break-all">solana-action:{origin}/api/actions/etf/silicon-ai</span></li>
+                </ol>
+                <p className="text-[11px] text-emerald-400 font-mono">
+                  ✓ Dialect will instantly render the full interactive PocketETF buying card with all 1-click buttons!
+                </p>
+              </div>
+
+              {/* 3. Testing on Twitter / X */}
+              <div className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.08] space-y-2">
+                <div className="flex items-center gap-2 text-white font-bold text-sm">
+                  <Share2 className="w-4 h-4 text-[#146EF5]" />
+                  <span>3. How to test on Twitter / X</span>
+                </div>
+                <p className="text-slate-400 leading-relaxed">
+                  To view Blinks natively on Twitter/X:
+                </p>
+                <ol className="list-decimal list-inside space-y-1 text-slate-300 font-mono text-[11px] bg-black/40 p-3 rounded-lg border border-white/5">
+                  <li>Ensure your <strong>Phantom</strong> or <strong>Backpack</strong> browser extension is updated.</li>
+                  <li>In Phantom: go to <strong>Settings → Developer Settings → Solana Actions &amp; Blinks</strong> and ensure it is enabled.</li>
+                  <li>Post or preview the URL <span className="text-cyan-300 break-all">{origin}/api/actions/etf/silicon-ai</span> on Twitter/X.</li>
+                  <li>Phantom will automatically unfold the tweet into an interactive buy card right inside your feed!</li>
+                </ol>
+              </div>
+
+              {/* 4. Wallet & Funds: Why Phantom warns */}
+              <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 space-y-2">
+                <div className="flex items-center gap-2 text-amber-300 font-bold text-sm">
+                  <AlertCircle className="w-4 h-4 text-amber-400" />
+                  <span>4. Why Phantom blocked the swap &amp; warned about 0.001 SOL</span>
+                </div>
+                <p className="text-amber-200/90 leading-relaxed">
+                  PocketETF executes real, live swaps on Solana Mainnet using <strong>USDC</strong> (<code className="font-mono text-[10px] bg-black/40 px-1 py-0.5 rounded">EPjFWdd...wyTDt1v</code>).
+                </p>
+                <p className="text-slate-300 leading-relaxed">
+                  Before signing, Phantom runs a <strong>background simulation</strong> of the transaction. If your wallet has <strong>0 USDC</strong>, the simulation fails with <code className="text-red-300 font-mono">insufficient funds</code>. Phantom flags this with a scary red warning: <em>&quot;Malicious or failing transaction detected: If you proceed, you will lose your 0.001 SOL network fee.&quot;</em>
+                </p>
+                <p className="text-slate-300 leading-relaxed font-semibold">
+                  👉 <strong>The Fix:</strong> The 0.001 SOL is Solana&apos;s standard network fee. Simply ensure your Phantom wallet holds at least <strong>$5 or $10 USDC</strong> on Solana Mainnet. You can swap a fraction of your SOL to USDC directly inside Phantom in 5 seconds!
+                </p>
+              </div>
+            </div>
+
+            <div className="p-4 border-t border-white/10 flex justify-between items-center bg-black/40 text-xs font-mono">
+              <span className="text-slate-400">PocketETF Protocol v1.0</span>
+              <button
+                type="button"
+                onClick={() => setShowBlinkGuide(false)}
+                className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#146EF5] to-[#00D69F] text-white font-bold hover:scale-105 transition-all shadow-md shadow-blue-500/25"
+              >
+                Got It!
               </button>
             </div>
           </div>

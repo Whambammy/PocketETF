@@ -178,6 +178,10 @@ export async function GET(
       links: {
         actions: [
           {
+            label: '$5 USDC',
+            href: `${baseActionHref}${baseActionHref.includes('?') ? '&' : '?'}amount=5`,
+          },
+          {
             label: '$10 USDC',
             href: `${baseActionHref}${baseActionHref.includes('?') ? '&' : '?'}amount=10`,
           },
