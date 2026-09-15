@@ -1,13 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { PublicKey } from '@solana/web3.js';
 import {
   CURATED_ETFS,
   PRE_BAKED_BASKETS,
   ACTIONS_CORS_HEADERS,
   STOCK_MINTS,
+  TOKEN_CATALOG,
   ETFDefinition,
   ETFAsset,
   MAX_ETF_ASSETS,
+  USDC_MINT_ADDRESS,
+  getDEXConflictStatus,
 } from '@/lib/constants';
+import { getSolanaConnection, getOnChainTokenBalance } from '@/lib/solana';
 import { buildBasketTransaction, RouteLiquidityError } from '@/lib/jupiter';
 
 /**
@@ -86,7 +91,6 @@ export function resolveETF(id: string, searchParams: URLSearchParams): ETFDefini
 
       // Strict Base58 public key validation
       try {
-        const { PublicKey } = require('@solana/web3.js');
         new PublicKey(mint);
       } catch {
         return null;
@@ -97,14 +101,17 @@ export function resolveETF(id: string, searchParams: URLSearchParams): ETFDefini
       }
       seenMints.add(mint);
 
+      const catalogMatch = TOKEN_CATALOG.find((t) => t.ticker === ticker || t.mint === mint);
+
       targetAssets.push({
         ticker,
-        name: `${ticker} Asset`,
+        name: catalogMatch?.name || `${ticker} Asset`,
         weightPercent: weight,
         mint,
-        decimals: 6,
-        color: '#10B981',
-        category: 'Semiconductors & AI',
+        decimals: catalogMatch?.decimals || 6,
+        color: catalogMatch?.color || '#10B981',
+        category: catalogMatch?.category || 'Semiconductors & AI',
+        primaryDex: catalogMatch?.primaryDex || 'Whirlpool',
       });
     }
 
@@ -261,9 +268,9 @@ export async function POST(
       );
     }
 
+    let userPublicKey: PublicKey;
     try {
-      const { PublicKey } = require('@solana/web3.js');
-      new PublicKey(account);
+      userPublicKey = new PublicKey(account);
     } catch {
       return NextResponse.json(
         { message: 'Invalid Solana wallet address format.' },
@@ -282,8 +289,37 @@ export async function POST(
       );
     }
 
+    // 3.5 Upfront DEX Compatibility Guard (for 3-stock baskets)
+    const conflictStatus = getDEXConflictStatus(etf.targetAssets);
+    if (!conflictStatus.isCompatible) {
+      return NextResponse.json(
+        {
+          message:
+            conflictStatus.reason ||
+            'Selected assets exceed Solana 1232B MTU packet limit. Please choose compatible DEX venues or reduce asset count.',
+        },
+        { status: 400, headers: ACTIONS_CORS_HEADERS }
+      );
+    }
+
     const isSimulation =
       url.searchParams.get('simulate') === 'true' || process.env.SIMULATION_MODE === 'true';
+
+    // 3.6 Zero-Gas Wallet Guardrail: On-chain USDC Balance Verification
+    if (!isSimulation) {
+      const connection = getSolanaConnection();
+      const usdcMintPubkey = new PublicKey(USDC_MINT_ADDRESS);
+      const { uiAmount } = await getOnChainTokenBalance(connection, userPublicKey, usdcMintPubkey);
+
+      if (uiAmount < usdcAmount) {
+        return NextResponse.json(
+          {
+            message: `Insufficient USDC: Your wallet currently holds $${uiAmount.toFixed(2)} USDC, but this ETF purchase requires $${usdcAmount.toFixed(2)} USDC. Please swap SOL to USDC in Phantom or select a smaller amount to avoid losing network gas fees.`,
+          },
+          { status: 400, headers: ACTIONS_CORS_HEADERS }
+        );
+      }
+    }
 
     // 4. Build Multi-Swap Versioned Transaction v0
     const { base64Tx, byteLength, allocations } = await buildBasketTransaction({

@@ -6,6 +6,7 @@ export interface ETFAsset {
   decimals: number;
   color: string;
   category: 'Semiconductors & AI' | 'Mega-Cap Tech' | 'Indices & Benchmarks' | 'Commodities & Yield' | 'Web3 Equities';
+  primaryDex?: 'Whirlpool' | 'Meteora' | 'Raydium';
   change24h?: string;
   underlyingPrice?: string;
 }
@@ -56,6 +57,7 @@ export const TOKEN_CATALOG: ETFAsset[] = [
     decimals: 6,
     color: '#10B981',
     category: 'Semiconductors & AI',
+    primaryDex: 'Whirlpool',
     change24h: '+4.2%',
     underlyingPrice: '$220.00',
   },
@@ -67,6 +69,7 @@ export const TOKEN_CATALOG: ETFAsset[] = [
     decimals: 6,
     color: '#06B6D4',
     category: 'Semiconductors & AI',
+    primaryDex: 'Meteora',
     change24h: '+2.8%',
     underlyingPrice: '$195.40',
   },
@@ -78,6 +81,7 @@ export const TOKEN_CATALOG: ETFAsset[] = [
     decimals: 6,
     color: '#EF4444',
     category: 'Semiconductors & AI',
+    primaryDex: 'Raydium',
     change24h: '+1.9%',
     underlyingPrice: '$165.20',
   },
@@ -89,6 +93,7 @@ export const TOKEN_CATALOG: ETFAsset[] = [
     decimals: 6,
     color: '#F59E0B',
     category: 'Semiconductors & AI',
+    primaryDex: 'Whirlpool',
     change24h: '+3.1%',
     underlyingPrice: '$185.30',
   },
@@ -100,6 +105,7 @@ export const TOKEN_CATALOG: ETFAsset[] = [
     decimals: 6,
     color: '#6366F1',
     category: 'Semiconductors & AI',
+    primaryDex: 'Raydium',
     change24h: '+5.4%',
     underlyingPrice: '$42.80',
   },
@@ -113,6 +119,7 @@ export const TOKEN_CATALOG: ETFAsset[] = [
     decimals: 6,
     color: '#94A3B8',
     category: 'Mega-Cap Tech',
+    primaryDex: 'Raydium',
     change24h: '+0.9%',
     underlyingPrice: '$232.50',
   },
@@ -124,6 +131,7 @@ export const TOKEN_CATALOG: ETFAsset[] = [
     decimals: 6,
     color: '#38BDF8',
     category: 'Mega-Cap Tech',
+    primaryDex: 'Meteora',
     change24h: '+1.4%',
     underlyingPrice: '$432.10',
   },
@@ -135,6 +143,7 @@ export const TOKEN_CATALOG: ETFAsset[] = [
     decimals: 6,
     color: '#60A5FA',
     category: 'Mega-Cap Tech',
+    primaryDex: 'Whirlpool',
     change24h: '+1.1%',
     underlyingPrice: '$165.70',
   },
@@ -146,6 +155,7 @@ export const TOKEN_CATALOG: ETFAsset[] = [
     decimals: 6,
     color: '#F97316',
     category: 'Mega-Cap Tech',
+    primaryDex: 'Whirlpool',
     change24h: '+2.2%',
     underlyingPrice: '$186.90',
   },
@@ -157,6 +167,7 @@ export const TOKEN_CATALOG: ETFAsset[] = [
     decimals: 6,
     color: '#0284C7',
     category: 'Mega-Cap Tech',
+    primaryDex: 'Whirlpool',
     change24h: '+3.7%',
     underlyingPrice: '$512.40',
   },
@@ -168,6 +179,7 @@ export const TOKEN_CATALOG: ETFAsset[] = [
     decimals: 6,
     color: '#E11D48',
     category: 'Mega-Cap Tech',
+    primaryDex: 'Meteora',
     change24h: '+4.8%',
     underlyingPrice: '$230.20',
   },
@@ -181,6 +193,7 @@ export const TOKEN_CATALOG: ETFAsset[] = [
     decimals: 6,
     color: '#F59E0B',
     category: 'Indices & Benchmarks',
+    primaryDex: 'Whirlpool',
     change24h: '+0.7%',
     underlyingPrice: '$558.10',
   },
@@ -192,6 +205,7 @@ export const TOKEN_CATALOG: ETFAsset[] = [
     decimals: 6,
     color: '#8B5CF6',
     category: 'Indices & Benchmarks',
+    primaryDex: 'Raydium',
     change24h: '+1.5%',
     underlyingPrice: '$482.40',
   },
@@ -203,6 +217,7 @@ export const TOKEN_CATALOG: ETFAsset[] = [
     decimals: 6,
     color: '#10B981',
     category: 'Indices & Benchmarks',
+    primaryDex: 'Whirlpool',
     change24h: '+3.3%',
     underlyingPrice: '$248.90',
   },
@@ -214,6 +229,7 @@ export const TOKEN_CATALOG: ETFAsset[] = [
     decimals: 6,
     color: '#EC4899',
     category: 'Indices & Benchmarks',
+    primaryDex: 'Raydium',
     change24h: '+1.2%',
     underlyingPrice: '$218.60',
   },
@@ -225,6 +241,7 @@ export const TOKEN_CATALOG: ETFAsset[] = [
     decimals: 6,
     color: '#14F195',
     category: 'Indices & Benchmarks',
+    primaryDex: 'Meteora',
     change24h: '+0.8%',
     underlyingPrice: '$274.50',
   },
@@ -238,6 +255,7 @@ export const TOKEN_CATALOG: ETFAsset[] = [
     decimals: 6,
     color: '#FBBF24',
     category: 'Commodities & Yield',
+    primaryDex: 'Meteora',
     change24h: '+0.6%',
     underlyingPrice: '$232.80',
   },
@@ -249,6 +267,7 @@ export const TOKEN_CATALOG: ETFAsset[] = [
     decimals: 6,
     color: '#CBD5E1',
     category: 'Commodities & Yield',
+    primaryDex: 'Raydium',
     change24h: '+1.8%',
     underlyingPrice: '$28.40',
   },
@@ -260,6 +279,7 @@ export const TOKEN_CATALOG: ETFAsset[] = [
     decimals: 6,
     color: '#3B82F6',
     category: 'Commodities & Yield',
+    primaryDex: 'Whirlpool',
     change24h: '-0.3%',
     underlyingPrice: '$98.20',
   },
@@ -271,6 +291,7 @@ export const TOKEN_CATALOG: ETFAsset[] = [
     decimals: 6,
     color: '#10B981',
     category: 'Commodities & Yield',
+    primaryDex: 'Whirlpool',
     change24h: '+5.1% APY',
     underlyingPrice: '$1.05',
   },
@@ -282,6 +303,7 @@ export const TOKEN_CATALOG: ETFAsset[] = [
     decimals: 6,
     color: '#A16207',
     category: 'Commodities & Yield',
+    primaryDex: 'Raydium',
     change24h: '+1.4%',
     underlyingPrice: '$78.10',
   },
@@ -295,6 +317,7 @@ export const TOKEN_CATALOG: ETFAsset[] = [
     decimals: 6,
     color: '#2563EB',
     category: 'Web3 Equities',
+    primaryDex: 'Raydium',
     change24h: '+6.8%',
     underlyingPrice: '$218.40',
   },
@@ -306,6 +329,7 @@ export const TOKEN_CATALOG: ETFAsset[] = [
     decimals: 9,
     color: '#9945FF',
     category: 'Web3 Equities',
+    primaryDex: 'Meteora',
     change24h: '+4.5%',
     underlyingPrice: '$142.30',
   },
@@ -317,6 +341,7 @@ export const TOKEN_CATALOG: ETFAsset[] = [
     decimals: 6,
     color: '#00F0FF',
     category: 'Web3 Equities',
+    primaryDex: 'Whirlpool',
     change24h: '+5.2%',
     underlyingPrice: '$0.84',
   },
@@ -451,12 +476,73 @@ export const ACTIONS_CORS_HEADERS: Record<string, string> = {
 /**
  * Protocol Constraints & Execution Limits
  */
-export const MAX_BASKET_ASSETS = 2; // 1232 Bytes MTU Guardrail
-export const MAX_ETF_ASSETS = 2;
+export const MAX_BASKET_ASSETS = 3; // Allows up to 3 compatible assets within 1232B MTU limit
+export const MAX_ETF_ASSETS = 3;
 export const COMPUTE_UNIT_LIMIT = 1_000_000; // Multi-swap budget
 export const COMPUTE_UNIT_PRICE_MICRO_LAMPORTS = 25_000; // 0.025 lamports/CU priority
 export const DEFAULT_SLIPPAGE_BPS = 100; // 1.00% slippage
 export const COMPACT_ROUTING_DEXES = 'Raydium,Raydium+CP,Whirlpool,Meteora,Meteora+DLMM'; // Standard AMMs indexed in Jupiter ALTs
+
+/**
+ * Evaluates whether a basket of assets complies with Solana's 1232B MTU packet limit.
+ * Baskets with 1 or 2 distinct DEX programs compile to <= 1,154B (Safe).
+ * Baskets with 3 distinct DEX programs compile to 1,264B-1,290B and exceed the 1232B MTU limit.
+ */
+export function getDEXConflictStatus(assets: ETFAsset[]): {
+  isCompatible: boolean;
+  uniqueDexes: string[];
+  estimatedBytes: number;
+  statusLabel: string;
+  reason?: string;
+} {
+  if (!assets || assets.length === 0) {
+    return {
+      isCompatible: true,
+      uniqueDexes: [],
+      estimatedBytes: 0,
+      statusLabel: 'Empty',
+    };
+  }
+
+  if (assets.length <= 2) {
+    const dexes = Array.from(new Set(assets.map((a) => a.primaryDex || 'Whirlpool')));
+    return {
+      isCompatible: true,
+      uniqueDexes: dexes,
+      estimatedBytes: assets.length === 1 ? 580 : 840,
+      statusLabel: 'Optimal (Safe)',
+    };
+  }
+
+  // 3 or more assets
+  const dexSet = new Set(assets.map((a) => a.primaryDex || 'Whirlpool'));
+  const uniqueDexes = Array.from(dexSet);
+
+  if (uniqueDexes.length === 1) {
+    return {
+      isCompatible: true,
+      uniqueDexes,
+      estimatedBytes: 1002, // 1 DEX program (Whirlpool or Meteora) shares accounts in ALT
+      statusLabel: `Compatible (1 AMM: ${uniqueDexes[0]} ~1,002B / 1232B)`,
+    };
+  } else if (uniqueDexes.length === 2) {
+    return {
+      isCompatible: true,
+      uniqueDexes,
+      estimatedBytes: 1154, // 2 DEX programs fit safely under 1,232B MTU
+      statusLabel: `Compatible (2 AMMs: ${uniqueDexes.join(' + ')} ~1,154B / 1232B)`,
+    };
+  } else {
+    // 3 distinct DEX programs (e.g. Whirlpool + Meteora + Raydium)
+    return {
+      isCompatible: false,
+      uniqueDexes,
+      estimatedBytes: 1268, // Exceeds 1,232B limit
+      statusLabel: '3-DEX Conflict (Exceeds 1232B MTU)',
+      reason: `3-DEX Conflict: The selected assets trade across 3 separate AMMs (${uniqueDexes.join(', ')}). Bundling 3 distinct DEX programs exceeds Solana's 1232B MTU packet limit. Please choose assets that share liquidity venues (e.g., Whirlpool + Meteora) to safely bundle 3 stocks.`,
+    };
+  }
+}
 
 /**
  * Jupiter API Endpoints

@@ -9,6 +9,7 @@
     "lint": "next lint",
     "audit": "node scripts/audit.mjs",
     "test:dust": "node scripts/test-dust.mjs",
+    "test:guardrails": "npx tsx scripts/test-guardrails.mjs && npx tsx scripts/test-api-route.mjs",
     "postinstall": "node scripts/patch-next.mjs"
   },
   "dependencies": {

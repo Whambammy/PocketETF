@@ -93,6 +93,42 @@ async function runAudit() {
   assert('Custom ETF composition GET returns 200 OK', customRes.status === 200);
   assert('Custom ETF response includes custom title', customRes.body?.title?.includes('Custom Titans'));
 
+  // 8. Zero-Gas Wallet Guardrail (Unfunded live POST)
+  const unfundedPost = await req('/api/actions/etf/silicon-ai?amount=50', 'POST', {
+    account: '11111111111111111111111111111111',
+  });
+  assert('Unfunded live POST returns 400 Bad Request (Zero-Gas Guard)', unfundedPost.status === 400);
+  assert(
+    'Unfunded live POST error message mentions Insufficient USDC',
+    unfundedPost.body?.message?.includes('Insufficient USDC')
+  );
+
+  // 9. Upfront DEX Venue Compatibility Guard for 3-Stock Baskets
+  // 9a. Incompatible 3-DEX combination (NVDA: Whirlpool, TSM: Meteora, AAPL: Raydium)
+  const conflictingPost = await req(
+    '/api/actions/etf/custom?assets=NVDA:40,TSM:30,AAPL:30&simulate=true',
+    'POST',
+    { account: '11111111111111111111111111111111' }
+  );
+  assert(
+    '3-DEX conflict POST rejected with 400 Bad Request',
+    conflictingPost.status === 400
+  );
+  assert(
+    '3-DEX conflict message cites MTU / AMM conflict',
+    conflictingPost.body?.message?.includes('3-DEX Conflict') ||
+      conflictingPost.body?.message?.includes('exceed')
+  );
+
+  // 9b. Compatible 3-DEX combination (NVDA: Whirlpool, GOOGL: Whirlpool, META: Whirlpool)
+  const compatiblePost = await req(
+    '/api/actions/etf/custom?assets=NVDA:40,GOOGL:30,META:30&simulate=true',
+    'POST',
+    { account: '11111111111111111111111111111111' }
+  );
+  assert('Compatible 3-stock basket POST succeeds with 200 OK', compatiblePost.status === 200);
+  assert('Compatible 3-stock basket returns valid transaction', typeof compatiblePost.body?.transaction === 'string');
+
   console.log('\n====================================================');
   console.log(`Audit Results: ${passed} Passed | ${failed} Failed`);
   console.log('====================================================\n');

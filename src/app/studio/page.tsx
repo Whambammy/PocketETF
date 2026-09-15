@@ -22,7 +22,7 @@ import {
   PieChart,
   HelpCircle,
 } from 'lucide-react';
-import { TOKEN_CATALOG, MAX_ETF_ASSETS, ETFAsset } from '@/lib/constants';
+import { TOKEN_CATALOG, MAX_ETF_ASSETS, ETFAsset, getDEXConflictStatus } from '@/lib/constants';
 import { DonutChart } from '@/components/DonutChart';
 
 interface ActiveStock {
@@ -32,6 +32,7 @@ interface ActiveStock {
   color: string;
   mint: string;
   category: string;
+  primaryDex?: 'Whirlpool' | 'Meteora' | 'Raydium';
   underlyingPrice?: string;
 }
 
@@ -49,6 +50,7 @@ export default function StudioPage() {
       color: '#10B981',
       mint: TOKEN_CATALOG.find((t) => t.ticker === 'NVDA')?.mint || '7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU',
       category: 'Semiconductors & AI',
+      primaryDex: 'Whirlpool',
       underlyingPrice: '$220.00',
     },
     {
@@ -58,6 +60,7 @@ export default function StudioPage() {
       color: '#06B6D4',
       mint: TOKEN_CATALOG.find((t) => t.ticker === 'TSM')?.mint || '3NZ9JMVBmGAqocybic2c7LQCJScmgsAZ6vQqTDzcqmJh',
       category: 'Semiconductors & AI',
+      primaryDex: 'Meteora',
       underlyingPrice: '$195.40',
     },
   ]);
@@ -170,6 +173,7 @@ export default function StudioPage() {
         color: asset.color,
         mint: asset.mint,
         category: asset.category,
+        primaryDex: asset.primaryDex || 'Whirlpool',
         underlyingPrice: asset.underlyingPrice,
       },
     ];
@@ -210,6 +214,7 @@ export default function StudioPage() {
         color: '#10B981',
         mint: trimmedMint,
         category: 'Custom Asset',
+        primaryDex: 'Whirlpool' as const,
         underlyingPrice: 'Dynamic',
       },
     ];
@@ -286,6 +291,19 @@ export default function StudioPage() {
     return matchesCategory && matchesSearch;
   });
 
+  const conflictStatus = getDEXConflictStatus(
+    activeStocks.map((s) => ({
+      ticker: s.ticker,
+      name: s.name,
+      weightPercent: s.weight,
+      mint: s.mint,
+      decimals: 6,
+      color: s.color,
+      category: s.category as any,
+      primaryDex: s.primaryDex || 'Whirlpool',
+    }))
+  );
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       {/* Back Link */}
@@ -314,11 +332,24 @@ export default function StudioPage() {
         </div>
 
         {/* 1232B MTU Status Pill */}
-        <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-black/40 border border-white/10 text-xs font-mono text-slate-300">
-          <ShieldCheck className="w-4 h-4 text-[#00D69F]" />
+        <div
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-mono border transition-all ${
+            conflictStatus.isCompatible
+              ? 'bg-black/40 border-white/10 text-slate-300'
+              : 'bg-red-500/10 border-red-500/30 text-red-300'
+          }`}
+        >
+          {conflictStatus.isCompatible ? (
+            <ShieldCheck className="w-4 h-4 text-[#00D69F]" />
+          ) : (
+            <ShieldAlert className="w-4 h-4 text-red-400" />
+          )}
           <span>
             Assets: <strong className="text-white">{activeStocks.length}</strong> /{' '}
-            {MAX_ETF_ASSETS} Max (1232B MTU Guard)
+            {MAX_ETF_ASSETS} Max &bull;{' '}
+            <span className={conflictStatus.isCompatible ? 'text-[#00D69F]' : 'text-red-400 font-bold'}>
+              {conflictStatus.statusLabel}
+            </span>
           </span>
         </div>
       </div>
@@ -409,6 +440,22 @@ export default function StudioPage() {
               </div>
             )}
 
+            {/* DEX Venue Conflict Warning */}
+            {!conflictStatus.isCompatible && (
+              <div className="mb-4 p-4 rounded-xl bg-red-500/15 border border-red-500/40 text-xs font-mono text-red-200 space-y-1.5">
+                <div className="flex items-center gap-2 font-bold text-red-300">
+                  <ShieldAlert className="w-4 h-4 text-red-400 shrink-0" />
+                  <span>DEX Venue Conflict: Exceeds Solana 1232B MTU Limit</span>
+                </div>
+                <p className="text-slate-300 text-[11px] leading-relaxed">
+                  {conflictStatus.reason}
+                </p>
+                <div className="pt-1 text-[11px] text-amber-300">
+                  💡 <strong>Venue Optimization:</strong> Replace one stock so all 3 assets share 1 or 2 DEX venues (e.g. Whirlpool for NVDA/GOOGL/META or Meteora for TSM/MSFT/TSLA) to fit safely on-chain.
+                </div>
+              </div>
+            )}
+
             {/* Active Stocks List */}
             <div className="space-y-3.5 mb-6">
               {activeStocks.map((stock) => (
@@ -423,7 +470,10 @@ export default function StudioPage() {
                         style={{ backgroundColor: stock.color }}
                       />
                       <span className="font-mono font-bold text-sm text-white">{stock.ticker}</span>
-                      <span className="text-xs text-slate-400 truncate max-w-[140px] sm:max-w-[200px]">
+                      <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold bg-white/5 border border-white/10 text-slate-300">
+                        {stock.primaryDex || 'Whirlpool'}
+                      </span>
+                      <span className="text-xs text-slate-400 truncate max-w-[120px] sm:max-w-[180px]">
                         {stock.name}
                       </span>
                     </div>
@@ -479,52 +529,64 @@ export default function StudioPage() {
               <span>3. Export Solana Action &amp; Blink Link</span>
             </h2>
 
-            <div className="space-y-3">
-              <div className="p-3 rounded-xl bg-black/60 border border-white/10 flex items-center justify-between gap-2 overflow-hidden">
-                <span className="font-mono text-xs text-slate-300 truncate">
-                  {actionUrl}
-                </span>
-                <button
-                  type="button"
-                  onClick={handleCopyLink}
-                  className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-[#146EF5] to-[#0D63F8] hover:from-[#257BF6] hover:to-[#146EF5] text-white font-semibold text-xs transition-all shrink-0 flex items-center gap-1.5 font-mono shadow-md shadow-blue-500/25 border border-blue-400/30"
-                >
-                  {copied ? (
-                    <>
-                      <Check className="w-3.5 h-3.5 text-[#00D69F]" />
-                      <span className="text-[#00D69F]">Copied!</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-3.5 h-3.5" />
-                      <span>Copy URL</span>
-                    </>
-                  )}
-                </button>
+            {!conflictStatus.isCompatible ? (
+              <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-xs font-mono text-red-300 space-y-2">
+                <div className="flex items-center gap-2 font-bold">
+                  <ShieldAlert className="w-4 h-4 text-red-400 shrink-0" />
+                  <span>Blink Generation Paused: 3-DEX AMM Conflict</span>
+                </div>
+                <p className="text-slate-300 text-[11px] leading-relaxed">
+                  Solana transactions cannot fit Whirlpool, Meteora, and Raydium accounts simultaneously within the 1232B MTU packet limit. Please adjust your 3 assets to share 1 or 2 venues or reduce to 2 assets to enable export.
+                </p>
               </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="p-3 rounded-xl bg-black/60 border border-white/10 flex items-center justify-between gap-2 overflow-hidden">
+                  <span className="font-mono text-xs text-slate-300 truncate">
+                    {actionUrl}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleCopyLink}
+                    className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-[#146EF5] to-[#0D63F8] hover:from-[#257BF6] hover:to-[#146EF5] text-white font-semibold text-xs transition-all shrink-0 flex items-center gap-1.5 font-mono shadow-md shadow-blue-500/25 border border-blue-400/30"
+                  >
+                    {copied ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-[#00D69F]" />
+                        <span className="text-[#00D69F]">Copied!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5" />
+                        <span>Copy URL</span>
+                      </>
+                    )}
+                  </button>
+                </div>
 
-              <div className="grid grid-cols-2 gap-3 pt-2">
-                <a
-                  href={dialectUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="py-2.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-xs font-mono font-semibold text-slate-200 flex items-center justify-center gap-2 transition-all hover:border-[#00D69F]/40"
-                >
-                  <span>Dialect Inspector</span>
-                  <ExternalLink className="w-3.5 h-3.5 text-[#00D69F]" />
-                </a>
+                <div className="grid grid-cols-2 gap-3 pt-2">
+                  <a
+                    href={dialectUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="py-2.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-xs font-mono font-semibold text-slate-200 flex items-center justify-center gap-2 transition-all hover:border-[#00D69F]/40"
+                  >
+                    <span>Dialect Inspector</span>
+                    <ExternalLink className="w-3.5 h-3.5 text-[#00D69F]" />
+                  </a>
 
-                <a
-                  href={twitterIntentUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="py-2.5 rounded-xl bg-[#1DA1F2]/20 hover:bg-[#1DA1F2]/30 border border-[#1DA1F2]/40 text-xs font-mono font-semibold text-[#1DA1F2] flex items-center justify-center gap-2 transition-all"
-                >
-                  <span>Share Blink on X</span>
-                  <Share2 className="w-3.5 h-3.5" />
-                </a>
+                  <a
+                    href={twitterIntentUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="py-2.5 rounded-xl bg-[#1DA1F2]/20 hover:bg-[#1DA1F2]/30 border border-[#1DA1F2]/40 text-xs font-mono font-semibold text-[#1DA1F2] flex items-center justify-center gap-2 transition-all"
+                  >
+                    <span>Share Blink on X</span>
+                    <Share2 className="w-3.5 h-3.5" />
+                  </a>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
 
@@ -778,7 +840,12 @@ export default function StudioPage() {
                     }`}
                   >
                     <div className="flex items-center justify-between w-full mb-1">
-                      <span className="font-mono font-bold text-sm text-white">{asset.ticker}</span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-mono font-bold text-sm text-white">{asset.ticker}</span>
+                        <span className="px-1.5 py-0.5 rounded text-[9px] font-mono bg-white/5 border border-white/10 text-slate-300">
+                          {asset.primaryDex || 'Whirlpool'}
+                        </span>
+                      </div>
                       <span
                         className={`text-[10px] font-mono ${
                           asset.change24h?.startsWith('+') ? 'text-[#00D69F]' : 'text-red-400'

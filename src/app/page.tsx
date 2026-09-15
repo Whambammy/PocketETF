@@ -180,14 +180,31 @@ export default function HomePage() {
         throw new Error('Could not retrieve active wallet address.');
       }
 
-      fetchBalance(activeAccount);
-
       const amount = selectedAmounts[etfId] || 10;
 
-      // Check if wallet has sufficient USDC on mainnet before initiating transaction
-      if (walletBalance && walletBalance.usdc < amount) {
+      // Zero-Gas Pre-Flight Wallet Check
+      let currentUsdc = walletBalance?.usdc;
+      try {
+        const balRes = await fetch(`/api/wallet/balance?account=${activeAccount}`);
+        if (balRes.ok) {
+          const balData = await balRes.json();
+          if (balData.success) {
+            currentUsdc = balData.usdc;
+            setWalletBalance({
+              sol: balData.sol,
+              usdc: balData.usdc,
+              formattedSol: balData.formattedSol,
+              formattedUsdc: balData.formattedUsdc,
+            });
+          }
+        }
+      } catch {
+        // fallback to cached walletBalance
+      }
+
+      if (typeof currentUsdc === 'number' && currentUsdc < amount) {
         throw new Error(
-          `Insufficient USDC balance: Your wallet has ${walletBalance.formattedUsdc} USDC, but this ETF buy requires $${amount}.00 USDC on Solana Mainnet. Please swap SOL to USDC in Phantom or choose a smaller amount like $5.`
+          `Zero-Gas Safety Guard: Your wallet holds $${currentUsdc.toFixed(2)} USDC, but this ETF purchase requires $${amount}.00 USDC on Solana Mainnet. Please swap SOL to USDC in your wallet first to prevent losing network gas fees.`
         );
       }
 

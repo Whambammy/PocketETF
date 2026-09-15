@@ -307,3 +307,40 @@ export async function compileAndValidateV0Transaction(params: {
     byteLength,
   };
 }
+
+/**
+ * Checks a user's on-chain token balance (e.g. USDC).
+ * Returns { balanceAtomic: bigint, uiAmount: number, exists: boolean }.
+ * If the account does not exist or has 0 balance, returns uiAmount: 0, exists: false.
+ */
+export async function getOnChainTokenBalance(
+  connection: Connection,
+  walletAddress: PublicKey,
+  mintAddress: PublicKey
+): Promise<{ balanceAtomic: bigint; uiAmount: number; exists: boolean }> {
+  try {
+    const ata = getAssociatedTokenAddressSync(
+      mintAddress,
+      walletAddress,
+      false,
+      TOKEN_PROGRAM_ID,
+      ASSOCIATED_TOKEN_PROGRAM_ID
+    );
+    const balanceRes = await connection.getTokenAccountBalance(ata);
+    if (balanceRes && balanceRes.value) {
+      return {
+        balanceAtomic: BigInt(balanceRes.value.amount),
+        uiAmount: balanceRes.value.uiAmount ?? 0,
+        exists: true,
+      };
+    }
+  } catch {
+    // Expected when ATA is uninitialized or wallet has 0 token balance
+  }
+  return {
+    balanceAtomic: BigInt(0),
+    uiAmount: 0,
+    exists: false,
+  };
+}
+
