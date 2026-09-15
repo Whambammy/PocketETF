@@ -36,16 +36,16 @@ interface ActiveStock {
 }
 
 export default function StudioPage() {
-  const [etfName, setEtfName] = useState('Silicon AI & Foundry Titans');
+  const [etfName, setEtfName] = useState('Silicon AI Supercycle');
   const [etfDescription, setEtfDescription] = useState(
-    '1-Click diversified exposure across NVIDIA, TSMC, and AMD. Executed atomically via PocketETF and Jupiter DEX routing on Solana.'
+    '1-Click diversified exposure across NVIDIA and Taiwan Semiconductor (TSMC). Executed atomically via PocketETF and Jupiter DEX routing on Solana.'
   );
 
   const [activeStocks, setActiveStocks] = useState<ActiveStock[]>([
     {
       ticker: 'NVDA',
       name: 'NVIDIA Corporation',
-      weight: 40,
+      weight: 60,
       color: '#10B981',
       mint: TOKEN_CATALOG.find((t) => t.ticker === 'NVDA')?.mint || '7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU',
       category: 'Semiconductors & AI',
@@ -54,20 +54,11 @@ export default function StudioPage() {
     {
       ticker: 'TSM',
       name: 'Taiwan Semiconductor Mfg',
-      weight: 30,
+      weight: 40,
       color: '#06B6D4',
       mint: TOKEN_CATALOG.find((t) => t.ticker === 'TSM')?.mint || '3NZ9JMVBmGAqocybic2c7LQCJScmgsAZ6vQqTDzcqmJh',
       category: 'Semiconductors & AI',
       underlyingPrice: '$195.40',
-    },
-    {
-      ticker: 'AMD',
-      name: 'Advanced Micro Devices',
-      weight: 30,
-      color: '#EF4444',
-      mint: TOKEN_CATALOG.find((t) => t.ticker === 'AMD')?.mint || '2FPyTwcZLUg1MDrwsyoP4D6s1tM7hAkHYRjkNb5w6Pxk',
-      category: 'Semiconductors & AI',
-      underlyingPrice: '$165.20',
     },
   ]);
 

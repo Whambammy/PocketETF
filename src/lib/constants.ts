@@ -120,7 +120,7 @@ export const TOKEN_CATALOG: ETFAsset[] = [
     ticker: 'MSFT',
     name: 'Microsoft Corporation',
     weightPercent: 0,
-    mint: process.env.MINT_MSFT || 'JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN',
+    mint: process.env.MINT_MSFT || '3NZ9JMVBmGAqocybic2c7LQCJScmgsAZ6vQqTDzcqmJh',
     decimals: 6,
     color: '#38BDF8',
     category: 'Mega-Cap Tech',
@@ -336,31 +336,29 @@ export const CURATED_ETFS: Record<string, ETFDefinition> = {
     name: 'Silicon AI Supercycle',
     symbol: 'PETF-AI',
     tagline: 'Leading AI Hardware & Foundry Pioneers',
-    description: '1-Click execution for 40% NVIDIA (NVDA), 30% TSMC (TSM), and 30% AMD via Jupiter DEX aggregation.',
+    description: '1-Click execution for 60% NVIDIA (NVDA) and 40% Taiwan Semiconductor (TSM) via Jupiter DEX aggregation.',
     iconPath: '/etfs/silicon-ai.svg',
     category: 'AI & Semiconductors',
     colorGradient: { from: '#10B981', to: '#06B6D4' },
     metrics: { aumSimulated: '$4.2M', benchmarkYield: '+64.2% YTD', volatility: 'High' },
     targetAssets: [
-      { ticker: 'NVDA', name: 'NVIDIA Corp', weightPercent: 40, mint: STOCK_MINTS.NVDA, decimals: 6, color: '#10B981', category: 'Semiconductors & AI' },
-      { ticker: 'TSM', name: 'Taiwan Semiconductor', weightPercent: 30, mint: STOCK_MINTS.TSM, decimals: 6, color: '#06B6D4', category: 'Semiconductors & AI' },
-      { ticker: 'AMD', name: 'Advanced Micro Devices', weightPercent: 30, mint: STOCK_MINTS.AMD, decimals: 6, color: '#EF4444', category: 'Semiconductors & AI' },
+      { ticker: 'NVDA', name: 'NVIDIA Corp', weightPercent: 60, mint: STOCK_MINTS.NVDA, decimals: 6, color: '#10B981', category: 'Semiconductors & AI' },
+      { ticker: 'TSM', name: 'Taiwan Semiconductor', weightPercent: 40, mint: STOCK_MINTS.TSM, decimals: 6, color: '#06B6D4', category: 'Semiconductors & AI' },
     ],
   },
   'mag-titans': {
     id: 'mag-titans',
     name: 'Magnificent Tech Titans',
     symbol: 'PETF-TITAN',
-    tagline: 'The Three Dominant Innovation Engines',
-    description: 'Instant allocation across 34% Apple (AAPL), 33% Microsoft (MSFT), and 33% Alphabet (GOOGL).',
+    tagline: 'The Dominant Innovation Engines',
+    description: 'Instant allocation across 50% Apple (AAPL) and 50% Microsoft (MSFT).',
     iconPath: '/etfs/mag-titans.svg',
     category: 'Mega-Cap Tech',
     colorGradient: { from: '#8B5CF6', to: '#EC4899' },
     metrics: { aumSimulated: '$8.7M', benchmarkYield: '+31.8% YTD', volatility: 'Moderate' },
     targetAssets: [
-      { ticker: 'AAPL', name: 'Apple Inc.', weightPercent: 34, mint: STOCK_MINTS.AAPL, decimals: 6, color: '#94A3B8', category: 'Mega-Cap Tech' },
-      { ticker: 'MSFT', name: 'Microsoft Corp', weightPercent: 33, mint: STOCK_MINTS.MSFT, decimals: 6, color: '#38BDF8', category: 'Mega-Cap Tech' },
-      { ticker: 'GOOGL', name: 'Alphabet Inc.', weightPercent: 33, mint: STOCK_MINTS.GOOGL, decimals: 6, color: '#60A5FA', category: 'Mega-Cap Tech' },
+      { ticker: 'AAPL', name: 'Apple Inc.', weightPercent: 50, mint: STOCK_MINTS.AAPL, decimals: 6, color: '#94A3B8', category: 'Mega-Cap Tech' },
+      { ticker: 'MSFT', name: 'Microsoft Corp', weightPercent: 50, mint: STOCK_MINTS.MSFT, decimals: 6, color: '#38BDF8', category: 'Mega-Cap Tech' },
     ],
   },
   'spy-benchmark': {
@@ -382,15 +380,14 @@ export const CURATED_ETFS: Record<string, ETFDefinition> = {
     name: 'Nasdaq-100 Growth Titans',
     symbol: 'PETF-QQQ',
     tagline: 'High-Beta Consumer Tech & Cloud Leaders',
-    description: 'Balanced growth exposure: 50% Nasdaq-100 (QQQ), 25% Amazon (AMZN), and 25% Meta Platforms (META).',
+    description: 'Balanced growth exposure: 60% Nasdaq-100 (QQQ) and 40% Amazon (AMZN).',
     iconPath: '/etfs/nasdaq-growth.svg',
     category: 'Broad Market',
     colorGradient: { from: '#0284C7', to: '#6366F1' },
     metrics: { aumSimulated: '$6.1M', benchmarkYield: '+26.9% YTD', volatility: 'Moderate' },
     targetAssets: [
-      { ticker: 'QQQ', name: 'Invesco QQQ Trust', weightPercent: 50, mint: STOCK_MINTS.QQQ, decimals: 6, color: '#8B5CF6', category: 'Indices & Benchmarks' },
-      { ticker: 'AMZN', name: 'Amazon.com Inc.', weightPercent: 25, mint: STOCK_MINTS.AMZN, decimals: 6, color: '#F97316', category: 'Mega-Cap Tech' },
-      { ticker: 'META', name: 'Meta Platforms Inc.', weightPercent: 25, mint: STOCK_MINTS.META, decimals: 6, color: '#0284C7', category: 'Mega-Cap Tech' },
+      { ticker: 'QQQ', name: 'Invesco QQQ Trust', weightPercent: 60, mint: STOCK_MINTS.QQQ, decimals: 6, color: '#8B5CF6', category: 'Indices & Benchmarks' },
+      { ticker: 'AMZN', name: 'Amazon.com Inc.', weightPercent: 40, mint: STOCK_MINTS.AMZN, decimals: 6, color: '#F97316', category: 'Mega-Cap Tech' },
     ],
   },
   'hard-assets': {
@@ -410,18 +407,17 @@ export const CURATED_ETFS: Record<string, ETFDefinition> = {
   },
   'crypto-frontier': {
     id: 'crypto-frontier',
-    name: 'Web3 & Financial Infrastructure',
+    name: 'Web3 & Solana Infrastructure',
     symbol: 'PETF-WEB3',
     tagline: 'Leading Crypto Economy & L1 Protocols',
-    description: 'Diversified crypto ecosystem exposure: 50% Coinbase (COIN), 25% Solana (SOL), and 25% Jupiter (JUP).',
+    description: 'Premier Solana ecosystem exposure: 50% Wrapped Solana (SOL) and 50% Jupiter DEX Engine (JUP).',
     iconPath: '/etfs/crypto-frontier.svg',
     category: 'Web3',
     colorGradient: { from: '#2563EB', to: '#9945FF' },
     metrics: { aumSimulated: '$5.5M', benchmarkYield: '+52.1% YTD', volatility: 'High' },
     targetAssets: [
-      { ticker: 'COIN', name: 'Coinbase Global', weightPercent: 50, mint: STOCK_MINTS.COIN, decimals: 6, color: '#2563EB', category: 'Web3 Equities' },
-      { ticker: 'SOL', name: 'Wrapped Solana', weightPercent: 25, mint: STOCK_MINTS.SOL, decimals: 9, color: '#9945FF', category: 'Web3 Equities' },
-      { ticker: 'JUP', name: 'Jupiter DEX', weightPercent: 25, mint: STOCK_MINTS.JUP, decimals: 6, color: '#00F0FF', category: 'Web3 Equities' },
+      { ticker: 'SOL', name: 'Wrapped Solana', weightPercent: 50, mint: STOCK_MINTS.SOL, decimals: 9, color: '#9945FF', category: 'Web3 Equities' },
+      { ticker: 'JUP', name: 'Jupiter DEX', weightPercent: 50, mint: STOCK_MINTS.JUP, decimals: 6, color: '#00F0FF', category: 'Web3 Equities' },
     ],
   },
 };
@@ -455,8 +451,8 @@ export const ACTIONS_CORS_HEADERS: Record<string, string> = {
 /**
  * Protocol Constraints & Execution Limits
  */
-export const MAX_BASKET_ASSETS = 3; // 1232 Bytes MTU Guardrail
-export const MAX_ETF_ASSETS = 3;
+export const MAX_BASKET_ASSETS = 2; // 1232 Bytes MTU Guardrail
+export const MAX_ETF_ASSETS = 2;
 export const COMPUTE_UNIT_LIMIT = 1_000_000; // Multi-swap budget
 export const COMPUTE_UNIT_PRICE_MICRO_LAMPORTS = 25_000; // 0.025 lamports/CU priority
 export const DEFAULT_SLIPPAGE_BPS = 100; // 1.00% slippage

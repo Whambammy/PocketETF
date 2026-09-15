@@ -202,15 +202,12 @@ export async function resolveAddressLookupTables(
 }
 
 /**
- * Creates Compute Budget instructions (Limit: 1.2M CU, Price: 50k microLamports)
+ * Creates Compute Budget instructions (Limit: COMPUTE_UNIT_LIMIT)
  */
 export function createComputeBudgetInstructions(): TransactionInstruction[] {
   return [
     ComputeBudgetProgram.setComputeUnitLimit({
       units: COMPUTE_UNIT_LIMIT,
-    }),
-    ComputeBudgetProgram.setComputeUnitPrice({
-      microLamports: COMPUTE_UNIT_PRICE_MICRO_LAMPORTS,
     }),
   ];
 }
