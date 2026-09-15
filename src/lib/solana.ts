@@ -57,11 +57,11 @@ function sanitizeRpcUrl(raw?: string): string | null {
   }
 }
 
-const DEFAULT_MAINNET_RPC = 'https://api.mainnet-beta.solana.com';
+const DEFAULT_MAINNET_RPC = 'https://solana-rpc.publicnode.com';
 const FALLBACK_PUBLIC_RPCS = [
+  'https://solana-rpc.publicnode.com',
+  'https://nodes.mewapi.io/rpc/sol',
   'https://api.mainnet-beta.solana.com',
-  'https://solana-mainnet.rpc.extrnode.com',
-  'https://rpc.ankr.com/solana',
 ];
 
 function buildEndpointsList(): string[] {
@@ -158,43 +158,43 @@ export async function resolveAddressLookupTables(
   // Deduplicate address strings
   const uniqueAddresses = Array.from(new Set(altAddresses));
 
+  const endpoints = buildEndpointsList();
+
   const lookups = await Promise.all(
     uniqueAddresses.map(async (address) => {
       if (altAccountCache.has(address)) {
         return altAccountCache.get(address)!;
       }
 
-      try {
-        const pubkey = new PublicKey(address);
-        let res = await connection.getAddressLookupTable(pubkey);
-        if (res.value) {
-          altAccountCache.set(address, res.value);
-          return res.value;
-        }
+      const pubkey = new PublicKey(address);
 
-        // Try rotating RPC if initial fetch returned empty/null
-        const fallbackConn = rotateRpcConnection();
-        res = await fallbackConn.getAddressLookupTable(pubkey);
+      // 1. Try active connection first
+      try {
+        const res = await connection.getAddressLookupTable(pubkey);
         if (res.value) {
           altAccountCache.set(address, res.value);
           return res.value;
         }
-        return null;
-      } catch (err) {
+      } catch {
+        // proceed to fallbacks
+      }
+
+      // 2. Iterate across all fallback endpoints
+      for (const ep of endpoints) {
         try {
-          const fallbackConn = rotateRpcConnection();
-          const pubkey = new PublicKey(address);
-          const res = await fallbackConn.getAddressLookupTable(pubkey);
+          const conn = createConnectionSafely(ep);
+          const res = await conn.getAddressLookupTable(pubkey);
           if (res.value) {
             altAccountCache.set(address, res.value);
             return res.value;
           }
         } catch {
-          // ignore
+          // continue to next endpoint
         }
-        console.warn(`[resolveAddressLookupTables] Failed to fetch ALT: ${address}`, err);
-        return null;
       }
+
+      console.warn(`[resolveAddressLookupTables] Failed to fetch ALT across all endpoints: ${address}`);
+      return null;
     })
   );
 

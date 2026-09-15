@@ -353,8 +353,8 @@ export async function buildBasketTransaction(
   // 1. Dust elimination and atomic allocation
   const { totalUsdcAtomic, allocations } = calculateAssetAllocations(usdcAmount, assets);
 
-  // Helper to compile the entire multi-swap basket with a given maxAccounts limit
-  const assembleBasket = async (maxAccountsLimit: number, preferDirectRoutes: boolean) => {
+  // Helper to compile the entire multi-swap basket with compact routing
+  const assembleBasket = async (preferDirectRoutes: boolean) => {
     const allInstructions: TransactionInstruction[] = [...createComputeBudgetInstructions()];
     const allAltAddresses: string[] = [];
 
@@ -384,7 +384,6 @@ export async function buildBasketTransaction(
               ticker: item.asset.ticker,
               onlyDirectRoutes: true,
               dexes: COMPACT_ROUTING_DEXES,
-              maxAccounts: maxAccountsLimit,
             });
           } catch {
             try {
@@ -395,7 +394,6 @@ export async function buildBasketTransaction(
                 slippageBps: DEFAULT_SLIPPAGE_BPS,
                 ticker: item.asset.ticker,
                 onlyDirectRoutes: true,
-                maxAccounts: maxAccountsLimit,
               });
             } catch {
               quote = await getJupiterQuote({
@@ -405,7 +403,6 @@ export async function buildBasketTransaction(
                 slippageBps: DEFAULT_SLIPPAGE_BPS,
                 ticker: item.asset.ticker,
                 dexes: COMPACT_ROUTING_DEXES,
-                maxAccounts: maxAccountsLimit,
               });
             }
           }
@@ -417,8 +414,8 @@ export async function buildBasketTransaction(
               amountAtomic: item.subAmountAtomic,
               slippageBps: DEFAULT_SLIPPAGE_BPS,
               ticker: item.asset.ticker,
+              onlyDirectRoutes: true,
               dexes: COMPACT_ROUTING_DEXES,
-              maxAccounts: maxAccountsLimit,
             });
           } catch {
             quote = await getJupiterQuote({
@@ -427,7 +424,7 @@ export async function buildBasketTransaction(
               amountAtomic: item.subAmountAtomic,
               slippageBps: DEFAULT_SLIPPAGE_BPS,
               ticker: item.asset.ticker,
-              maxAccounts: maxAccountsLimit,
+              dexes: COMPACT_ROUTING_DEXES,
             });
           }
         }
@@ -483,7 +480,7 @@ export async function buildBasketTransaction(
     };
   };
 
-  // Execution with 2-stage adaptive MTU auto-compression retry
+  // Execution with adaptive MTU auto-compression retry
   let result: {
     serializedBase64: string;
     byteLength: number;
@@ -491,8 +488,8 @@ export async function buildBasketTransaction(
   };
 
   try {
-    // Stage 1: Standard compact DEXes + Direct routes, maxAccounts: 10
-    result = await assembleBasket(10, true);
+    // Stage 1: Direct routes preferred + Compact DEXes
+    result = await assembleBasket(true);
   } catch (err: any) {
     const isMtuError =
       err.message &&
@@ -501,9 +498,8 @@ export async function buildBasketTransaction(
         err.message.includes('packet limit'));
 
     if (isMtuError && !isSimulation && allocations.length > 1) {
-      console.warn('[Jupiter] Transaction exceeded 1232B MTU, auto-compressing with Stage 2...');
-      // Stage 2: Strict compact fallback with maxAccounts: 8
-      result = await assembleBasket(8, true);
+      console.warn('[Jupiter] Transaction exceeded 1232B MTU, retrying with strict direct routes...');
+      result = await assembleBasket(true);
     } else {
       throw err;
     }

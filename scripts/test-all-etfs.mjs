@@ -16,6 +16,7 @@ async function testAll() {
         } else {
           console.log(`[FAIL] ${id} ($${amt}): Status ${res.status} - ${data.message || data.error}`);
         }
+        await new Promise(r => setTimeout(r, 600));
       } catch (err) {
         console.log(`[ERR] ${id} ($${amt}): ${err.message}`);
       }
