@@ -9,6 +9,7 @@ export interface ETFAsset {
   primaryDex?: 'Whirlpool' | 'Meteora' | 'Raydium';
   change24h?: string;
   underlyingPrice?: string;
+  pythFeedId?: string;
 }
 
 // Backwards compatibility alias
@@ -45,6 +46,13 @@ export const USDC_DECIMALS = 6;
 export const USDC_ATOMIC_PER_UNIT = 10 ** USDC_DECIMALS; // 1,000,000 units per $1
 
 /**
+ * Protocol Revenue & Monetization Engine (Configured to 0 bps by default for Alpha testing)
+ */
+export const DEFAULT_PLATFORM_FEE_BPS = Number(process.env.PLATFORM_FEE_BPS) || 0; // 0 bps = 0% for Hackathon
+export const PROTOCOL_TREASURY_PUBKEY = process.env.TREASURY_PUBKEY || 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
+export const CREATOR_FEE_SPLIT_PERCENT = 50; // 50% split to Blink curators
+
+/**
  * Curated Catalog of 25+ Verified Tokenized Stocks, Indices, Commodities & RWAs
  */
 export const TOKEN_CATALOG: ETFAsset[] = [
@@ -60,6 +68,7 @@ export const TOKEN_CATALOG: ETFAsset[] = [
     primaryDex: 'Whirlpool',
     change24h: '+4.2%',
     underlyingPrice: '$220.00',
+    pythFeedId: '0xb1073854ed24cbc755dc527418f52b7d271f6cc967bbf8d8129112b18860a593',
   },
   {
     ticker: 'TSM',
@@ -72,6 +81,7 @@ export const TOKEN_CATALOG: ETFAsset[] = [
     primaryDex: 'Meteora',
     change24h: '+2.8%',
     underlyingPrice: '$195.40',
+    pythFeedId: '0x5109b83b3e2189fb462f43dbb10815776d54cf8e3f4ad699eec38515c0a0c649',
   },
   {
     ticker: 'AMD',
@@ -84,6 +94,7 @@ export const TOKEN_CATALOG: ETFAsset[] = [
     primaryDex: 'Raydium',
     change24h: '+1.9%',
     underlyingPrice: '$165.20',
+    pythFeedId: '0xd365f112fa7cfec7f1b72e987c9ec5ca7ee90a424e83a9f0e13c8f85f3a0937a',
   },
   {
     ticker: 'AVGO',
@@ -96,6 +107,7 @@ export const TOKEN_CATALOG: ETFAsset[] = [
     primaryDex: 'Whirlpool',
     change24h: '+3.1%',
     underlyingPrice: '$185.30',
+    pythFeedId: '0x24749f7831d10e527d2c12513f5fb479b18ba046d3e8ad6f54ab179bf1db8ef5',
   },
   {
     ticker: 'PLTR',
@@ -108,6 +120,7 @@ export const TOKEN_CATALOG: ETFAsset[] = [
     primaryDex: 'Raydium',
     change24h: '+5.4%',
     underlyingPrice: '$42.80',
+    pythFeedId: '0x64703be3a4ffbfa506820245050f28e2da5ea9b69c4f1c9c41f71dfb19908611',
   },
 
   // Mega-Cap Tech
@@ -122,6 +135,7 @@ export const TOKEN_CATALOG: ETFAsset[] = [
     primaryDex: 'Raydium',
     change24h: '+0.9%',
     underlyingPrice: '$232.50',
+    pythFeedId: '0x49f6b65eb1bf245ad4ec79e2c24483d34e680480a4a2fdb4466bca5fed2f7902',
   },
   {
     ticker: 'MSFT',
@@ -134,6 +148,7 @@ export const TOKEN_CATALOG: ETFAsset[] = [
     primaryDex: 'Meteora',
     change24h: '+1.4%',
     underlyingPrice: '$432.10',
+    pythFeedId: '0xd0ca22c31e9aeaeab98ea9878a3c861214e27f0980582845ab3d191d9cf1b702',
   },
   {
     ticker: 'GOOGL',
@@ -146,6 +161,7 @@ export const TOKEN_CATALOG: ETFAsset[] = [
     primaryDex: 'Whirlpool',
     change24h: '+1.1%',
     underlyingPrice: '$165.70',
+    pythFeedId: '0x5a2d590e8fc5500e28f2eb67586522c091d37803df3985b9b94fa8ec6287c2fb',
   },
   {
     ticker: 'AMZN',
@@ -158,6 +174,7 @@ export const TOKEN_CATALOG: ETFAsset[] = [
     primaryDex: 'Whirlpool',
     change24h: '+2.2%',
     underlyingPrice: '$186.90',
+    pythFeedId: '0x9780b62e49c719ef8947f636c7a408796f6e5e8e89ad6c9d7494a82161426466',
   },
   {
     ticker: 'META',
@@ -170,6 +187,7 @@ export const TOKEN_CATALOG: ETFAsset[] = [
     primaryDex: 'Whirlpool',
     change24h: '+3.7%',
     underlyingPrice: '$512.40',
+    pythFeedId: '0xc21805561a00a0664906f2d22b64d39f71c4c9258282b9e67272821a7a1c7fc0',
   },
   {
     ticker: 'TSLA',
@@ -182,6 +200,7 @@ export const TOKEN_CATALOG: ETFAsset[] = [
     primaryDex: 'Meteora',
     change24h: '+4.8%',
     underlyingPrice: '$230.20',
+    pythFeedId: '0x16027a050f28e678ba499a224a141bdf0d42ae5049b4938a16db8a2a514fa67c',
   },
 
   // Indices & Market Benchmarks
@@ -196,6 +215,7 @@ export const TOKEN_CATALOG: ETFAsset[] = [
     primaryDex: 'Whirlpool',
     change24h: '+0.7%',
     underlyingPrice: '$558.10',
+    pythFeedId: '0x2617fe89849204005b4b104992989db96860085d773c3cbdf98c0b25e79148d4',
   },
   {
     ticker: 'QQQ',
@@ -208,6 +228,7 @@ export const TOKEN_CATALOG: ETFAsset[] = [
     primaryDex: 'Raydium',
     change24h: '+1.5%',
     underlyingPrice: '$482.40',
+    pythFeedId: '0xb8f2d59648939c4d9241b7771ec8e9f567b5e825e98f06079c6563ee28e61474',
   },
   {
     ticker: 'SMH',
@@ -220,6 +241,7 @@ export const TOKEN_CATALOG: ETFAsset[] = [
     primaryDex: 'Whirlpool',
     change24h: '+3.3%',
     underlyingPrice: '$248.90',
+    pythFeedId: '0x16be85ea933390fe66f4cfbfa4876b66e13faeefad0066b5372332616cfd25fd',
   },
   {
     ticker: 'IWM',
@@ -232,6 +254,7 @@ export const TOKEN_CATALOG: ETFAsset[] = [
     primaryDex: 'Raydium',
     change24h: '+1.2%',
     underlyingPrice: '$218.60',
+    pythFeedId: '0xcfc02e7ecbc367db0ee32e4d01b1fc86a422eb2c8e317c2a71f00cb105e46cbb',
   },
   {
     ticker: 'VTI',
@@ -244,6 +267,7 @@ export const TOKEN_CATALOG: ETFAsset[] = [
     primaryDex: 'Meteora',
     change24h: '+0.8%',
     underlyingPrice: '$274.50',
+    pythFeedId: '0x327bf094a9ea4a56c078a6ff622a5598ba96561cf6fdf399c5c165ef678b88d3',
   },
 
   // Commodities & Real-World Assets (RWAs)
@@ -258,6 +282,7 @@ export const TOKEN_CATALOG: ETFAsset[] = [
     primaryDex: 'Meteora',
     change24h: '+0.6%',
     underlyingPrice: '$232.80',
+    pythFeedId: '0x765d2ba906dbc32ca17cc11f5310a43e8033997db1aeb254a6ba604e710255eb',
   },
   {
     ticker: 'SLV',
@@ -270,6 +295,7 @@ export const TOKEN_CATALOG: ETFAsset[] = [
     primaryDex: 'Raydium',
     change24h: '+1.8%',
     underlyingPrice: '$28.40',
+    pythFeedId: '0x4031df1ebf0d46d0a7905187747e4b2d6a78ea3e800927df4d2d488e3a20726d',
   },
   {
     ticker: 'TLT',
@@ -282,6 +308,7 @@ export const TOKEN_CATALOG: ETFAsset[] = [
     primaryDex: 'Whirlpool',
     change24h: '-0.3%',
     underlyingPrice: '$98.20',
+    pythFeedId: '0xc28258dc78ea598b0f4fa6e45447ea873db863c32ffc9ce35b1d5c7f8a7e082a',
   },
   {
     ticker: 'USDY',
@@ -294,6 +321,7 @@ export const TOKEN_CATALOG: ETFAsset[] = [
     primaryDex: 'Whirlpool',
     change24h: '+5.1% APY',
     underlyingPrice: '$1.05',
+    pythFeedId: '0x367f08bfd7bb957b98d363d66663ce951e7a5c8163f538334466b0adad0263f3',
   },
   {
     ticker: 'USO',
@@ -306,6 +334,7 @@ export const TOKEN_CATALOG: ETFAsset[] = [
     primaryDex: 'Raydium',
     change24h: '+1.4%',
     underlyingPrice: '$78.10',
+    pythFeedId: '0x0eb3a77884848d6139151e28fa2ee950668b57732a3fc79287c89f5c40131498',
   },
 
   // Web3 Equities & Infrastructure
@@ -320,6 +349,20 @@ export const TOKEN_CATALOG: ETFAsset[] = [
     primaryDex: 'Raydium',
     change24h: '+6.8%',
     underlyingPrice: '$218.40',
+    pythFeedId: '0x738d9ad7bc149306b9eaee6cf8a23072237eb5f013d7e5e33d45cf59b2075bf9',
+  },
+  {
+    ticker: 'MSTR',
+    name: 'MicroStrategy (Backpack / Sunrise)',
+    weightPercent: 0,
+    mint: process.env.MINT_MSTR || '7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU',
+    decimals: 6,
+    color: '#D97706',
+    category: 'Web3 Equities',
+    primaryDex: 'Whirlpool',
+    change24h: '+8.4%',
+    underlyingPrice: '$134.50',
+    pythFeedId: '0xeb88820c6c21e5e0640df21d1aa56ee892d47f9a8a3064ec80c5bd4a22ad39a2',
   },
   {
     ticker: 'SOL',
@@ -332,6 +375,7 @@ export const TOKEN_CATALOG: ETFAsset[] = [
     primaryDex: 'Meteora',
     change24h: '+4.5%',
     underlyingPrice: '$142.30',
+    pythFeedId: '0xef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc0f4cfac8c280b56d',
   },
   {
     ticker: 'JUP',
@@ -344,6 +388,7 @@ export const TOKEN_CATALOG: ETFAsset[] = [
     primaryDex: 'Whirlpool',
     change24h: '+5.2%',
     underlyingPrice: '$0.84',
+    pythFeedId: '0x0a0409d6042f4493a388f8d6840742111fe1e360f04c6ebcf1cc0184b2354c41',
   },
 ];
 
@@ -443,6 +488,21 @@ export const CURATED_ETFS: Record<string, ETFDefinition> = {
     targetAssets: [
       { ticker: 'SOL', name: 'Wrapped Solana', weightPercent: 50, mint: STOCK_MINTS.SOL, decimals: 9, color: '#9945FF', category: 'Web3 Equities' },
       { ticker: 'JUP', name: 'Jupiter DEX', weightPercent: 50, mint: STOCK_MINTS.JUP, decimals: 6, color: '#00F0FF', category: 'Web3 Equities' },
+    ],
+  },
+  'backpack-titans': {
+    id: 'backpack-titans',
+    name: 'Backpack 24/7 Equity Titans',
+    symbol: 'PETF-BPK',
+    tagline: '1:1 Regulated Custody Tokenized Stocks',
+    description: 'Canonical tokenized equities: 50% NVIDIA (NVDA) and 50% MicroStrategy (MSTR) backed 1:1 by real shares in custody.',
+    iconPath: '/etfs/mag-titans.svg',
+    category: 'Mega-Cap Tech',
+    colorGradient: { from: '#E11D48', to: '#6366F1' },
+    metrics: { aumSimulated: '$4.2M', benchmarkYield: '+42.3% YTD', volatility: 'Moderate' },
+    targetAssets: [
+      { ticker: 'NVDA', name: 'NVIDIA Corporation', weightPercent: 50, mint: STOCK_MINTS.NVDA, decimals: 6, color: '#10B981', category: 'Semiconductors & AI' },
+      { ticker: 'MSTR', name: 'MicroStrategy Inc.', weightPercent: 50, mint: STOCK_MINTS.MSTR, decimals: 6, color: '#D97706', category: 'Web3 Equities' },
     ],
   },
 };

@@ -7,6 +7,8 @@ import {
   JUPITER_API_URL,
   MAX_BASKET_ASSETS,
   COMPACT_ROUTING_DEXES,
+  DEFAULT_PLATFORM_FEE_BPS,
+  PROTOCOL_TREASURY_PUBKEY,
 } from './constants';
 import {
   getSolanaConnection,
@@ -203,12 +205,17 @@ export async function getJupiterQuote(params: {
   maxAccounts?: number;
   onlyDirectRoutes?: boolean;
   dexes?: string;
+  platformFeeBps?: number;
 }): Promise<JupiterQuoteResponse> {
-  const { inputMint, outputMint, amountAtomic, slippageBps = DEFAULT_SLIPPAGE_BPS, ticker, maxAccounts, onlyDirectRoutes, dexes } = params;
+  const { inputMint, outputMint, amountAtomic, slippageBps = DEFAULT_SLIPPAGE_BPS, ticker, maxAccounts, onlyDirectRoutes, dexes, platformFeeBps } = params;
 
   let path = `/quote?inputMint=${encodeURIComponent(inputMint)}&outputMint=${encodeURIComponent(
     outputMint
   )}&amount=${amountAtomic}&slippageBps=${slippageBps}&asLegacyTransaction=false`;
+
+  if (platformFeeBps && platformFeeBps > 0) {
+    path += `&platformFeeBps=${platformFeeBps}`;
+  }
 
   if (maxAccounts && maxAccounts > 0) {
     path += `&maxAccounts=${maxAccounts}`;
@@ -265,8 +272,21 @@ export async function getJupiterQuote(params: {
 export async function getJupiterSwapInstructions(params: {
   quoteResponse: JupiterQuoteResponse;
   userPublicKey: string;
+  feeAccount?: string;
 }): Promise<JupiterSwapInstructionsResponse> {
-  const { quoteResponse, userPublicKey } = params;
+  const { quoteResponse, userPublicKey, feeAccount } = params;
+
+  const postBody: Record<string, unknown> = {
+    quoteResponse,
+    userPublicKey,
+    wrapAndUnwrapSol: false,
+    useSharedAccounts: true,
+    asLegacyTransaction: false,
+  };
+
+  if (feeAccount) {
+    postBody.feeAccount = feeAccount;
+  }
 
   let res: Response;
   try {
@@ -275,13 +295,7 @@ export async function getJupiterSwapInstructions(params: {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        quoteResponse,
-        userPublicKey,
-        wrapAndUnwrapSol: false,
-        useSharedAccounts: true,
-        asLegacyTransaction: false,
-      }),
+      body: JSON.stringify(postBody),
     });
   } catch (err: unknown) {
     const error = err as Error;
@@ -312,6 +326,9 @@ export interface BuildBasketTxParams {
   usdcAmount: number;
   assets: BasketAsset[];
   isSimulation?: boolean;
+  platformFeeBps?: number;
+  feeAccount?: string;
+  creatorPublicKey?: string;
 }
 
 export interface BuildBasketTxResult {
@@ -335,7 +352,17 @@ export interface BuildBasketTxResult {
 export async function buildBasketTransaction(
   params: BuildBasketTxParams
 ): Promise<BuildBasketTxResult> {
-  const { userPublicKey: userPubkeyStr, usdcAmount, assets, isSimulation = false } = params;
+  const {
+    userPublicKey: userPubkeyStr,
+    usdcAmount,
+    assets,
+    isSimulation = false,
+    platformFeeBps = DEFAULT_PLATFORM_FEE_BPS,
+    feeAccount,
+  } = params;
+
+  const effectivePlatformFeeBps = platformFeeBps > 0 ? platformFeeBps : undefined;
+  const resolvedFeeAccount = effectivePlatformFeeBps ? (feeAccount || PROTOCOL_TREASURY_PUBKEY) : undefined;
 
   let payerKey: PublicKey;
   try {
@@ -384,6 +411,7 @@ export async function buildBasketTransaction(
               ticker: item.asset.ticker,
               onlyDirectRoutes: true,
               dexes: COMPACT_ROUTING_DEXES,
+              platformFeeBps: effectivePlatformFeeBps,
             });
           } catch {
             try {
@@ -394,6 +422,7 @@ export async function buildBasketTransaction(
                 slippageBps: DEFAULT_SLIPPAGE_BPS,
                 ticker: item.asset.ticker,
                 onlyDirectRoutes: true,
+                platformFeeBps: effectivePlatformFeeBps,
               });
             } catch {
               quote = await getJupiterQuote({
@@ -403,6 +432,7 @@ export async function buildBasketTransaction(
                 slippageBps: DEFAULT_SLIPPAGE_BPS,
                 ticker: item.asset.ticker,
                 dexes: COMPACT_ROUTING_DEXES,
+                platformFeeBps: effectivePlatformFeeBps,
               });
             }
           }
@@ -416,6 +446,7 @@ export async function buildBasketTransaction(
               ticker: item.asset.ticker,
               onlyDirectRoutes: true,
               dexes: COMPACT_ROUTING_DEXES,
+              platformFeeBps: effectivePlatformFeeBps,
             });
           } catch {
             quote = await getJupiterQuote({
@@ -425,6 +456,7 @@ export async function buildBasketTransaction(
               slippageBps: DEFAULT_SLIPPAGE_BPS,
               ticker: item.asset.ticker,
               dexes: COMPACT_ROUTING_DEXES,
+              platformFeeBps: effectivePlatformFeeBps,
             });
           }
         }
@@ -435,12 +467,14 @@ export async function buildBasketTransaction(
           amountAtomic: item.subAmountAtomic,
           slippageBps: DEFAULT_SLIPPAGE_BPS,
           ticker: item.asset.ticker,
+          platformFeeBps: effectivePlatformFeeBps,
         });
       }
 
       const swapIxs = await getJupiterSwapInstructions({
         quoteResponse: quote,
         userPublicKey: payerKey.toBase58(),
+        feeAccount: resolvedFeeAccount,
       });
 
       // Append setup instructions (if any)

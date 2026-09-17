@@ -10,6 +10,8 @@
     "audit": "node scripts/audit.mjs",
     "test:dust": "node scripts/test-dust.mjs",
     "test:guardrails": "npx tsx scripts/test-guardrails.mjs && npx tsx scripts/test-api-route.mjs",
+    "test:pyth": "npx tsx scripts/test-pyth.mjs",
+    "test": "npx tsx scripts/test-guardrails.mjs && npx tsx scripts/test-api-route.mjs && npx tsx scripts/test-pyth.mjs",
     "postinstall": "node scripts/patch-next.mjs"
   },
   "dependencies": {

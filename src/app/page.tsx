@@ -28,6 +28,8 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { CURATED_ETFS, ETFDefinition, TOKEN_CATALOG } from '@/lib/constants';
+import { ComparisonMatrix } from '@/components/ComparisonMatrix';
+import { FAQSection } from '@/components/FAQSection';
 
 export default function HomePage() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -46,6 +48,7 @@ export default function HomePage() {
     'nasdaq-growth': 10,
     'hard-assets': 10,
     'crypto-frontier': 10,
+    'backpack-titans': 10,
   });
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [origin, setOrigin] = useState<string>('https://pocketetf.solana.app');
@@ -305,9 +308,12 @@ export default function HomePage() {
 
       {/* Hero Section */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-16 text-center relative">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#146EF5]/10 border border-[#146EF5]/30 text-xs font-mono text-[#00D69F] mb-8 backdrop-blur-md">
-          <Sparkles className="w-3.5 h-3.5 text-[#00D69F] animate-spin" style={{ animationDuration: '8s' }} />
-          <span>The 1-Click Stock &amp; Index ETF Protocol for Solana Blinks</span>
+        <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-[#146EF5]/10 border border-[#146EF5]/30 text-xs font-mono text-[#00D69F] mb-8 backdrop-blur-md shadow-lg shadow-blue-500/10">
+          {/* Official Solana Ecosystem Logo */}
+          <img src="/solanaLogo.png" alt="Solana" className="w-4 h-3.5 object-contain" />
+          <span className="font-semibold text-white">Built for Solana Actions &amp; Blinks</span>
+          <span className="text-slate-500">•</span>
+          <span className="text-[#00D69F]">1-Click Stock ETFs</span>
           <span className="w-1.5 h-1.5 rounded-full bg-[#00D69F] animate-ping" />
         </div>
 
@@ -349,11 +355,14 @@ export default function HomePage() {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#00D69F] opacity-75" />
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-[#00D69F]" />
               </span>
-              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#00D69F]">
-                Pyth &amp; Jupiter Real-Time Oracle Feeds
+              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#00D69F] flex items-center gap-1.5">
+                <span>Powered by Pyth Network Hermes v2 &amp; Jupiter</span>
+              </span>
+              <span className="px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/30 text-[9px] font-mono text-amber-300">
+                ±σ Confidence Bands
               </span>
             </div>
-            <span className="text-[9px] font-mono text-slate-400">Auto-refresh 15s</span>
+            <span className="text-[9px] font-mono text-slate-400">Pull Oracle • 32 Publishers</span>
           </div>
 
           <div className="flex items-center justify-around gap-6 flex-wrap text-xs font-mono">
@@ -876,6 +885,12 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* PocketETF vs The World Comparison Matrix */}
+      <ComparisonMatrix />
+
+      {/* Protocol FAQ & Knowledge Base */}
+      <FAQSection />
 
       {/* Solana Action JSON Inspector Modal */}
       {activeJsonETF && (

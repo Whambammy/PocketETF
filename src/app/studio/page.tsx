@@ -587,6 +587,32 @@ export default function StudioPage() {
               </div>
             )}
           </div>
+
+          {/* Creator Monetization & Protocol Revenue */}
+          <div className="fintech-card p-5 rounded-2xl border border-[#00D69F]/20 bg-gradient-to-b from-[#00D69F]/5 to-transparent">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-mono font-bold text-white flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-[#00D69F]" />
+                <span>Creator Affiliate Revenue Architecture</span>
+              </span>
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#00D69F]/15 text-[#00D69F] font-mono border border-[#00D69F]/30 font-semibold">
+                0% Fee Alpha
+              </span>
+            </div>
+            <p className="text-xs text-slate-300 leading-relaxed mb-3">
+              PocketETF features an automated <strong>50/50 Creator Revenue Split</strong> built directly into the Jupiter DEX swap routing. When fees are activated, half of all platform protocol basis points are paid atomically to your creator wallet address.
+            </p>
+            <div className="grid grid-cols-2 gap-2 text-[11px] font-mono">
+              <div className="p-2.5 rounded-lg bg-black/40 border border-white/5">
+                <span className="text-slate-400 block text-[10px]">CURRENT ALPHA FEE</span>
+                <span className="text-white font-bold text-sm">0.00% (0 bps)</span>
+              </div>
+              <div className="p-2.5 rounded-lg bg-black/40 border border-white/5">
+                <span className="text-slate-400 block text-[10px]">CREATOR REVENUE SPLIT</span>
+                <span className="text-[#00D69F] font-bold text-sm">50% of Platform Fee</span>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Right Form: Real-Time Donut Chart & Live Blink Preview */}

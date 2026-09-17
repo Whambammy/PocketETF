@@ -55,12 +55,20 @@ export default function RootLayout({
             </Link>
 
             {/* Nav Links */}
-            <nav className="flex items-center gap-2 sm:gap-6">
+            <nav className="flex items-center gap-2 sm:gap-5">
               <Link
                 href="/"
-                className="text-xs sm:text-sm font-semibold text-slate-300 hover:text-white transition-colors px-3 py-1.5 rounded-lg hover:bg-white/5"
+                className="text-xs sm:text-sm font-semibold text-slate-300 hover:text-white transition-colors px-2.5 py-1.5 rounded-lg hover:bg-white/5"
               >
                 Explore ETFs
+              </Link>
+
+              <Link
+                href="/compare"
+                className="text-xs sm:text-sm font-semibold text-slate-300 hover:text-[#00D69F] transition-colors px-2.5 py-1.5 rounded-lg hover:bg-white/5 flex items-center gap-1.5"
+              >
+                <span>Compare</span>
+                <span className="text-[10px] px-1.5 py-0.2 rounded bg-[#00D69F]/15 text-[#00D69F] font-mono border border-[#00D69F]/30">vs X</span>
               </Link>
 
               <Link
@@ -71,13 +79,19 @@ export default function RootLayout({
                 <span>Creator Studio</span>
               </Link>
 
+              {/* Solana Network Indicator */}
+              <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/40 border border-[#14F195]/25 text-[11px] font-mono text-slate-300">
+                <img src="/solanaLogo.png" alt="Solana" className="w-4 h-4 object-contain" />
+                <span className="text-[#14F195] font-semibold">Mainnet-Beta</span>
+              </div>
+
               <a
                 href="https://dial.to"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hidden md:flex items-center gap-1.5 text-xs font-mono text-slate-400 hover:text-slate-200 transition-colors border border-white/10 px-3 py-1.5 rounded-lg hover:border-blue-500/40"
               >
-                <span>Dialect Inspector</span>
+                <span>Dialect</span>
                 <ExternalLink className="w-3 h-3 text-[#00D69F]" />
               </a>
             </nav>
@@ -104,7 +118,7 @@ export default function RootLayout({
                   <span>•</span>
                   <span>Execution: v0 Versioned Tx</span>
                   <span>•</span>
-                  <span>Routing: Jupiter v6</span>
+                  <span>Oracle: Pyth Hermes v2</span>
                 </div>
               </div>
 
@@ -123,7 +137,7 @@ export default function RootLayout({
                   </li>
                   <li className="flex items-center gap-2">
                     <Activity className="w-3.5 h-3.5 text-purple-400" />
-                    <span>Idempotent ATA Injection</span>
+                    <span>Pyth Hermes Feeds (±σ)</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <Terminal className="w-3.5 h-3.5 text-amber-400" />
@@ -142,8 +156,16 @@ export default function RootLayout({
                     <span className="font-mono text-[#00D69F] font-semibold">Enabled (*)</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Address Lookup Tables:</span>
-                    <span className="font-mono text-purple-400 font-semibold">Active</span>
+                    <span>Protocol Comparison:</span>
+                    <Link href="/compare" className="font-mono text-[#00D69F] hover:underline">
+                      PocketETF vs X
+                    </Link>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Oracle Feeds:</span>
+                    <Link href="/api/prices" className="font-mono text-purple-400 hover:underline">
+                      /api/prices (Pyth)
+                    </Link>
                   </div>
                   <div className="flex justify-between">
                     <span>Action Rules:</span>
@@ -158,9 +180,13 @@ export default function RootLayout({
             <div className="border-t border-white/[0.06] pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500 font-mono">
               <p>© 2026 PocketETF Protocol. Open-source decentralized finance infrastructure.</p>
               <div className="flex items-center gap-4">
+                <span className="flex items-center gap-2 text-slate-400 bg-white/5 px-3 py-1 rounded-full border border-white/10">
+                  <img src="/solanaLogo.png" alt="Solana" className="w-3.5 h-3.5 object-contain" />
+                  <span>Built on Solana</span>
+                </span>
                 <span className="flex items-center gap-1.5 text-slate-400">
                   <span className="w-2 h-2 rounded-full bg-[#00D69F] animate-pulse" />
-                  Solana Mainnet-Beta Ready
+                  Mainnet-Beta Ready
                 </span>
               </div>
             </div>
