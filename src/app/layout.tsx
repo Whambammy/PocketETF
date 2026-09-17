@@ -80,7 +80,7 @@ export default function RootLayout({
               </Link>
 
               {/* Solana Ecosystem Badge */}
-              <div className="hidden sm:flex items-center gap-2.5 px-3.5 py-1.5 rounded-xl bg-black/50 border border-[#14F195]/30 shadow-md shadow-[#14F195]/5">
+              <div className="hidden sm:flex items-center gap-2 px-2.5 py-1 rounded-lg bg-black/40 border border-[#14F195]/25 shadow-sm">
                 <a
                   href="https://solana.com"
                   target="_blank"
@@ -91,11 +91,11 @@ export default function RootLayout({
                   <img
                     src="/solanaLogo.png"
                     alt="Solana"
-                    className="h-5 sm:h-6 w-auto object-contain"
+                    className="h-2.5 sm:h-3 w-auto object-contain"
                   />
                 </a>
-                <span className="h-3.5 w-[1px] bg-white/20" />
-                <span className="text-[#14F195] text-[11px] font-mono font-semibold flex items-center gap-1.5">
+                <span className="h-3 w-[1px] bg-white/20" />
+                <span className="text-[#14F195] text-[10px] font-mono font-semibold flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-[#14F195] animate-pulse" />
                   Mainnet
                 </span>
@@ -200,14 +200,14 @@ export default function RootLayout({
                   href="https://solana.com"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-3 px-4 py-2 rounded-xl bg-black/60 border border-[#14F195]/30 hover:border-[#14F195]/60 transition-all shadow-md shadow-[#14F195]/5 group"
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/40 border border-[#14F195]/25 hover:border-[#14F195]/50 transition-all shadow-sm group"
                   title="Built natively on Solana"
                 >
-                  <span className="text-[11px] text-slate-400 font-mono">Built natively on</span>
+                  <span className="text-[10px] text-slate-400 font-mono">Built natively on</span>
                   <img
                     src="/solanaLogo.png"
                     alt="Solana"
-                    className="h-6 sm:h-7 w-auto object-contain transition-transform group-hover:scale-105"
+                    className="h-3 sm:h-3.5 w-auto object-contain transition-transform group-hover:scale-105"
                   />
                 </a>
                 <span className="flex items-center gap-2 text-slate-400 text-xs">
