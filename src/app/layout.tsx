@@ -79,10 +79,26 @@ export default function RootLayout({
                 <span>Creator Studio</span>
               </Link>
 
-              {/* Solana Network Indicator */}
-              <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/40 border border-[#14F195]/25 text-[11px] font-mono text-slate-300">
-                <img src="/solanaLogo.png" alt="Solana" className="w-4 h-4 object-contain" />
-                <span className="text-[#14F195] font-semibold">Mainnet-Beta</span>
+              {/* Solana Ecosystem Badge */}
+              <div className="hidden sm:flex items-center gap-2.5 px-3.5 py-1.5 rounded-xl bg-black/50 border border-[#14F195]/30 shadow-md shadow-[#14F195]/5">
+                <a
+                  href="https://solana.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center hover:opacity-85 transition-opacity"
+                  title="Solana Network"
+                >
+                  <img
+                    src="/solanaLogo.png"
+                    alt="Solana"
+                    className="h-5 sm:h-6 w-auto object-contain"
+                  />
+                </a>
+                <span className="h-3.5 w-[1px] bg-white/20" />
+                <span className="text-[#14F195] text-[11px] font-mono font-semibold flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#14F195] animate-pulse" />
+                  Mainnet
+                </span>
               </div>
 
               <a
@@ -177,16 +193,26 @@ export default function RootLayout({
               </div>
             </div>
 
-            <div className="border-t border-white/[0.06] pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500 font-mono">
+            <div className="border-t border-white/[0.06] pt-8 flex flex-col sm:flex-row items-center justify-between gap-6 text-xs text-slate-500 font-mono">
               <p>© 2026 PocketETF Protocol. Open-source decentralized finance infrastructure.</p>
-              <div className="flex items-center gap-4">
-                <span className="flex items-center gap-2 text-slate-400 bg-white/5 px-3 py-1 rounded-full border border-white/10">
-                  <img src="/solanaLogo.png" alt="Solana" className="w-3.5 h-3.5 object-contain" />
-                  <span>Built on Solana</span>
-                </span>
-                <span className="flex items-center gap-1.5 text-slate-400">
+              <div className="flex flex-wrap items-center gap-5">
+                <a
+                  href="https://solana.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 px-4 py-2 rounded-xl bg-black/60 border border-[#14F195]/30 hover:border-[#14F195]/60 transition-all shadow-md shadow-[#14F195]/5 group"
+                  title="Built natively on Solana"
+                >
+                  <span className="text-[11px] text-slate-400 font-mono">Built natively on</span>
+                  <img
+                    src="/solanaLogo.png"
+                    alt="Solana"
+                    className="h-6 sm:h-7 w-auto object-contain transition-transform group-hover:scale-105"
+                  />
+                </a>
+                <span className="flex items-center gap-2 text-slate-400 text-xs">
                   <span className="w-2 h-2 rounded-full bg-[#00D69F] animate-pulse" />
-                  Mainnet-Beta Ready
+                  Solana Mainnet-Beta
                 </span>
               </div>
             </div>

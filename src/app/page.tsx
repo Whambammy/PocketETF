@@ -309,8 +309,7 @@ export default function HomePage() {
       {/* Hero Section */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-16 text-center relative">
         <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-[#146EF5]/10 border border-[#146EF5]/30 text-xs font-mono text-[#00D69F] mb-8 backdrop-blur-md shadow-lg shadow-blue-500/10">
-          {/* Official Solana Ecosystem Logo */}
-          <img src="/solanaLogo.png" alt="Solana" className="w-4 h-3.5 object-contain" />
+          <Layers className="w-4 h-4 text-[#00D69F]" />
           <span className="font-semibold text-white">Built for Solana Actions &amp; Blinks</span>
           <span className="text-slate-500">•</span>
           <span className="text-[#00D69F]">1-Click Stock ETFs</span>
