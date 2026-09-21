@@ -2,7 +2,8 @@ import type { Metadata } from 'next';
 import './globals.css';
 import Link from 'next/link';
 import { PocketLogo } from '@/components/PocketLogo';
-import { Sparkles, ExternalLink, ShieldCheck, Zap, Terminal, Activity } from 'lucide-react';
+import { HeaderNav } from '@/components/HeaderNav';
+import { ShieldCheck, Zap, Terminal, Activity } from 'lucide-react';
 
 export const metadata: Metadata = {
   title: 'PocketETF | 1-Click Tokenized Stock ETFs for Solana Blinks',
@@ -46,73 +47,8 @@ export default function RootLayout({
         {/* Top Brand Hairline Indicator */}
         <div className="h-[3px] w-full bg-gradient-to-r from-[#146EF5] via-[#00D69F] to-[#14F195]" />
 
-        {/* Global Navigation Header */}
-        <header className="sticky top-0 z-50 backdrop-blur-xl bg-[#0A1128]/90 border-b border-[#146EF5]/20">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-[72px] sm:h-20 flex items-center justify-between">
-            {/* Logo */}
-            <Link href="/" className="hover:opacity-95 transition-opacity flex items-center py-1">
-              <PocketLogo imageClassName="h-[56px] sm:h-[68px]" />
-            </Link>
-
-            {/* Nav Links */}
-            <nav className="flex items-center gap-2 sm:gap-5">
-              <Link
-                href="/"
-                className="text-xs sm:text-sm font-semibold text-slate-300 hover:text-white transition-colors px-2.5 py-1.5 rounded-lg hover:bg-white/5"
-              >
-                Explore ETFs
-              </Link>
-
-              <Link
-                href="/compare"
-                className="text-xs sm:text-sm font-semibold text-slate-300 hover:text-[#00D69F] transition-colors px-2.5 py-1.5 rounded-lg hover:bg-white/5 flex items-center gap-1.5"
-              >
-                <span>Compare</span>
-                <span className="text-[10px] px-1.5 py-0.2 rounded bg-[#00D69F]/15 text-[#00D69F] font-mono border border-[#00D69F]/30">vs X</span>
-              </Link>
-
-              <Link
-                href="/studio"
-                className="flex items-center gap-1.5 text-xs sm:text-sm font-semibold px-3.5 py-2 rounded-xl bg-gradient-to-r from-[#146EF5] to-[#0D63F8] hover:from-[#257BF6] hover:to-[#146EF5] text-white shadow-lg shadow-blue-500/25 transition-all duration-200 hover:scale-105 active:scale-95 border border-blue-400/30"
-              >
-                <Sparkles className="w-3.5 h-3.5 text-[#00D69F]" />
-                <span>Creator Studio</span>
-              </Link>
-
-              {/* Solana Ecosystem Badge */}
-              <div className="hidden sm:flex items-center gap-2 px-2.5 py-1 rounded-lg bg-black/40 border border-[#14F195]/25 shadow-sm">
-                <a
-                  href="https://solana.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center hover:opacity-85 transition-opacity"
-                  title="Solana Network"
-                >
-                  <img
-                    src="/solanaLogo.png"
-                    alt="Solana"
-                    className="h-2.5 sm:h-3 w-auto object-contain"
-                  />
-                </a>
-                <span className="h-3 w-[1px] bg-white/20" />
-                <span className="text-[#14F195] text-[10px] font-mono font-semibold flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#14F195] animate-pulse" />
-                  Mainnet
-                </span>
-              </div>
-
-              <a
-                href="https://dial.to"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hidden md:flex items-center gap-1.5 text-xs font-mono text-slate-400 hover:text-slate-200 transition-colors border border-white/10 px-3 py-1.5 rounded-lg hover:border-blue-500/40"
-              >
-                <span>Dialect</span>
-                <ExternalLink className="w-3 h-3 text-[#00D69F]" />
-              </a>
-            </nav>
-          </div>
-        </header>
+        {/* Global Responsive Navigation Header */}
+        <HeaderNav />
 
         {/* Main Application Content */}
         <main className="flex-grow">{children}</main>

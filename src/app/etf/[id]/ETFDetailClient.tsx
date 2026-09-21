@@ -184,26 +184,26 @@ export default function ETFDetailClient({ etf }: Props) {
 
   return (
     <div className="min-h-screen bg-[#0A1128] text-white">
-      {/* Header */}
-      <header className="sticky top-0 z-40 bg-[#0A1128]/95 backdrop-blur-md border-b border-white/10">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      {/* Breadcrumb & Wallet Status Sub-Bar */}
+      <div className="bg-[#0A1128]/80 border-b border-white/[0.06]">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-3">
           <Link
             href="/"
-            className="inline-flex items-center gap-2 text-xs font-semibold text-slate-300 hover:text-white transition-colors"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-300 hover:text-white transition-colors"
           >
             <ArrowLeft className="w-4 h-4 text-[#146EF5]" />
             <span>Back to All ETFs</span>
           </Link>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             {walletAddress ? (
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/[0.05] border border-white/10 text-xs font-mono">
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.05] border border-white/10 text-xs font-mono">
                 <span className="w-2 h-2 rounded-full bg-[#00D69F] animate-pulse" />
-                <span className="text-slate-300">
+                <span className="text-slate-300 text-[11px]">
                   {walletAddress.slice(0, 4)}...{walletAddress.slice(-4)}
                 </span>
                 {walletBalance && (
-                  <span className="text-[#00D69F] font-bold ml-1">
+                  <span className="text-[#00D69F] font-bold text-[11px] ml-1">
                     ({walletBalance.formattedUsdc})
                   </span>
                 )}
@@ -212,14 +212,14 @@ export default function ETFDetailClient({ etf }: Props) {
               <button
                 type="button"
                 onClick={handleConnectWallet}
-                className="px-4 py-1.5 rounded-xl bg-[#146EF5] hover:bg-[#0D63F8] text-xs font-bold text-white transition-all shadow-md shadow-blue-500/20"
+                className="px-3 py-1.5 rounded-xl bg-[#146EF5] hover:bg-[#0D63F8] text-xs font-bold text-white transition-all shadow-md shadow-blue-500/20"
               >
                 Connect Wallet
               </button>
             )}
           </div>
         </div>
-      </header>
+      </div>
 
       {/* Main Content */}
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">

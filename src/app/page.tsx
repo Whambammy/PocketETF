@@ -316,21 +316,21 @@ export default function HomePage() {
           <span className="w-1.5 h-1.5 rounded-full bg-[#00D69F] animate-ping" />
         </div>
 
-        <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight max-w-4xl mx-auto leading-[1.08] mb-6 text-white">
+        <h1 className="text-3xl sm:text-5xl lg:text-7xl font-extrabold tracking-tight max-w-4xl mx-auto leading-[1.12] sm:leading-[1.08] mb-6 text-white">
           Institutional <span className="bg-gradient-to-r from-[#00D69F] via-[#146EF5] to-[#38BDF8] bg-clip-text text-transparent">Stock ETFs</span>
-          <br />Native to Solana Blinks.
+          <br className="hidden sm:inline" /> Native to Solana Blinks.
         </h1>
 
-        <p className="text-base sm:text-lg text-slate-300 max-w-2xl mx-auto leading-relaxed mb-10">
+        <p className="text-sm sm:text-lg text-slate-300 max-w-2xl mx-auto leading-relaxed mb-8 sm:mb-10 px-2 sm:px-0">
           Execute diversified baskets of tokenized US equities, S&amp;P 500 benchmarks, and gold proxies
           atomically in a single Solana transaction. Shareable directly on Twitter/X, Discord, and Telegram.
         </p>
 
         {/* Action CTAs */}
-        <div className="flex flex-wrap items-center justify-center gap-4 mb-16">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-12 sm:mb-16 w-full max-w-md sm:max-w-none mx-auto">
           <a
             href="#etfs"
-            className="px-6 py-3.5 rounded-xl bg-gradient-to-r from-[#146EF5] to-[#0D63F8] text-white font-bold text-sm shadow-xl shadow-blue-500/25 hover:from-[#257BF6] hover:to-[#146EF5] hover:scale-105 active:scale-95 transition-all duration-200 flex items-center gap-2 border border-blue-400/30"
+            className="w-full sm:w-auto justify-center px-6 py-3.5 rounded-xl bg-gradient-to-r from-[#146EF5] to-[#0D63F8] text-white font-bold text-sm shadow-xl shadow-blue-500/25 hover:from-[#257BF6] hover:to-[#146EF5] hover:scale-105 active:scale-95 transition-all duration-200 flex items-center gap-2 border border-blue-400/30"
           >
             <Layers className="w-4 h-4 text-[#00D69F]" />
             <span>Explore Curated ETFs</span>
@@ -338,7 +338,7 @@ export default function HomePage() {
 
           <Link
             href="/studio"
-            className="px-6 py-3.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.08] text-white font-semibold text-sm border border-[#146EF5]/30 hover:border-[#00D69F]/50 backdrop-blur-sm transition-all duration-200 flex items-center gap-2"
+            className="w-full sm:w-auto justify-center px-6 py-3.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.08] text-white font-semibold text-sm border border-[#146EF5]/30 hover:border-[#00D69F]/50 backdrop-blur-sm transition-all duration-200 flex items-center gap-2"
           >
             <Sliders className="w-4 h-4 text-[#00D69F]" />
             <span>Open Creator Studio</span>
@@ -347,9 +347,9 @@ export default function HomePage() {
         </div>
 
         {/* Live Market Ticker Strip with Real-Time Feed Indicator */}
-        <div className="max-w-5xl mx-auto mb-14 overflow-hidden border-y border-white/[0.06] py-3 bg-black/30 backdrop-blur-md">
-          <div className="flex items-center justify-between px-4 mb-2">
-            <div className="flex items-center gap-2">
+        <div className="max-w-5xl mx-auto mb-10 sm:mb-14 overflow-hidden border-y border-white/[0.06] py-3 bg-black/30 backdrop-blur-md rounded-xl">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between px-3 sm:px-4 mb-2 gap-1.5">
+            <div className="flex items-center gap-2 flex-wrap">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#00D69F] opacity-75" />
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-[#00D69F]" />
@@ -364,14 +364,15 @@ export default function HomePage() {
             <span className="text-[9px] font-mono text-slate-400">Pull Oracle • 32 Publishers</span>
           </div>
 
-          <div className="flex items-center justify-around gap-6 flex-wrap text-xs font-mono">
-            {TOKEN_CATALOG.slice(0, 6).map((token) => {
+          {/* Horizontal scrollable single-line ticker tape on mobile */}
+          <div className="flex items-center gap-6 overflow-x-auto no-scrollbar py-1 px-3 text-xs font-mono whitespace-nowrap">
+            {TOKEN_CATALOG.slice(0, 8).map((token) => {
               const live = livePrices[token.ticker];
               const priceDisplay = live?.formatted || token.underlyingPrice;
               const changeDisplay = live?.change24h || token.change24h;
 
               return (
-                <div key={token.ticker} className="flex items-center gap-2">
+                <div key={token.ticker} className="flex items-center gap-2 shrink-0 bg-white/[0.02] px-2.5 py-1 rounded-lg border border-white/[0.04]">
                   <span className="font-bold text-slate-200">{token.ticker}</span>
                   <span className="text-white font-semibold transition-all duration-300">
                     {priceDisplay}
@@ -390,7 +391,7 @@ export default function HomePage() {
         </div>
 
         {/* Key Protocol Safeguards Strip */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 max-w-4xl mx-auto text-left">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 max-w-4xl mx-auto text-left">
           <div className="fintech-card p-4 rounded-xl">
             <div className="flex items-center gap-2 text-emerald-400 text-xs font-mono font-bold mb-1">
               <ShieldCheck className="w-4 h-4" />
@@ -434,7 +435,7 @@ export default function HomePage() {
       </section>
 
       {/* Curated PocketETFs Section */}
-      <section id="etfs" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 scroll-mt-20">
+      <section id="etfs" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 scroll-mt-20">
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
           <div>
             <div className="flex items-center gap-2 mb-2">
@@ -446,7 +447,7 @@ export default function HomePage() {
                 MAINNET LIVE
               </span>
             </div>
-            <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight">
+            <h2 className="text-2xl sm:text-4xl font-black text-white tracking-tight">
               Curated PocketETFs
             </h2>
             <p className="text-xs sm:text-sm text-slate-400 mt-2 max-w-xl leading-relaxed">
@@ -454,46 +455,48 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-            {/* Wallet Connect Button */}
-            <button
-              type="button"
-              onClick={handleConnectWallet}
-              disabled={walletConnecting}
-              className={`px-3.5 py-2 rounded-xl text-xs font-mono font-bold flex items-center gap-2 transition-all ${
-                walletAddress
-                  ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20'
-                  : 'bg-gradient-to-r from-[#146EF5] to-[#0D63F8] text-white hover:scale-105 shadow-md shadow-blue-500/25 border border-blue-400/30'
-              }`}
-            >
-              <Wallet className="w-3.5 h-3.5 text-[#00D69F]" />
-              <span>
-                {walletAddress
-                  ? `${walletAddress.slice(0, 4)}...${walletAddress.slice(-4)}${walletBalance ? ` • ${walletBalance.formattedUsdc}` : ''}`
-                  : walletConnecting
-                  ? 'Connecting...'
-                  : 'Connect Wallet'}
-              </span>
-            </button>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              {/* Wallet Connect Button */}
+              <button
+                type="button"
+                onClick={handleConnectWallet}
+                disabled={walletConnecting}
+                className={`flex-1 sm:flex-initial px-3.5 py-2 rounded-xl text-xs font-mono font-bold flex items-center justify-center gap-2 transition-all ${
+                  walletAddress
+                    ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20'
+                    : 'bg-gradient-to-r from-[#146EF5] to-[#0D63F8] text-white hover:scale-105 shadow-md shadow-blue-500/25 border border-blue-400/30'
+                }`}
+              >
+                <Wallet className="w-3.5 h-3.5 text-[#00D69F]" />
+                <span>
+                  {walletAddress
+                    ? `${walletAddress.slice(0, 4)}...${walletAddress.slice(-4)}${walletBalance ? ` • ${walletBalance.formattedUsdc}` : ''}`
+                    : walletConnecting
+                    ? 'Connecting...'
+                    : 'Connect Wallet'}
+                </span>
+              </button>
 
-            {/* How to Test Blinks Guide Button */}
-            <button
-              type="button"
-              onClick={() => setShowBlinkGuide(true)}
-              className="px-3 py-2 rounded-xl text-xs font-mono font-semibold text-slate-300 hover:text-white bg-white/[0.05] hover:bg-white/[0.09] border border-white/10 flex items-center gap-1.5 transition-all"
-            >
-              <HelpCircle className="w-3.5 h-3.5 text-[#38BDF8]" />
-              <span>How to Test Blinks</span>
-            </button>
+              {/* How to Test Blinks Guide Button */}
+              <button
+                type="button"
+                onClick={() => setShowBlinkGuide(true)}
+                className="flex-1 sm:flex-initial px-3 py-2 rounded-xl text-xs font-mono font-semibold text-slate-300 hover:text-white bg-white/[0.05] hover:bg-white/[0.09] border border-white/10 flex items-center justify-center gap-1.5 transition-all"
+              >
+                <HelpCircle className="w-3.5 h-3.5 text-[#38BDF8]" />
+                <span>Test Guide</span>
+              </button>
+            </div>
 
-            {/* Category Filter Pills */}
-            <div className="flex flex-wrap gap-1.5 p-1 rounded-xl bg-black/40 border border-white/[0.06]">
+            {/* Category Filter Pills (horizontal scrollable on mobile) */}
+            <div className="flex items-center gap-1.5 p-1 rounded-xl bg-black/40 border border-white/[0.06] overflow-x-auto no-scrollbar max-w-full">
               {categories.map((cat) => (
                 <button
                   key={cat}
                   type="button"
                   onClick={() => setSelectedCategory(cat)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium shrink-0 whitespace-nowrap transition-all ${
                     selectedCategory === cat
                       ? 'bg-[#146EF5] text-white font-semibold shadow-md shadow-blue-500/25'
                       : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'

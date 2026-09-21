@@ -456,42 +456,44 @@ export default function StudioPage() {
             )}
 
             {/* Active Stocks List */}
-            <div className="space-y-3.5 mb-6">
+            <div className="space-y-3 mb-6">
               {activeStocks.map((stock) => (
                 <div
                   key={stock.ticker}
-                  className="p-3.5 rounded-xl bg-black/40 border border-white/[0.04] space-y-2"
+                  className="p-3.5 rounded-xl bg-black/40 border border-white/[0.04] space-y-2.5"
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <span
-                        className="w-2.5 h-2.5 rounded-full"
+                        className="w-2.5 h-2.5 rounded-full shrink-0"
                         style={{ backgroundColor: stock.color }}
                       />
                       <span className="font-mono font-bold text-sm text-white">{stock.ticker}</span>
                       <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold bg-white/5 border border-white/10 text-slate-300">
                         {stock.primaryDex || 'Whirlpool'}
                       </span>
-                      <span className="text-xs text-slate-400 truncate max-w-[120px] sm:max-w-[180px]">
+                      <span className="text-xs text-slate-400 truncate max-w-[150px] sm:max-w-[180px]">
                         {stock.name}
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-3 font-mono">
+                    <div className="flex items-center justify-between sm:justify-end gap-3 font-mono pt-1 sm:pt-0 border-t sm:border-t-0 border-white/[0.04]">
                       <span className="text-xs text-slate-400">{stock.underlyingPrice}</span>
-                      <span className="text-sm font-bold text-[#00D69F] w-12 text-right">
-                        {stock.weight}%
-                      </span>
-                      {activeStocks.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveStock(stock.ticker)}
-                          className="text-slate-500 hover:text-red-400 p-1 rounded transition-colors"
-                          title="Remove asset"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      )}
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-[#00D69F] w-12 text-right">
+                          {stock.weight}%
+                        </span>
+                        {activeStocks.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveStock(stock.ticker)}
+                            className="text-slate-500 hover:text-red-400 p-1.5 rounded transition-colors"
+                            title="Remove asset"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
 
