@@ -23,10 +23,10 @@ import {
   BarChart3,
   Search,
   Share2,
-  HelpCircle,
   AlertCircle,
   Smartphone,
   Wallet,
+  BookOpen,
 } from 'lucide-react';
 import { CURATED_ETFS, ETFDefinition, TOKEN_CATALOG } from '@/lib/constants';
 import { ComparisonMatrix } from '@/components/ComparisonMatrix';
@@ -459,39 +459,6 @@ export default function HomePage() {
           </div>
 
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
-            <div className="flex items-center gap-2 w-full sm:w-auto">
-              {/* Wallet Connect Button */}
-              <button
-                type="button"
-                onClick={handleConnectWallet}
-                disabled={walletConnecting}
-                className={`flex-1 sm:flex-initial px-3.5 py-2 rounded-xl text-xs font-mono font-bold flex items-center justify-center gap-2 transition-all ${
-                  walletAddress
-                    ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20'
-                    : 'bg-gradient-to-r from-[#146EF5] to-[#0D63F8] text-white hover:scale-105 shadow-md shadow-blue-500/25 border border-blue-400/30'
-                }`}
-              >
-                <Wallet className="w-3.5 h-3.5 text-[#00D69F]" />
-                <span>
-                  {walletAddress
-                    ? `${walletAddress.slice(0, 4)}...${walletAddress.slice(-4)}${walletBalance ? ` • ${walletBalance.formattedUsdc}` : ''}`
-                    : walletConnecting
-                    ? 'Connecting...'
-                    : 'Connect Wallet'}
-                </span>
-              </button>
-
-              {/* How to Test Blinks Guide Button */}
-              <button
-                type="button"
-                onClick={() => setShowBlinkGuide(true)}
-                className="flex-1 sm:flex-initial px-3 py-2 rounded-xl text-xs font-mono font-semibold text-slate-300 hover:text-white bg-white/[0.05] hover:bg-white/[0.09] border border-white/10 flex items-center justify-center gap-1.5 transition-all"
-              >
-                <HelpCircle className="w-3.5 h-3.5 text-[#38BDF8]" />
-                <span>Test Guide</span>
-              </button>
-            </div>
-
             {/* Category Filter Pills (horizontal scrollable on mobile) */}
             <div className="flex items-center gap-1.5 p-1 rounded-xl bg-black/40 border border-white/[0.06] overflow-x-auto no-scrollbar max-w-full">
               {categories.map((cat) => (
@@ -509,6 +476,17 @@ export default function HomePage() {
                 </button>
               ))}
             </div>
+
+            {/* How It Works Guide Button */}
+            <button
+              type="button"
+              onClick={() => setShowBlinkGuide(true)}
+              className="px-3.5 py-2 rounded-xl text-xs font-mono font-semibold text-slate-200 hover:text-white bg-white/[0.06] hover:bg-white/[0.1] border border-white/10 flex items-center justify-center gap-1.5 transition-all shrink-0 shadow-sm"
+              title="Learn how PocketETF and Solana Blinks work"
+            >
+              <BookOpen className="w-3.5 h-3.5 text-[#00D69F]" />
+              <span>How It Works</span>
+            </button>
           </div>
         </div>
 
@@ -994,18 +972,18 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* Blinks & Dialect Testing Guide Modal */}
+      {/* How It Works Protocol Guide Modal */}
       {showBlinkGuide && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
-          <div className="fintech-card bg-[#0A1128] border border-[#146EF5]/40 rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="fintech-card bg-[#0A1128] border border-[#146EF5]/40 rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150">
             <div className="p-5 border-b border-white/10 flex items-center justify-between bg-black/30">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-lg bg-[#146EF5]/20 border border-[#146EF5]/40 flex items-center justify-center text-[#00D69F]">
-                  <HelpCircle className="w-4 h-4 text-[#00D69F]" />
+                  <BookOpen className="w-4 h-4 text-[#00D69F]" />
                 </div>
                 <div>
-                  <h4 className="text-sm font-bold text-white">How to Test PocketETF Blinks &amp; Social Links</h4>
-                  <p className="text-[11px] text-slate-400 font-mono">Guide to Dialect, Twitter/X, and Live Wallet Swaps</p>
+                  <h4 className="text-sm font-bold text-white">How PocketETF Works</h4>
+                  <p className="text-[11px] text-slate-400 font-mono">1-Click Solana Index Trading &amp; Social Blinks</p>
                 </div>
               </div>
               <button
@@ -1018,32 +996,32 @@ export default function HomePage() {
             </div>
 
             <div className="p-6 overflow-y-auto space-y-6 text-xs text-slate-300">
-              {/* 1. Why JSON in browser */}
+              {/* 1. What is PocketETF & Blinks */}
               <div className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.08] space-y-2">
                 <div className="flex items-center gap-2 text-white font-bold text-sm">
-                  <Code2 className="w-4 h-4 text-[#38BDF8]" />
-                  <span>1. Why does visiting the link in Chrome show a JSON payload?</span>
+                  <Zap className="w-4 h-4 text-[#00D69F]" />
+                  <span>1. 1-Click Thematic Index Swaps</span>
                 </div>
                 <p className="text-slate-400 leading-relaxed">
-                  Solana Action URLs (e.g. <code className="text-[#00D69F] font-mono">/api/actions/etf/silicon-ai</code>) are standard REST API endpoints compliant with the <strong>Solana Actions v2.1.3 Specification</strong>. Normal web browsers don't have built-in Solana wallet renderers, so they display the raw JSON metadata.
+                  PocketETF packages diversified thematic equity, semiconductor, and commodity baskets into atomic Solana transactions executed directly on Solana Mainnet via <strong>Jupiter DEX aggregation</strong>.
                 </p>
                 <p className="text-slate-400 leading-relaxed">
-                  <strong>Blinks (Blockchain Links)</strong> are the <em>visual rendering</em> of that JSON created by client apps (like Twitter/X, Discord, and Dialect) when a user has a compatible wallet extension.
+                  When shared on <strong>Twitter/𝕏, Discord, or Telegram</strong>, Action-compatible wallets automatically unfurl the link into an interactive <strong>Blink (Blockchain Link)</strong> card. Anyone can buy the entire basket in 1 click without leaving their social feed.
                 </p>
               </div>
 
-              {/* 2. Built-in In-App Blink Simulator */}
+              {/* 2. Built-in In-App Preview & Social Feed Mockup */}
               <div className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.08] space-y-2">
                 <div className="flex items-center gap-2 text-white font-bold text-sm">
-                  <Sparkles className="w-4 h-4 text-[#00D69F]" />
-                  <span>2. Instant Testing via Built-in Blink Simulator</span>
+                  <Sparkles className="w-4 h-4 text-[#38BDF8]" />
+                  <span>2. Interactive Preview &amp; 𝕏 Feed Mockup</span>
                 </div>
                 <p className="text-slate-400 leading-relaxed">
-                  PocketETF features a native, real-time Action simulator. You don't need any external tools or extensions to experience and evaluate the full interactive Blink flow:
+                  PocketETF features a native, real-time Action preview engine. You can evaluate and experience the complete social Blink flow directly in-app:
                 </p>
                 <ol className="list-decimal list-inside space-y-1 text-slate-300 font-mono text-[11px] bg-black/40 p-3 rounded-lg border border-white/5">
                   <li>Navigate to the <Link href="/studio" className="text-[#00D69F] underline font-bold">Creator Studio</Link> or any ETF detail page.</li>
-                  <li>Toggle between <strong>Widget View</strong> and <strong>𝕏 / Twitter Feed View</strong>.</li>
+                  <li>Toggle between <strong>Widget View</strong> and the authentic <strong>𝕏 / Twitter Feed Mockup</strong>.</li>
                   <li>Click preset allocation buttons ($5, $10, $25, $50, $100) or enter a custom amount.</li>
                   <li>View live Jupiter DEX route aggregation, Pyth NAV confidence intervals, and 1232B MTU safety guards.</li>
                 </ol>
@@ -1062,7 +1040,7 @@ export default function HomePage() {
                   To trade on your phone with zero desktop extension setup:
                 </p>
                 <ol className="list-decimal list-inside space-y-1 text-slate-300 font-mono text-[11px] bg-black/40 p-3 rounded-lg border border-white/5">
-                  <li>Click <strong>&quot;QR Mobile&quot;</strong> on any ETF card.</li>
+                  <li>Click <strong>&quot;QR Mobile&quot;</strong> on any ETF card or detail page.</li>
                   <li>Scan the QR code with your phone camera or the <strong>Phantom / Backpack</strong> in-app scanner.</li>
                   <li>The ETF opens directly inside your mobile wallet browser with your wallet connected for 1-click execution.</li>
                 </ol>
@@ -1072,7 +1050,7 @@ export default function HomePage() {
               <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 space-y-2">
                 <div className="flex items-center gap-2 text-amber-300 font-bold text-sm">
                   <AlertCircle className="w-4 h-4 text-amber-400" />
-                  <span>4. Why Phantom warns about insufficient USDC</span>
+                  <span>4. Zero-Gas Safety Guardrail (USDC Requirement)</span>
                 </div>
                 <p className="text-amber-200/90 leading-relaxed">
                   PocketETF executes real, live swaps on Solana Mainnet using <strong>USDC</strong> (<code className="font-mono text-[10px] bg-black/40 px-1 py-0.5 rounded">EPjFWdd...wyTDt1v</code>).

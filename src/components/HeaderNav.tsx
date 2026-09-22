@@ -105,14 +105,6 @@ export function HeaderNav() {
             <PieChart className="w-3.5 h-3.5 text-[#00D69F]" />
             <span>My Portfolio</span>
           </button>
-
-          <Link
-            href="/studio"
-            className="hidden lg:flex items-center gap-1.5 text-xs font-mono text-slate-400 hover:text-slate-200 transition-colors border border-white/10 px-3 py-1.5 rounded-lg hover:border-[#00D69F]/40"
-          >
-            <Sparkles className="w-3 h-3 text-[#00D69F]" />
-            <span>Simulator</span>
-          </Link>
         </nav>
 
         {/* Mobile Header Controls (< sm) */}
