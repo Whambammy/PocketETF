@@ -155,7 +155,12 @@ export default function ETFDetailClient({ etf }: Props) {
       }
 
       // Fetch transaction from the action API
-      const res = await fetch(`/api/actions/etf/${etf.id}?amount=${activeAmount}`, {
+      const searchStr = typeof window !== 'undefined' ? window.location.search : '';
+      const actionEndpoint = etf.id === 'custom'
+        ? `/api/actions/etf/custom${searchStr ? searchStr + '&' : '?'}amount=${activeAmount}`
+        : `/api/actions/etf/${etf.id}?amount=${activeAmount}`;
+
+      const res = await fetch(actionEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ account: activeAccount }),
@@ -190,9 +195,10 @@ export default function ETFDetailClient({ etf }: Props) {
     }
   };
 
-  const actionUrl = `${origin}/api/actions/etf/${etf.id}`;
+  const currentSearch = typeof window !== 'undefined' ? window.location.search : '';
+  const sharePageUrl = etf.id === 'custom' ? `${origin}/etf/custom${currentSearch}` : `${origin}/etf/${etf.id}`;
   const shareTweetUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
-    `Invest in the ${etf.name} with 1-click on @solana via @PocketETF!\n\n${origin}/etf/${etf.id}\n\n#Solana #Blinks #PocketETF`
+    `Invest in the ${etf.name} with 1-click on @solana via @PocketETF!\n\n${sharePageUrl}\n\n#Solana #Blinks #PocketETF`
   )}`;
 
   return (
@@ -354,7 +360,7 @@ export default function ETFDetailClient({ etf }: Props) {
                 <button
                   type="button"
                   onClick={async () => {
-                    await navigator.clipboard.writeText(actionUrl);
+                    await navigator.clipboard.writeText(sharePageUrl);
                     setCopiedLink(true);
                     setTimeout(() => setCopiedLink(false), 2500);
                   }}
@@ -363,12 +369,12 @@ export default function ETFDetailClient({ etf }: Props) {
                   {copiedLink ? (
                     <>
                       <Check className="w-3.5 h-3.5 text-[#00D69F]" />
-                      <span className="text-[#00D69F]">Action URL Copied!</span>
+                      <span className="text-[#00D69F]">Share Link Copied!</span>
                     </>
                   ) : (
                     <>
                       <Share2 className="w-3.5 h-3.5 text-slate-300" />
-                      <span>Copy Solana Action URL</span>
+                      <span>Copy Share Link</span>
                     </>
                   )}
                 </button>
@@ -381,16 +387,6 @@ export default function ETFDetailClient({ etf }: Props) {
                   <Smartphone className="w-3.5 h-3.5" />
                   <span>Trade on Mobile (QR)</span>
                 </button>
-
-                <a
-                  href={actionUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-3.5 py-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-slate-300 hover:text-white font-mono text-xs transition-all flex items-center gap-1.5"
-                >
-                  <span>View Action JSON</span>
-                  <ExternalLink className="w-3 h-3 text-[#00D69F]" />
-                </a>
               </div>
             </div>
           </div>
@@ -545,7 +541,7 @@ export default function ETFDetailClient({ etf }: Props) {
         onClose={() => setIsMobileQrOpen(false)}
         etfId={etf.id}
         etfName={etf.name}
-        url={`${origin}/etf/${etf.id}`}
+        url={sharePageUrl}
       />
     </div>
   );

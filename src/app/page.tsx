@@ -151,8 +151,8 @@ export default function HomePage() {
   };
 
   const handleCopyBlink = async (id: string) => {
-    const actionUrl = `${origin}/api/actions/etf/${id}`;
-    await navigator.clipboard.writeText(actionUrl);
+    const shareUrl = `${origin}/etf/${id}`;
+    await navigator.clipboard.writeText(shareUrl);
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 2500);
   };
@@ -694,12 +694,12 @@ export default function HomePage() {
                     {copiedId === etf.id ? (
                       <>
                         <Check className="w-3.5 h-3.5 text-[#00D69F]" />
-                        <span className="text-[#00D69F] font-bold">Action URL Copied!</span>
+                        <span className="text-[#00D69F] font-bold">Share Link Copied!</span>
                       </>
                     ) : (
                       <>
                         <Share2 className="w-3.5 h-3.5 text-slate-400" />
-                        <span>Copy Solana Action URL</span>
+                        <span>Copy Share Link</span>
                       </>
                     )}
                   </button>

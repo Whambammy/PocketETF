@@ -1,12 +1,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   X, 
   Wallet, 
   TrendingUp, 
   TrendingDown, 
-  ExternalLink, 
   RefreshCw, 
   ShieldCheck, 
   PieChart, 
@@ -39,11 +39,16 @@ export function PortfolioDrawer({
   walletAddress,
   onConnectWallet,
 }: PortfolioDrawerProps) {
+  const [mounted, setMounted] = useState(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [holdings, setHoldings] = useState<OnChainHolding[]>([]);
   const [usdcBalance, setUsdcBalance] = useState<number>(0);
   const [totalValueUsd, setTotalValueUsd] = useState<number>(0);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const fetchOnChainBalances = async (pubkey: string) => {
     setLoading(true);
@@ -136,15 +141,17 @@ export function PortfolioDrawer({
     }
   }, [isOpen, walletAddress]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
-      {/* Click outside to close */}
-      <div className="flex-1" onClick={onClose} />
-
-      {/* Slide-over Container */}
-      <div className="w-full max-w-md bg-[#0A1128] border-l border-[#146EF5]/30 h-full p-6 flex flex-col shadow-2xl shadow-black/80 text-slate-100 overflow-y-auto">
+  const modalContent = (
+    <div 
+      className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200"
+      onClick={onClose}
+    >
+      <div 
+        className="relative w-full max-w-xl bg-[#0A1128] border border-[#146EF5]/40 rounded-2xl p-6 shadow-2xl shadow-black/90 text-slate-100 max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-150"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="flex items-center justify-between pb-4 border-b border-white/10">
           <div className="flex items-center gap-2.5">
@@ -170,7 +177,7 @@ export function PortfolioDrawer({
 
         {/* Not Connected State */}
         {!walletAddress ? (
-          <div className="my-auto py-12 text-center space-y-4">
+          <div className="py-12 text-center space-y-4">
             <div className="w-16 h-16 rounded-2xl bg-[#146EF5]/10 border border-[#146EF5]/30 flex items-center justify-center text-[#146EF5] mx-auto">
               <Wallet className="w-8 h-8" />
             </div>
@@ -188,11 +195,11 @@ export function PortfolioDrawer({
             </button>
           </div>
         ) : (
-          <div className="flex-1 py-4 flex flex-col">
+          <div className="flex-1 py-4 flex flex-col overflow-y-auto space-y-4">
             {/* Total Balance Card */}
-            <div className="bg-gradient-to-br from-[#101B3B] to-[#0D1530] border border-[#146EF5]/30 rounded-2xl p-5 mb-5 shadow-lg">
+            <div className="bg-gradient-to-br from-[#101B3B] to-[#0D1530] border border-[#146EF5]/30 rounded-2xl p-5 shadow-lg">
               <div className="flex items-center justify-between text-xs text-slate-400 font-mono">
-                <span>TOTAL EQUITIES & CASH</span>
+                <span>TOTAL EQUITIES &amp; CASH</span>
                 <button
                   onClick={() => fetchOnChainBalances(walletAddress)}
                   disabled={loading}
@@ -220,14 +227,14 @@ export function PortfolioDrawer({
 
             {/* Error Message if RPC Failed */}
             {error && (
-              <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-3 mb-4 text-xs text-red-300 flex items-start gap-2">
+              <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-3 text-xs text-red-300 flex items-start gap-2">
                 <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
                 <span>{error}</span>
               </div>
             )}
 
             {/* Holdings List */}
-            <div className="flex-1 space-y-3">
+            <div className="space-y-2.5">
               <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-slate-400">
                 <span>Holdings ({holdings.length + (usdcBalance > 0 ? 1 : 0)})</span>
                 <span className="text-[10px] font-mono">VALUED VIA PYTH</span>
@@ -258,7 +265,7 @@ export function PortfolioDrawer({
 
               {/* Stock Holdings items */}
               {holdings.length === 0 ? (
-                <div className="bg-[#0D1530] border border-white/5 rounded-xl p-6 text-center text-slate-400 text-xs">
+                <div className="bg-[#0D1530] border border-white/5 rounded-xl p-5 text-center text-slate-400 text-xs">
                   <p className="font-medium text-slate-300">No tokenized stocks found in this wallet.</p>
                   <p className="mt-1 text-slate-500">
                     Buy a curated PocketETF or mint a custom basket to start building your on-chain portfolio.
@@ -318,7 +325,7 @@ export function PortfolioDrawer({
             </div>
 
             {/* Footer security notice */}
-            <div className="pt-4 border-t border-white/10 text-center text-[10px] font-mono text-slate-500 flex items-center justify-center gap-1">
+            <div className="pt-3 border-t border-white/10 text-center text-[10px] font-mono text-slate-500 flex items-center justify-center gap-1">
               <ShieldCheck className="w-3.5 h-3.5 text-[#00D69F]" />
               <span>Production-ready read-only RPC. Zero custody risk.</span>
             </div>
@@ -327,4 +334,6 @@ export function PortfolioDrawer({
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 }

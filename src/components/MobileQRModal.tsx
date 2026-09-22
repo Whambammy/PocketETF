@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { QRCodeSVG } from 'qrcode.react';
 import { X, Smartphone, Copy, Check, ExternalLink, ShieldCheck } from 'lucide-react';
 
@@ -19,9 +20,14 @@ export function MobileQRModal({
   etfName,
   url,
 }: MobileQRModalProps) {
+  const [mounted, setMounted] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!isOpen || !mounted) return null;
 
   // Phantom Universal Deep Link format
   const phantomDeepLink = `https://phantom.app/ul/browse/${encodeURIComponent(url)}?ref=${encodeURIComponent('https://pocketetf.vercel.app')}`;
@@ -32,9 +38,9 @@ export function MobileQRModal({
     setTimeout(() => setCopied(false), 2000);
   };
 
-  return (
+  return createPortal(
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200"
+      className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200"
       onClick={onClose}
     >
       <div 
@@ -131,6 +137,7 @@ export function MobileQRModal({
           </a>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

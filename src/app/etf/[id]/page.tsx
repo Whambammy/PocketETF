@@ -1,14 +1,32 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { CURATED_ETFS } from '@/lib/constants';
+import { resolveETF } from '@/lib/etfResolver';
 import ETFDetailClient from './ETFDetailClient';
 
 interface Props {
   params: { id: string };
+  searchParams?: { [key: string]: string | string[] | undefined };
 }
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const etf = CURATED_ETFS[params.id];
+function buildSearchParams(searchParams?: { [key: string]: string | string[] | undefined }): URLSearchParams {
+  const params = new URLSearchParams();
+  if (searchParams) {
+    for (const [key, value] of Object.entries(searchParams)) {
+      if (typeof value === 'string') {
+        params.set(key, value);
+      } else if (Array.isArray(value)) {
+        for (const item of value) {
+          params.append(key, item);
+        }
+      }
+    }
+  }
+  return params;
+}
+
+export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
+  const sp = buildSearchParams(searchParams);
+  const etf = resolveETF(params.id, sp);
   if (!etf) {
     return {
       title: 'PocketETF | The 1-Click Solana ETF Protocol',
@@ -22,7 +40,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     ? (process.env.NEXT_PUBLIC_BASE_URL.startsWith('http') ? process.env.NEXT_PUBLIC_BASE_URL : `https://${process.env.NEXT_PUBLIC_BASE_URL}`)
     : 'https://pocketetf.vercel.app';
 
-  const iconUrl = `${baseUrl}${etf.iconPath}`;
+  const iconUrl = etf.iconPath.startsWith('http') ? etf.iconPath : `${baseUrl}${etf.iconPath}`;
+  const queryStr = params.id === 'custom' && sp.toString() ? `?${sp.toString()}` : '';
 
   return {
     title: `${title} | PocketETF`,
@@ -30,7 +49,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     openGraph: {
       title,
       description,
-      url: `${baseUrl}/etf/${etf.id}`,
+      url: `${baseUrl}/etf/${etf.id}${queryStr}`,
       siteName: 'PocketETF Protocol',
       images: [
         {
@@ -49,16 +68,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       images: [iconUrl],
     },
     other: {
-      'solana-action': `${baseUrl}/api/actions/etf/${etf.id}`,
+      'solana-action': `${baseUrl}/api/actions/etf/${etf.id}${queryStr}`,
     },
   };
 }
 
-export default function ETFPage({ params }: Props) {
-  const etf = CURATED_ETFS[params.id];
+export default function ETFPage({ params, searchParams }: Props) {
+  const sp = buildSearchParams(searchParams);
+  const etf = resolveETF(params.id, sp);
   if (!etf) {
     notFound();
   }
 
   return <ETFDetailClient etf={etf} />;
 }
+

@@ -8,7 +8,6 @@ import {
   ArrowLeft,
   Copy,
   Check,
-  ExternalLink,
   ShieldAlert,
   ShieldCheck,
   Sliders,
@@ -264,18 +263,20 @@ export default function StudioPage() {
     );
   };
 
-  // Build Action URL
+  // Build Action & Share URLs
   const assetQuery = activeStocks.map((s) => `${s.ticker}:${s.weight}`).join(',');
-  const actionUrl = `${origin}/api/actions/etf/custom?assets=${encodeURIComponent(
-    assetQuery
-  )}&name=${encodeURIComponent(etfName)}&description=${encodeURIComponent(etfDescription)}`;
+  const queryParams = `assets=${encodeURIComponent(assetQuery)}&name=${encodeURIComponent(
+    etfName
+  )}&description=${encodeURIComponent(etfDescription)}`;
+  const actionUrl = `${origin}/api/actions/etf/custom?${queryParams}`;
+  const shareUrl = `${origin}/etf/custom?${queryParams}`;
   const tweetText = `Check out my custom tokenized stock ETF "${etfName}" on Solana! Execute 1-click with @JupiterExchange & @PocketETF:`;
   const twitterIntentUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
     tweetText
-  )}&url=${encodeURIComponent(actionUrl)}`;
+  )}&url=${encodeURIComponent(shareUrl)}`;
 
   const handleCopyLink = async () => {
-    await navigator.clipboard.writeText(actionUrl);
+    await navigator.clipboard.writeText(shareUrl);
     setCopied(true);
     setTimeout(() => setCopied(false), 2500);
   };
@@ -552,7 +553,7 @@ export default function StudioPage() {
               <div className="space-y-3">
                 <div className="p-3 rounded-xl bg-black/60 border border-white/10 flex items-center justify-between gap-2 overflow-hidden">
                   <span className="font-mono text-xs text-slate-300 truncate">
-                    {actionUrl}
+                    {shareUrl}
                   </span>
                   <button
                     type="button"
@@ -567,39 +568,29 @@ export default function StudioPage() {
                     ) : (
                       <>
                         <Copy className="w-3.5 h-3.5" />
-                        <span>Copy URL</span>
+                        <span>Copy Share Link</span>
                       </>
                     )}
                   </button>
                 </div>
 
-                <div className="grid grid-cols-3 gap-2 pt-2">
-                  <a
-                    href={actionUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="py-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-[11px] font-mono font-semibold text-slate-200 flex items-center justify-center gap-1.5 transition-all hover:border-[#00D69F]/40"
-                  >
-                    <span>Action JSON</span>
-                    <ExternalLink className="w-3 h-3 text-[#00D69F]" />
-                  </a>
-
+                <div className="grid grid-cols-2 gap-2.5 pt-2">
                   <a
                     href={twitterIntentUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="py-2 rounded-xl bg-[#1DA1F2]/20 hover:bg-[#1DA1F2]/30 border border-[#1DA1F2]/40 text-[11px] font-mono font-semibold text-[#1DA1F2] flex items-center justify-center gap-1.5 transition-all"
+                    className="py-2.5 rounded-xl bg-[#1DA1F2]/20 hover:bg-[#1DA1F2]/30 border border-[#1DA1F2]/40 text-xs font-mono font-semibold text-[#1DA1F2] flex items-center justify-center gap-2 transition-all shadow-sm"
                   >
-                    <Share2 className="w-3 h-3" />
+                    <Share2 className="w-3.5 h-3.5" />
                     <span>Post on 𝕏</span>
                   </a>
 
                   <button
                     type="button"
                     onClick={() => setIsMobileQrOpen(true)}
-                    className="py-2 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-[11px] font-mono font-semibold text-[#00D69F] flex items-center justify-center gap-1.5 transition-all shadow-sm"
+                    className="py-2.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-xs font-mono font-semibold text-[#00D69F] flex items-center justify-center gap-2 transition-all shadow-sm"
                   >
-                    <Smartphone className="w-3 h-3" />
+                    <Smartphone className="w-3.5 h-3.5" />
                     <span>Mobile QR</span>
                   </button>
                 </div>
@@ -998,7 +989,7 @@ export default function StudioPage() {
         onClose={() => setIsMobileQrOpen(false)}
         etfId="custom-basket"
         etfName={etfName || 'Custom Basket'}
-        url={actionUrl}
+        url={shareUrl}
       />
     </div>
   );
