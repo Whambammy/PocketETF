@@ -1,0 +1,20 @@
+{
+  "rules": [
+    {
+      "pathPattern": "/etf/*",
+      "apiPath": "/api/actions/etf/*"
+    },
+    {
+      "pathPattern": "/api/actions/etf/*",
+      "apiPath": "/api/actions/etf/*"
+    },
+    {
+      "pathPattern": "/basket/*",
+      "apiPath": "/api/actions/etf/*"
+    },
+    {
+      "pathPattern": "/api/actions/basket/*",
+      "apiPath": "/api/actions/etf/*"
+    }
+  ]
+}

@@ -173,7 +173,7 @@ export async function GET(
 
     const absoluteIconUrl = `${baseOrigin}${etf.iconPath}`;
 
-    const baseActionHref = url.pathname + url.search;
+    const baseActionHref = `${baseOrigin}${url.pathname}${url.search}`;
 
     const actionResponse = {
       type: 'action',
