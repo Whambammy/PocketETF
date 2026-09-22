@@ -51,7 +51,7 @@ export default function HomePage() {
     'backpack-titans': 10,
   });
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
-  const [origin, setOrigin] = useState<string>('https://pocketetf.solana.app');
+  const [origin, setOrigin] = useState<string>('https://pocketetf.vercel.app');
   const [simulationState, setSimulationState] = useState<
     Record<string, { loading: boolean; result?: any; error?: string }>
   >({});

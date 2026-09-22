@@ -66,7 +66,7 @@ export default function StudioPage() {
   ]);
 
   const [copied, setCopied] = useState(false);
-  const [origin, setOrigin] = useState('https://pocketetf.solana.app');
+  const [origin, setOrigin] = useState('https://pocketetf.vercel.app');
   const [isAssetDrawerOpen, setIsAssetDrawerOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategoryFilter, setActiveCategoryFilter] = useState('All');
@@ -750,7 +750,7 @@ export default function StudioPage() {
                     <ShieldCheck className="w-3 h-3 text-[#00D69F]" />
                     Jupiter v6 Multi-Swap
                   </span>
-                  <span>pocketetf.solana.app</span>
+                  <span>pocketetf.vercel.app</span>
                 </div>
               </div>
             </div>
