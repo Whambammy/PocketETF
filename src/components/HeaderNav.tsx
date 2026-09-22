@@ -12,10 +12,28 @@ import {
   BarChart3,
   Sliders,
   ShieldCheck,
+  PieChart,
+  Wallet,
 } from 'lucide-react';
+import { PortfolioDrawer } from '@/components/PortfolioDrawer';
 
 export function HeaderNav() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [portfolioOpen, setPortfolioOpen] = useState(false);
+  const [walletAddress, setWalletAddress] = useState<string | null>(null);
+
+  const connectWallet = async () => {
+    try {
+      if (typeof window !== 'undefined' && (window as any).solana) {
+        const resp = await (window as any).solana.connect();
+        setWalletAddress(resp.publicKey.toString());
+      } else {
+        alert('Please install Phantom or a Solana wallet to connect.');
+      }
+    } catch (e) {
+      console.error('Wallet connection rejected:', e);
+    }
+  };
 
   return (
     <header className="sticky top-0 z-50 backdrop-blur-xl bg-[#0A1128]/95 border-b border-[#146EF5]/20 shadow-lg shadow-black/20">
@@ -78,15 +96,23 @@ export function HeaderNav() {
             </span>
           </div>
 
-          <a
-            href="https://dial.to"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hidden lg:flex items-center gap-1.5 text-xs font-mono text-slate-400 hover:text-slate-200 transition-colors border border-white/10 px-3 py-1.5 rounded-lg hover:border-blue-500/40"
+          <button
+            type="button"
+            onClick={() => setPortfolioOpen(true)}
+            className="flex items-center gap-1.5 text-xs font-semibold text-slate-200 hover:text-white transition-colors bg-white/5 border border-white/10 px-3 py-1.5 rounded-lg hover:border-[#146EF5]/50 hover:bg-white/10"
+            title="View on-chain portfolio & holdings"
           >
-            <span>Dialect</span>
-            <ExternalLink className="w-3 h-3 text-[#00D69F]" />
-          </a>
+            <PieChart className="w-3.5 h-3.5 text-[#00D69F]" />
+            <span>My Portfolio</span>
+          </button>
+
+          <Link
+            href="/studio"
+            className="hidden lg:flex items-center gap-1.5 text-xs font-mono text-slate-400 hover:text-slate-200 transition-colors border border-white/10 px-3 py-1.5 rounded-lg hover:border-[#00D69F]/40"
+          >
+            <Sparkles className="w-3 h-3 text-[#00D69F]" />
+            <span>Simulator</span>
+          </Link>
         </nav>
 
         {/* Mobile Header Controls (< sm) */}
@@ -179,18 +205,28 @@ export function HeaderNav() {
               </span>
             </div>
 
-            <a
-              href="https://dial.to"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1 text-[11px] text-slate-400 hover:text-white px-2.5 py-1.5 rounded-lg bg-white/5 border border-white/10"
+            <button
+              type="button"
+              onClick={() => {
+                setMobileMenuOpen(false);
+                setPortfolioOpen(true);
+              }}
+              className="flex items-center gap-1.5 text-[11px] text-[#00D69F] font-semibold hover:text-white px-2.5 py-1.5 rounded-lg bg-[#146EF5]/20 border border-[#146EF5]/40"
             >
-              <span>Dial.to Test</span>
-              <ExternalLink className="w-3 h-3 text-[#00D69F]" />
-            </a>
+              <PieChart className="w-3.5 h-3.5" />
+              <span>My Portfolio</span>
+            </button>
           </div>
         </div>
       )}
+
+      {/* Slide-over On-Chain Portfolio Drawer */}
+      <PortfolioDrawer
+        isOpen={portfolioOpen}
+        onClose={() => setPortfolioOpen(false)}
+        walletAddress={walletAddress}
+        onConnectWallet={connectWallet}
+      />
     </header>
   );
 }

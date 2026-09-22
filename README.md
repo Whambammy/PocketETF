@@ -11,7 +11,7 @@
 
 **PocketETF** is a decentralized execution protocol that bundles diversified tokenized US stocks, S&P 500 benchmarks, and commodities into a single atomic transaction native to **Solana Actions & Blinks**.
 
-[Explore Curated ETFs](https://pocketetf.vercel.app) • [Test in Dialect Inspector](https://dial.to/?action=solana-action:https://pocketetf.vercel.app/api/actions/etf/silicon-ai) • [Creator Studio](https://pocketetf.vercel.app/studio)
+[Explore Curated ETFs](https://pocketetf.vercel.app) • [Interactive Blink Simulator](https://pocketetf.vercel.app/studio) • [Compare vs. Traditional](https://pocketetf.vercel.app/compare)
 
 </div>
 
@@ -77,15 +77,15 @@ Executing multi-token swaps inside a single Solana transaction presents hard tec
 
 ## 📊 Curated PocketETFs
 
-| ETF ID | Name | Holdings | Category | Dialect Test Link |
+| ETF ID | Name | Holdings | Category | 1-Click Live Link |
 | :--- | :--- | :--- | :--- | :--- |
-| `silicon-ai` | **Silicon AI Supercycle** | 60% NVDA, 40% TSM | Semiconductors & AI | [Open in Dialect](https://dial.to/?action=solana-action:https://pocketetf.vercel.app/api/actions/etf/silicon-ai) |
-| `backpack-titans` | **Backpack Tokenized Titans** | 50% NVDA, 50% MSTR | Tokenized Equities | [Open in Dialect](https://dial.to/?action=solana-action:https://pocketetf.vercel.app/api/actions/etf/backpack-titans) |
-| `mag-titans` | **Magnificent Tech Titans** | 50% AAPL, 50% MSFT | Mega-Cap Tech | [Open in Dialect](https://dial.to/?action=solana-action:https://pocketetf.vercel.app/api/actions/etf/mag-titans) |
-| `spy-benchmark` | **S&P 500 Benchmark Proxy** | 100% SPY | Broad Market Index | [Open in Dialect](https://dial.to/?action=solana-action:https://pocketetf.vercel.app/api/actions/etf/spy-benchmark) |
-| `nasdaq-growth` | **Nasdaq-100 Growth Titans** | 50% QQQ, 25% AMZN, 25% META | Growth Equities | [Open in Dialect](https://dial.to/?action=solana-action:https://pocketetf.vercel.app/api/actions/etf/nasdaq-growth) |
-| `hard-assets` | **All-Weather Gold & Yield** | 50% GLD, 50% TLT | Commodities & Yield | [Open in Dialect](https://dial.to/?action=solana-action:https://pocketetf.vercel.app/api/actions/etf/hard-assets) |
-| `crypto-frontier` | **Web3 & DEX Infrastructure** | 50% COIN, 25% SOL, 25% JUP | Crypto Equities | [Open in Dialect](https://dial.to/?action=solana-action:https://pocketetf.vercel.app/api/actions/etf/crypto-frontier) |
+| `silicon-ai` | **Silicon AI Supercycle** | 60% NVDA, 40% TSM | Semiconductors & AI | [Trade Silicon AI](https://pocketetf.vercel.app/etf/silicon-ai) |
+| `backpack-titans` | **Backpack Tokenized Titans** | 50% NVDA, 50% MSTR | Tokenized Equities | [Trade Backpack Titans](https://pocketetf.vercel.app/etf/backpack-titans) |
+| `mag-titans` | **Magnificent Tech Titans** | 50% AAPL, 50% MSFT | Mega-Cap Tech | [Trade Magnificent Titans](https://pocketetf.vercel.app/etf/mag-titans) |
+| `spy-benchmark` | **S&P 500 Benchmark Proxy** | 100% SPY | Broad Market Index | [Trade SPY Benchmark](https://pocketetf.vercel.app/etf/spy-benchmark) |
+| `nasdaq-growth` | **Nasdaq-100 Growth Titans** | 50% QQQ, 25% AMZN, 25% META | Growth Equities | [Trade Nasdaq Growth](https://pocketetf.vercel.app/etf/nasdaq-growth) |
+| `hard-assets` | **All-Weather Gold & Yield** | 50% GLD, 50% TLT | Commodities & Yield | [Trade Hard Assets](https://pocketetf.vercel.app/etf/hard-assets) |
+| `crypto-frontier` | **Web3 & DEX Infrastructure** | 50% COIN, 25% SOL, 25% JUP | Crypto Equities | [Trade Crypto Frontier](https://pocketetf.vercel.app/etf/crypto-frontier) |
 
 ---
 

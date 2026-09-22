@@ -28,8 +28,28 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: 'PocketETF | 1-Click Tokenized Stock ETFs for Solana Blinks',
-    description: 'Execute multi-asset stock and index ETFs natively via Solana Blinks and Jupiter.',
-    images: ['/logo.png'],
+    description:
+      'Institutional-grade 1-click tokenized stock and ETF execution protocol for Solana Blinks and Jupiter DEX aggregation.',
+    url: 'https://pocketetf.vercel.app',
+    siteName: 'PocketETF Protocol',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'PocketETF - Institutional Stock ETFs Native to Solana Blinks',
+      },
+    ],
+    locale: 'en_US',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'PocketETF | 1-Click Tokenized Stock ETFs for Solana Blinks',
+    description:
+      'Execute multi-asset stock and index ETFs natively via Solana Blinks and Jupiter DEX aggregation.',
+    images: ['/og-image.png'],
+    creator: '@PocketETF',
   },
 };
 

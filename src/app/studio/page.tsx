@@ -21,9 +21,15 @@ import {
   Database,
   PieChart,
   HelpCircle,
+  Smartphone,
+  MessageCircle,
+  Repeat2,
+  Heart,
+  Bookmark,
 } from 'lucide-react';
 import { TOKEN_CATALOG, MAX_ETF_ASSETS, ETFAsset, getDEXConflictStatus } from '@/lib/constants';
 import { DonutChart } from '@/components/DonutChart';
+import { MobileQRModal } from '@/components/MobileQRModal';
 
 interface ActiveStock {
   ticker: string;
@@ -39,7 +45,7 @@ interface ActiveStock {
 export default function StudioPage() {
   const [etfName, setEtfName] = useState('Silicon AI Supercycle');
   const [etfDescription, setEtfDescription] = useState(
-    '1-Click diversified exposure across NVIDIA and Taiwan Semiconductor (TSMC). Executed atomically via PocketETF and Jupiter DEX routing on Solana.'
+    '1-Click execution for 60% NVIDIA (NVDA) and 40% Taiwan Semiconductor (TSM) via Jupiter DEX aggregation.'
   );
 
   const [activeStocks, setActiveStocks] = useState<ActiveStock[]>([
@@ -47,20 +53,20 @@ export default function StudioPage() {
       ticker: 'NVDA',
       name: 'NVIDIA Corporation',
       weight: 60,
-      color: '#10B981',
-      mint: TOKEN_CATALOG.find((t) => t.ticker === 'NVDA')?.mint || '7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU',
+      color: '#76B900',
+      mint: '7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU',
       category: 'Semiconductors & AI',
       primaryDex: 'Whirlpool',
       underlyingPrice: '$220.00',
     },
     {
       ticker: 'TSM',
-      name: 'Taiwan Semiconductor Mfg',
+      name: 'Taiwan Semiconductor',
       weight: 40,
-      color: '#06B6D4',
-      mint: TOKEN_CATALOG.find((t) => t.ticker === 'TSM')?.mint || '3NZ9JMVBmGAqocybic2c7LQCJScmgsAZ6vQqTDzcqmJh',
+      color: '#D12420',
+      mint: '3NZ9JMVBmGAqocybic2c7LQCJScmgsAZ6vQqTDzcqmJh',
       category: 'Semiconductors & AI',
-      primaryDex: 'Meteora',
+      primaryDex: 'Whirlpool',
       underlyingPrice: '$195.40',
     },
   ]);
@@ -72,6 +78,8 @@ export default function StudioPage() {
   const [activeCategoryFilter, setActiveCategoryFilter] = useState('All');
   const [customMintInput, setCustomMintInput] = useState('');
   const [customTickerInput, setCustomTickerInput] = useState('');
+  const [previewMode, setPreviewMode] = useState<'widget' | 'twitter'>('twitter');
+  const [isMobileQrOpen, setIsMobileQrOpen] = useState(false);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -565,26 +573,35 @@ export default function StudioPage() {
                   </button>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3 pt-2">
+                <div className="grid grid-cols-3 gap-2 pt-2">
                   <a
                     href={actionUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="py-2.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-xs font-mono font-semibold text-slate-200 flex items-center justify-center gap-2 transition-all hover:border-[#00D69F]/40"
+                    className="py-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-[11px] font-mono font-semibold text-slate-200 flex items-center justify-center gap-1.5 transition-all hover:border-[#00D69F]/40"
                   >
-                    <span>View Action JSON</span>
-                    <ExternalLink className="w-3.5 h-3.5 text-[#00D69F]" />
+                    <span>Action JSON</span>
+                    <ExternalLink className="w-3 h-3 text-[#00D69F]" />
                   </a>
 
                   <a
                     href={twitterIntentUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="py-2.5 rounded-xl bg-[#1DA1F2]/20 hover:bg-[#1DA1F2]/30 border border-[#1DA1F2]/40 text-xs font-mono font-semibold text-[#1DA1F2] flex items-center justify-center gap-2 transition-all"
+                    className="py-2 rounded-xl bg-[#1DA1F2]/20 hover:bg-[#1DA1F2]/30 border border-[#1DA1F2]/40 text-[11px] font-mono font-semibold text-[#1DA1F2] flex items-center justify-center gap-1.5 transition-all"
                   >
-                    <span>Share Action on X</span>
-                    <Share2 className="w-3.5 h-3.5" />
+                    <Share2 className="w-3 h-3" />
+                    <span>Post on 𝕏</span>
                   </a>
+
+                  <button
+                    type="button"
+                    onClick={() => setIsMobileQrOpen(true)}
+                    className="py-2 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-[11px] font-mono font-semibold text-[#00D69F] flex items-center justify-center gap-1.5 transition-all shadow-sm"
+                  >
+                    <Smartphone className="w-3 h-3" />
+                    <span>Mobile QR</span>
+                  </button>
                 </div>
               </div>
             )}
@@ -657,102 +674,190 @@ export default function StudioPage() {
 
           {/* Live Blink Card Preview */}
           <div className="sticky top-24 space-y-3">
-            <div className="flex items-center justify-between text-xs font-mono text-slate-400">
+            <div className="flex items-center justify-between text-xs font-mono">
               <span className="font-semibold uppercase tracking-wider text-[#146EF5] flex items-center gap-1.5">
                 <Sparkles className="w-3.5 h-3.5 text-[#00D69F]" />
-                Live Blink Card Preview
+                Live Action Simulation
               </span>
-              <span>Twitter / Dialect Frame</span>
+              <div className="flex items-center p-0.5 rounded-lg bg-black/60 border border-white/10 text-[11px]">
+                <button
+                  type="button"
+                  onClick={() => setPreviewMode('twitter')}
+                  className={`px-2.5 py-1 rounded-md transition-all font-semibold flex items-center gap-1 ${
+                    previewMode === 'twitter'
+                      ? 'bg-[#1D9BF0] text-white shadow-sm'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <span>Feed View (𝕏)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPreviewMode('widget')}
+                  className={`px-2.5 py-1 rounded-md transition-all font-semibold ${
+                    previewMode === 'widget'
+                      ? 'bg-[#146EF5] text-white shadow-sm'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <span>Widget View</span>
+                </button>
+              </div>
             </div>
 
-            {/* Simulated Blink Action Card */}
-            <div className="rounded-2xl border border-white/15 bg-[#0e0f17] overflow-hidden shadow-2xl">
-              <div className="relative w-full h-44 bg-gradient-to-br from-[#0A1128] via-[#0F172A] to-[#060A17] flex items-center justify-center p-4 border-b border-white/10">
-                <img
-                  src="/favicon.png"
-                  alt="PocketETF"
-                  className="w-16 h-16 object-contain drop-shadow-[0_0_24px_rgba(20,110,245,0.4)]"
-                />
-                <div className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-black/70 backdrop-blur-md border border-[#00D69F]/30 text-[10px] font-mono font-bold text-[#00D69F] flex items-center gap-1">
-                  <CheckCircle2 className="w-3 h-3 text-[#00D69F]" />
-                  <span>PocketETF Action</span>
-                </div>
-                <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-black/70 backdrop-blur-md border border-white/10 text-[10px] font-mono text-slate-300">
-                  v2.1.3
-                </div>
-              </div>
-
-              {/* Card Body */}
-              <div className="p-5 space-y-4">
+            {/* Social Feed Mockup Frame when in Twitter Mode */}
+            <div className={previewMode === 'twitter' ? 'rounded-2xl border border-white/10 bg-[#000000] p-4 sm:p-5 shadow-2xl space-y-3' : ''}>
+              {previewMode === 'twitter' && (
                 <div>
-                  <h3 className="text-base font-bold text-white mb-1 font-mono">
-                    PocketETF: {etfName || 'Untitled ETF'}
-                  </h3>
-                  <p className="text-xs text-slate-400 leading-relaxed line-clamp-2">
-                    {etfDescription || 'No description provided.'}
+                  {/* Tweet Author Row */}
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#146EF5] to-[#00D69F] p-0.5 flex-shrink-0">
+                        <img
+                          src="/favicon.png"
+                          alt="PocketETF"
+                          className="w-full h-full rounded-full bg-black object-contain p-1"
+                        />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-1 leading-tight">
+                          <span className="font-bold text-white text-sm hover:underline cursor-pointer">
+                            PocketETF
+                          </span>
+                          <CheckCircle2 className="w-4 h-4 text-[#1D9BF0] fill-[#1D9BF0]" />
+                          <span className="text-slate-500 text-xs font-normal">@PocketETF</span>
+                          <span className="text-slate-500 text-xs">·</span>
+                          <span className="text-slate-500 text-xs">2m</span>
+                        </div>
+                        <p className="text-[11px] text-slate-400 font-mono">1-Click Equity Baskets on Solana</p>
+                      </div>
+                    </div>
+                    <span className="text-slate-400 text-sm font-bold font-mono">𝕏</span>
+                  </div>
+
+                  {/* Tweet Body Text */}
+                  <p className="text-xs sm:text-sm text-slate-100 leading-relaxed mt-2.5 mb-3 font-sans">
+                    Just created a new equity basket thesis on @Solana:{' '}
+                    <span className="text-[#1D9BF0] font-semibold">${etfName || 'Custom Basket'}</span>! 1-click execution across{' '}
+                    {activeStocks.map((s) => '$' + s.ticker).join(', ')} directly in your timeline via @Solana Actions &amp; @JupiterExchange. 🚀
                   </p>
                 </div>
+              )}
 
-                {/* Weights preview bar */}
-                <div>
-                  <div className="flex justify-between text-[11px] font-mono text-slate-400 mb-1.5">
-                    <span>Weights</span>
-                    <span className="text-[#00D69F] font-bold">{totalWeight}% Total</span>
+              {/* Simulated Blink Action Card */}
+              <div className="rounded-2xl border border-white/15 bg-[#0e0f17] overflow-hidden shadow-2xl">
+                <div className="relative w-full h-44 bg-gradient-to-br from-[#0A1128] via-[#0F172A] to-[#060A17] flex items-center justify-center p-4 border-b border-white/10">
+                  <img
+                    src="/favicon.png"
+                    alt="PocketETF"
+                    className="w-16 h-16 object-contain drop-shadow-[0_0_24px_rgba(20,110,245,0.4)]"
+                  />
+                  <div className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-black/70 backdrop-blur-md border border-[#00D69F]/30 text-[10px] font-mono font-bold text-[#00D69F] flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3 text-[#00D69F]" />
+                    <span>PocketETF Action</span>
                   </div>
-                  <div className="h-2 w-full rounded-full bg-slate-800 overflow-hidden flex p-[1px] gap-[1px]">
-                    {activeStocks.map((s) => (
-                      <div
-                        key={s.ticker}
-                        style={{
-                          width: `${s.weight}%`,
-                          backgroundColor: s.color,
-                        }}
-                        className="h-full rounded-sm transition-all duration-300"
-                      />
+                  <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-black/70 backdrop-blur-md border border-white/10 text-[10px] font-mono text-slate-300">
+                    v2.1.3
+                  </div>
+                </div>
+
+                {/* Card Body */}
+                <div className="p-5 space-y-4">
+                  <div>
+                    <h3 className="text-base font-bold text-white mb-1 font-mono">
+                      PocketETF: {etfName || 'Untitled ETF'}
+                    </h3>
+                    <p className="text-xs text-slate-400 leading-relaxed line-clamp-2">
+                      {etfDescription || 'No description provided.'}
+                    </p>
+                  </div>
+
+                  {/* Weights preview bar */}
+                  <div>
+                    <div className="flex justify-between text-[11px] font-mono text-slate-400 mb-1.5">
+                      <span>Weights</span>
+                      <span className="text-[#00D69F] font-bold">{totalWeight}% Total</span>
+                    </div>
+                    <div className="h-2 w-full rounded-full bg-slate-800 overflow-hidden flex p-[1px] gap-[1px]">
+                      {activeStocks.map((s) => (
+                        <div
+                          key={s.ticker}
+                          style={{
+                            width: `${s.weight}%`,
+                            backgroundColor: s.color,
+                          }}
+                          className="h-full rounded-sm transition-all duration-300"
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Preset Buttons (All 5 Presets) */}
+                  <div className="grid grid-cols-5 gap-1.5 pt-1 font-mono">
+                    {['$5', '$10', '$25', '$50', '$100'].map((amt) => (
+                      <button
+                        key={amt}
+                        type="button"
+                        className="py-2 rounded-xl bg-gradient-to-r from-[#146EF5] to-[#0D63F8] hover:brightness-110 text-white text-xs font-bold transition-all shadow-md shadow-blue-500/20 text-center"
+                      >
+                        {amt}
+                      </button>
                     ))}
                   </div>
-                </div>
 
-                {/* Preset Buttons (All 5 Presets) */}
-                <div className="grid grid-cols-5 gap-1.5 pt-1 font-mono">
-                  {['$5', '$10', '$25', '$50', '$100'].map((amt) => (
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <span className="absolute left-3 top-2.5 text-xs text-slate-500 font-mono">$</span>
+                      <input
+                        type="number"
+                        placeholder="Custom USDC Amount"
+                        disabled
+                        className="w-full pl-7 pr-3 py-2 rounded-xl bg-black/40 border border-white/10 text-xs text-slate-400 cursor-not-allowed font-mono"
+                      />
+                    </div>
                     <button
-                      key={amt}
                       type="button"
-                      className="py-2 rounded-xl bg-gradient-to-r from-[#146EF5] to-[#0D63F8] hover:brightness-110 text-white text-xs font-bold transition-all shadow-md shadow-blue-500/20 text-center"
-                    >
-                      {amt}
-                    </button>
-                  ))}
-                </div>
-
-                <div className="flex gap-2">
-                  <div className="relative flex-1">
-                    <span className="absolute left-3 top-2.5 text-xs text-slate-500 font-mono">$</span>
-                    <input
-                      type="number"
-                      placeholder="Custom USDC Amount"
                       disabled
-                      className="w-full pl-7 pr-3 py-2 rounded-xl bg-black/40 border border-white/10 text-xs text-slate-400 cursor-not-allowed font-mono"
-                    />
+                      className="px-4 py-2 rounded-xl bg-white/10 text-slate-400 text-xs font-mono font-semibold cursor-not-allowed"
+                    >
+                      Buy
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    disabled
-                    className="px-4 py-2 rounded-xl bg-white/10 text-slate-400 text-xs font-mono font-semibold cursor-not-allowed"
-                  >
-                    Buy
-                  </button>
-                </div>
 
-                <div className="pt-2 border-t border-white/5 flex items-center justify-between text-[10px] font-mono text-slate-500">
-                  <span className="flex items-center gap-1">
-                    <ShieldCheck className="w-3 h-3 text-[#00D69F]" />
-                    Jupiter v6 Multi-Swap
-                  </span>
-                  <span>pocketetf.vercel.app</span>
+                  <div className="pt-2 border-t border-white/5 flex items-center justify-between text-[10px] font-mono text-slate-500">
+                    <span className="flex items-center gap-1">
+                      <ShieldCheck className="w-3 h-3 text-[#00D69F]" />
+                      Jupiter v6 Multi-Swap
+                    </span>
+                    <span>pocketetf.vercel.app</span>
+                  </div>
                 </div>
               </div>
+
+              {/* Twitter Engagement Bar when in Feed View */}
+              {previewMode === 'twitter' && (
+                <div className="pt-2 flex items-center justify-between text-slate-500 text-xs font-mono px-2">
+                  <div className="flex items-center gap-1.5 hover:text-[#1D9BF0] transition-colors cursor-pointer">
+                    <MessageCircle className="w-4 h-4" />
+                    <span className="text-[11px]">24</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 hover:text-emerald-400 transition-colors cursor-pointer">
+                    <Repeat2 className="w-4 h-4" />
+                    <span className="text-[11px]">88</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 hover:text-rose-500 transition-colors cursor-pointer">
+                    <Heart className="w-4 h-4" />
+                    <span className="text-[11px]">342</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 hover:text-[#1D9BF0] transition-colors cursor-pointer">
+                    <Bookmark className="w-4 h-4" />
+                    <span className="text-[11px]">49</span>
+                  </div>
+                  <div className="hover:text-[#1D9BF0] transition-colors cursor-pointer">
+                    <Share2 className="w-4 h-4" />
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -886,6 +991,15 @@ export default function StudioPage() {
           </div>
         </div>
       )}
+
+      {/* Mobile QR Modal for Custom Basket */}
+      <MobileQRModal
+        isOpen={isMobileQrOpen}
+        onClose={() => setIsMobileQrOpen(false)}
+        etfId="custom-basket"
+        etfName={etfName || 'Custom Basket'}
+        url={actionUrl}
+      />
     </div>
   );
 }

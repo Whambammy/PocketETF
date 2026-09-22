@@ -22,19 +22,22 @@ import {
   Database,
   BarChart3,
   Search,
-  Wallet,
   Share2,
   HelpCircle,
   AlertCircle,
+  Smartphone,
+  Wallet,
 } from 'lucide-react';
 import { CURATED_ETFS, ETFDefinition, TOKEN_CATALOG } from '@/lib/constants';
 import { ComparisonMatrix } from '@/components/ComparisonMatrix';
 import { FAQSection } from '@/components/FAQSection';
+import { MobileQRModal } from '@/components/MobileQRModal';
 
 export default function HomePage() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [activeJsonETF, setActiveJsonETF] = useState<ETFDefinition | null>(null);
   const [showBlinkGuide, setShowBlinkGuide] = useState<boolean>(false);
+  const [selectedQrEtf, setSelectedQrEtf] = useState<{ id: string; name: string; url: string } | null>(null);
   const [walletBalance, setWalletBalance] = useState<{
     sol: number;
     usdc: number;
@@ -701,24 +704,40 @@ export default function HomePage() {
                     )}
                   </button>
 
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-3 gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setSelectedQrEtf({
+                          id: etf.id,
+                          name: etf.name,
+                          url: `${origin}/etf/${etf.id}`,
+                        })
+                      }
+                      className="py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-[10px] font-semibold text-[#00D69F] hover:text-white transition-all flex items-center justify-center gap-1 font-mono"
+                      title="Scan with phone camera or Phantom mobile"
+                    >
+                      <Smartphone className="w-3 h-3 text-[#00D69F]" />
+                      <span>QR Mobile</span>
+                    </button>
+
                     <a
                       href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(
                         `Invest in ${etf.name} with 1-click on @solana via @PocketETF!\n\n${origin}/etf/${etf.id}\n\n#Solana #Blinks #PocketETF`
                       )}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="py-1.5 rounded-lg bg-[#146EF5]/15 hover:bg-[#146EF5]/25 border border-[#146EF5]/30 text-[11px] font-semibold text-blue-300 hover:text-white transition-all flex items-center justify-center gap-1.5 font-mono"
+                      className="py-1.5 rounded-lg bg-[#146EF5]/15 hover:bg-[#146EF5]/25 border border-[#146EF5]/30 text-[10px] font-semibold text-blue-300 hover:text-white transition-all flex items-center justify-center gap-1 font-mono"
                     >
                       <Share2 className="w-3 h-3 text-[#146EF5]" />
-                      <span>Post on X</span>
+                      <span>Post to 𝕏</span>
                     </a>
 
                     <Link
                       href={`/etf/${etf.id}`}
-                      className="py-1.5 rounded-lg bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.06] hover:border-emerald-500/40 text-[11px] font-semibold text-slate-300 hover:text-white transition-all flex items-center justify-center gap-1.5 font-mono"
+                      className="py-1.5 rounded-lg bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.06] hover:border-emerald-500/40 text-[10px] font-semibold text-slate-300 hover:text-white transition-all flex items-center justify-center gap-1 font-mono"
                     >
-                      <span>ETF Page</span>
+                      <span>Details</span>
                       <ExternalLink className="w-3 h-3 text-[#00D69F]" />
                     </Link>
                   </div>
@@ -1013,40 +1032,39 @@ export default function HomePage() {
                 </p>
               </div>
 
-              {/* 2. Testing in Dialect (dial.to) */}
+              {/* 2. Built-in In-App Blink Simulator */}
               <div className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.08] space-y-2">
                 <div className="flex items-center gap-2 text-white font-bold text-sm">
-                  <ExternalLink className="w-4 h-4 text-[#00D69F]" />
-                  <span>2. How to test on Dialect Blinks Inspector (dial.to)</span>
+                  <Sparkles className="w-4 h-4 text-[#00D69F]" />
+                  <span>2. Instant Testing via Built-in Blink Simulator</span>
                 </div>
                 <p className="text-slate-400 leading-relaxed">
-                  Dialect verifies all actions against their central registry. While your registry request is in review by Dialect, you can test and interact with your Blink immediately in <strong>Developer Mode</strong>:
+                  PocketETF features a native, real-time Action simulator. You don't need any external tools or extensions to experience and evaluate the full interactive Blink flow:
                 </p>
                 <ol className="list-decimal list-inside space-y-1 text-slate-300 font-mono text-[11px] bg-black/40 p-3 rounded-lg border border-white/5">
-                  <li>Open <a href="https://dial.to" target="_blank" rel="noreferrer" className="text-[#00D69F] underline">dial.to</a> in your browser.</li>
-                  <li>Click the <strong>Settings (⚙️ Gear icon)</strong> in the top right corner.</li>
-                  <li>Toggle ON <strong>&quot;Allow unregistered actions&quot;</strong> (or Developer Mode).</li>
-                  <li>Paste your Blink URL: <span className="text-cyan-300 break-all">solana-action:{origin}/api/actions/etf/silicon-ai</span></li>
+                  <li>Navigate to the <Link href="/studio" className="text-[#00D69F] underline font-bold">Creator Studio</Link> or any ETF detail page.</li>
+                  <li>Toggle between <strong>Widget View</strong> and <strong>𝕏 / Twitter Feed View</strong>.</li>
+                  <li>Click preset allocation buttons ($5, $10, $25, $50, $100) or enter a custom amount.</li>
+                  <li>View live Jupiter DEX route aggregation, Pyth NAV confidence intervals, and 1232B MTU safety guards.</li>
                 </ol>
                 <p className="text-[11px] text-emerald-400 font-mono">
-                  ✓ Dialect will instantly render the full interactive PocketETF buying card with all 1-click buttons!
+                  ✓ Experience the exact social Blink UI and test Jupiter routing live in-app!
                 </p>
               </div>
 
-              {/* 3. Testing on Twitter / X */}
+              {/* 3. Mobile QR Scanner (Phantom & Backpack Mobile) */}
               <div className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.08] space-y-2">
                 <div className="flex items-center gap-2 text-white font-bold text-sm">
-                  <Share2 className="w-4 h-4 text-[#146EF5]" />
-                  <span>3. How to test on Twitter / X</span>
+                  <Smartphone className="w-4 h-4 text-[#146EF5]" />
+                  <span>3. Scan to Trade on Mobile (Phantom / Backpack)</span>
                 </div>
                 <p className="text-slate-400 leading-relaxed">
-                  To view Blinks natively on Twitter/X:
+                  To trade on your phone with zero desktop extension setup:
                 </p>
                 <ol className="list-decimal list-inside space-y-1 text-slate-300 font-mono text-[11px] bg-black/40 p-3 rounded-lg border border-white/5">
-                  <li>Ensure your <strong>Phantom</strong> or <strong>Backpack</strong> browser extension is updated.</li>
-                  <li>In Phantom: go to <strong>Settings → Developer Settings → Solana Actions &amp; Blinks</strong> and ensure it is enabled.</li>
-                  <li>Post or preview the URL <span className="text-cyan-300 break-all">{origin}/api/actions/etf/silicon-ai</span> on Twitter/X.</li>
-                  <li>Phantom will automatically unfold the tweet into an interactive buy card right inside your feed!</li>
+                  <li>Click <strong>&quot;QR Mobile&quot;</strong> on any ETF card.</li>
+                  <li>Scan the QR code with your phone camera or the <strong>Phantom / Backpack</strong> in-app scanner.</li>
+                  <li>The ETF opens directly inside your mobile wallet browser with your wallet connected for 1-click execution.</li>
                 </ol>
               </div>
 
@@ -1054,16 +1072,13 @@ export default function HomePage() {
               <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 space-y-2">
                 <div className="flex items-center gap-2 text-amber-300 font-bold text-sm">
                   <AlertCircle className="w-4 h-4 text-amber-400" />
-                  <span>4. Why Phantom blocked the swap &amp; warned about 0.001 SOL</span>
+                  <span>4. Why Phantom warns about insufficient USDC</span>
                 </div>
                 <p className="text-amber-200/90 leading-relaxed">
                   PocketETF executes real, live swaps on Solana Mainnet using <strong>USDC</strong> (<code className="font-mono text-[10px] bg-black/40 px-1 py-0.5 rounded">EPjFWdd...wyTDt1v</code>).
                 </p>
                 <p className="text-slate-300 leading-relaxed">
-                  Before signing, Phantom runs a <strong>background simulation</strong> of the transaction. If your wallet has <strong>0 USDC</strong>, the simulation fails with <code className="text-red-300 font-mono">insufficient funds</code>. Phantom flags this with a scary red warning: <em>&quot;Malicious or failing transaction detected: If you proceed, you will lose your 0.001 SOL network fee.&quot;</em>
-                </p>
-                <p className="text-slate-300 leading-relaxed font-semibold">
-                  👉 <strong>The Fix:</strong> The 0.001 SOL is Solana&apos;s standard network fee. Simply ensure your Phantom wallet holds at least <strong>$5 or $10 USDC</strong> on Solana Mainnet. You can swap a fraction of your SOL to USDC directly inside Phantom in 5 seconds!
+                  If your wallet does not hold sufficient USDC, our pre-flight guardrail detects this immediately and halts execution to protect you from spending unnecessary SOL gas fees.
                 </p>
               </div>
             </div>
@@ -1080,6 +1095,17 @@ export default function HomePage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Reusable Mobile QR Modal */}
+      {selectedQrEtf && (
+        <MobileQRModal
+          isOpen={!!selectedQrEtf}
+          onClose={() => setSelectedQrEtf(null)}
+          etfId={selectedQrEtf.id}
+          etfName={selectedQrEtf.name}
+          url={selectedQrEtf.url}
+        />
       )}
     </div>
   );
