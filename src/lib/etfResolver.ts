@@ -99,13 +99,25 @@ export function resolveETF(id: string, searchParams: URLSearchParams): ETFDefini
       });
     }
 
+    // Optional custom badge/image URL or preset path
+    const rawImage = searchParams.get('image');
+    let iconPath = '/etfs/custom.png';
+    if (rawImage) {
+      const trimmed = rawImage.trim();
+      if (trimmed.startsWith('/') && !trimmed.startsWith('//')) {
+        iconPath = trimmed.slice(0, 500);
+      } else if (trimmed.startsWith('https://') || trimmed.startsWith('http://')) {
+        iconPath = trimmed.slice(0, 500);
+      }
+    }
+
     return {
       id: 'custom',
       name,
       symbol: 'CUSTOM',
       tagline: 'Custom Multi-Asset PocketETF',
       description,
-      iconPath: '/solanaLogo.png',
+      iconPath,
       category: 'Broad Market',
       colorGradient: { from: '#10B981', to: '#9945FF' },
       targetAssets,

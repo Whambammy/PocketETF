@@ -68,7 +68,10 @@ export async function GET(
       baseOrigin = `${proto}://${host}`;
     }
 
-    const absoluteIconUrl = `${baseOrigin}${etf.iconPath}`;
+    const absoluteIconUrl =
+      etf.iconPath.startsWith('http://') || etf.iconPath.startsWith('https://')
+        ? etf.iconPath
+        : `${baseOrigin}${etf.iconPath.startsWith('/') ? '' : '/'}${etf.iconPath}`;
 
     const baseActionHref = `${baseOrigin}${url.pathname}${url.search}`;
 

@@ -71,23 +71,6 @@ export default function RootLayout({
     <html lang="en" className="dark">
       <head>
         <link rel="icon" href="/favicon.png" type="image/png" />
-        {/* Explicit OpenGraph & Twitter tags for maximum crawler compatibility */}
-        <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://pocketetf.vercel.app" />
-        <meta property="og:title" content="PocketETF | 1-Click Tokenized Stock ETFs for Solana Blinks" />
-        <meta property="og:description" content="Institutional-grade 1-click tokenized stock and ETF execution protocol for Solana Blinks and Jupiter DEX aggregation." />
-        <meta property="og:image" content="https://pocketetf.vercel.app/og-image.png" />
-        <meta property="og:image:secure_url" content="https://pocketetf.vercel.app/og-image.png" />
-        <meta property="og:image:type" content="image/png" />
-        <meta property="og:image:width" content="1024" />
-        <meta property="og:image:height" content="510" />
-        <meta property="og:image:alt" content="PocketETF - 1-Click Tokenized Stock ETFs Native to Solana Blinks" />
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:site" content="@PocketETF" />
-        <meta name="twitter:creator" content="@PocketETF" />
-        <meta name="twitter:title" content="PocketETF | 1-Click Tokenized Stock ETFs for Solana Blinks" />
-        <meta name="twitter:description" content="Execute multi-asset stock and index ETFs natively via Solana Blinks and Jupiter DEX aggregation." />
-        <meta name="twitter:image" content="https://pocketetf.vercel.app/og-image.png" />
       </head>
       <body className="min-h-screen flex flex-col bg-[#0A1128] text-slate-100 antialiased selection:bg-[#00D69F] selection:text-black">
         {/* Top Brand Hairline Indicator */}

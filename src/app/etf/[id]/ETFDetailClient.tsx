@@ -253,6 +253,7 @@ export default function ETFDetailClient({ etf }: Props) {
                     alt={etf.name}
                     width={64}
                     height={64}
+                    unoptimized
                     className="w-full h-full object-contain"
                   />
                 </div>
