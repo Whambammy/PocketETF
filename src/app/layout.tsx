@@ -5,8 +5,14 @@ import { PocketLogo } from '@/components/PocketLogo';
 import { HeaderNav } from '@/components/HeaderNav';
 import { ShieldCheck, Zap, Terminal, Activity } from 'lucide-react';
 
+const siteOrigin = 'https://pocketetf.vercel.app';
+
 export const metadata: Metadata = {
-  title: 'PocketETF | 1-Click Tokenized Stock ETFs for Solana Blinks',
+  metadataBase: new URL(siteOrigin),
+  title: {
+    default: 'PocketETF | 1-Click Tokenized Stock ETFs for Solana Blinks',
+    template: '%s | PocketETF',
+  },
   description:
     'Institutional-grade 1-click tokenized stock and ETF execution protocol for Solana Blinks and Jupiter DEX aggregation. Execute NVDA, AAPL, SPY, QQQ, and Gold proxies atomically in a single transaction.',
   keywords: [
@@ -30,14 +36,16 @@ export const metadata: Metadata = {
     title: 'PocketETF | 1-Click Tokenized Stock ETFs for Solana Blinks',
     description:
       'Institutional-grade 1-click tokenized stock and ETF execution protocol for Solana Blinks and Jupiter DEX aggregation.',
-    url: 'https://pocketetf.vercel.app',
+    url: siteOrigin,
     siteName: 'PocketETF Protocol',
     images: [
       {
-        url: '/og-image.png',
-        width: 1200,
-        height: 630,
-        alt: 'PocketETF - Institutional Stock ETFs Native to Solana Blinks',
+        url: `${siteOrigin}/og-image.png`,
+        secureUrl: `${siteOrigin}/og-image.png`,
+        width: 1024,
+        height: 510,
+        type: 'image/png',
+        alt: 'PocketETF - 1-Click Tokenized Stock ETFs Native to Solana Blinks',
       },
     ],
     locale: 'en_US',
@@ -48,8 +56,9 @@ export const metadata: Metadata = {
     title: 'PocketETF | 1-Click Tokenized Stock ETFs for Solana Blinks',
     description:
       'Execute multi-asset stock and index ETFs natively via Solana Blinks and Jupiter DEX aggregation.',
-    images: ['/og-image.png'],
+    images: [`${siteOrigin}/og-image.png`],
     creator: '@PocketETF',
+    site: '@PocketETF',
   },
 };
 
@@ -62,6 +71,23 @@ export default function RootLayout({
     <html lang="en" className="dark">
       <head>
         <link rel="icon" href="/favicon.png" type="image/png" />
+        {/* Explicit OpenGraph & Twitter tags for maximum crawler compatibility */}
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://pocketetf.vercel.app" />
+        <meta property="og:title" content="PocketETF | 1-Click Tokenized Stock ETFs for Solana Blinks" />
+        <meta property="og:description" content="Institutional-grade 1-click tokenized stock and ETF execution protocol for Solana Blinks and Jupiter DEX aggregation." />
+        <meta property="og:image" content="https://pocketetf.vercel.app/og-image.png" />
+        <meta property="og:image:secure_url" content="https://pocketetf.vercel.app/og-image.png" />
+        <meta property="og:image:type" content="image/png" />
+        <meta property="og:image:width" content="1024" />
+        <meta property="og:image:height" content="510" />
+        <meta property="og:image:alt" content="PocketETF - 1-Click Tokenized Stock ETFs Native to Solana Blinks" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:site" content="@PocketETF" />
+        <meta name="twitter:creator" content="@PocketETF" />
+        <meta name="twitter:title" content="PocketETF | 1-Click Tokenized Stock ETFs for Solana Blinks" />
+        <meta name="twitter:description" content="Execute multi-asset stock and index ETFs natively via Solana Blinks and Jupiter DEX aggregation." />
+        <meta name="twitter:image" content="https://pocketetf.vercel.app/og-image.png" />
       </head>
       <body className="min-h-screen flex flex-col bg-[#0A1128] text-slate-100 antialiased selection:bg-[#00D69F] selection:text-black">
         {/* Top Brand Hairline Indicator */}

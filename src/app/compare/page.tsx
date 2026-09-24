@@ -7,6 +7,31 @@ import { FAQSection } from '@/components/FAQSection';
 export const metadata = {
   title: 'PocketETF vs. Traditional Brokerages & EVM Protocols | Comparison',
   description: 'Detailed competitive analysis of PocketETF vs. Robinhood, Schwab, Index Coop, and manual Solana DEX swaps.',
+  openGraph: {
+    title: 'PocketETF vs. Traditional Brokerages & EVM Protocols',
+    description: 'Detailed competitive analysis of PocketETF vs. Robinhood, Schwab, Index Coop, and manual Solana DEX swaps.',
+    url: 'https://pocketetf.vercel.app/compare',
+    siteName: 'PocketETF Protocol',
+    images: [
+      {
+        url: 'https://pocketetf.vercel.app/og-image.png',
+        secureUrl: 'https://pocketetf.vercel.app/og-image.png',
+        width: 1024,
+        height: 510,
+        type: 'image/png',
+        alt: 'PocketETF Protocol Comparison Matrix',
+      },
+    ],
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'PocketETF vs. Traditional Brokerages & EVM Protocols',
+    description: 'Detailed competitive analysis of PocketETF vs. Robinhood, Schwab, Index Coop, and manual Solana DEX swaps.',
+    images: ['https://pocketetf.vercel.app/og-image.png'],
+    site: '@PocketETF',
+    creator: '@PocketETF',
+  },
 };
 
 export default function ComparePage() {

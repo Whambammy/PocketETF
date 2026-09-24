@@ -40,10 +40,11 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
     ? (process.env.NEXT_PUBLIC_BASE_URL.startsWith('http') ? process.env.NEXT_PUBLIC_BASE_URL : `https://${process.env.NEXT_PUBLIC_BASE_URL}`)
     : 'https://pocketetf.vercel.app';
 
-  const iconUrl = etf.iconPath.startsWith('http') ? etf.iconPath : `${baseUrl}${etf.iconPath}`;
+  const previewImage = `${baseUrl}/og-image.png`;
   const queryStr = params.id === 'custom' && sp.toString() ? `?${sp.toString()}` : '';
 
   return {
+    metadataBase: new URL(baseUrl),
     title: `${title} | PocketETF`,
     description,
     openGraph: {
@@ -53,19 +54,23 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
       siteName: 'PocketETF Protocol',
       images: [
         {
-          url: iconUrl,
-          width: 800,
-          height: 800,
-          alt: etf.name,
+          url: previewImage,
+          secureUrl: previewImage,
+          width: 1024,
+          height: 510,
+          type: 'image/png',
+          alt: `${etf.name} - PocketETF Protocol`,
         },
       ],
       type: 'website',
     },
     twitter: {
-      card: 'summary',
+      card: 'summary_large_image',
       title,
       description,
-      images: [iconUrl],
+      images: [previewImage],
+      site: '@PocketETF',
+      creator: '@PocketETF',
     },
     other: {
       'solana-action': `${baseUrl}/api/actions/etf/${etf.id}${queryStr}`,
