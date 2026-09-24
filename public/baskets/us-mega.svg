@@ -23,24 +23,19 @@
   <circle cx="200" cy="190" r="110" fill="none" stroke="url(#neonPurple)" stroke-width="2" stroke-dasharray="6 6" opacity="0.6" />
   <circle cx="200" cy="190" r="85" fill="#1e0c33" stroke="url(#neonPurple)" stroke-width="3" filter="url(#glowMega)" />
 
-  <!-- 3 Pillar Icons / Nodes -->
-  <!-- Top: Apple -->
-  <circle cx="200" cy="120" r="28" fill="#2d124d" stroke="#D946EF" stroke-width="2" />
-  <text x="200" y="126" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="13" fill="#ffffff" text-anchor="middle">AAPL</text>
-  <text x="200" y="139" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="9" fill="#D946EF" text-anchor="middle">34%</text>
+  <!-- 2 Pillar Icons / Nodes -->
+  <!-- Left: Apple -->
+  <circle cx="150" cy="180" r="38" fill="#2d124d" stroke="#D946EF" stroke-width="2.5" />
+  <text x="150" y="176" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="16" fill="#ffffff" text-anchor="middle">AAPL</text>
+  <text x="150" y="195" font-family="system-ui, -apple-system, sans-serif" font-weight="800" font-size="13" fill="#D946EF" text-anchor="middle">50%</text>
 
-  <!-- Left: Microsoft -->
-  <circle cx="140" cy="225" r="28" fill="#2d124d" stroke="#00A4EF" stroke-width="2" />
-  <text x="140" y="231" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="13" fill="#ffffff" text-anchor="middle">MSFT</text>
-  <text x="140" y="244" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="9" fill="#00A4EF" text-anchor="middle">33%</text>
+  <!-- Right: Microsoft -->
+  <circle cx="250" cy="180" r="38" fill="#2d124d" stroke="#00A4EF" stroke-width="2.5" />
+  <text x="250" y="176" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="16" fill="#ffffff" text-anchor="middle">MSFT</text>
+  <text x="250" y="195" font-family="system-ui, -apple-system, sans-serif" font-weight="800" font-size="13" fill="#00A4EF" text-anchor="middle">50%</text>
 
-  <!-- Right: Google -->
-  <circle cx="260" cy="225" r="28" fill="#2d124d" stroke="#4285F4" stroke-width="2" />
-  <text x="260" y="231" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="13" fill="#ffffff" text-anchor="middle">GOOGL</text>
-  <text x="260" y="244" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="9" fill="#4285F4" text-anchor="middle">33%</text>
-
-  <!-- Center Symbol -->
-  <text x="200" y="195" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="18" fill="#ffffff" text-anchor="middle">TITANS</text>
+  <!-- Connecting Bridge Line -->
+  <line x1="188" y1="180" x2="212" y2="180" stroke="url(#neonPurple)" stroke-width="3" stroke-linecap="round" />
 
   <!-- Bottom Badge -->
   <rect x="80" y="325" width="240" height="38" rx="19" fill="#260b40" stroke="url(#neonPurple)" stroke-width="1.5" />

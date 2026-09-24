@@ -33,10 +33,9 @@
   <rect x="120" y="120" width="160" height="160" rx="24" fill="#0d1b17" stroke="url(#neonGreen)" stroke-width="2.5" filter="url(#glow)" />
   <rect x="135" y="135" width="130" height="130" rx="16" fill="#061f18" stroke="#10B981" stroke-width="1" stroke-dasharray="4 2" />
 
-  <!-- Typography & Tickers -->
-  <text x="200" y="172" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="20" fill="#10B981" text-anchor="middle" letter-spacing="1">NVDA 40%</text>
-  <text x="200" y="202" font-family="system-ui, -apple-system, sans-serif" font-weight="800" font-size="16" fill="#06B6D4" text-anchor="middle" letter-spacing="1">TSM 30%</text>
-  <text x="200" y="230" font-family="system-ui, -apple-system, sans-serif" font-weight="800" font-size="16" fill="#EF4444" text-anchor="middle" letter-spacing="1">AMD 30%</text>
+  <!-- Typography & Tickers (2 Assets) -->
+  <text x="200" y="180" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="22" fill="#10B981" text-anchor="middle" letter-spacing="1">NVDA 60%</text>
+  <text x="200" y="218" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="22" fill="#06B6D4" text-anchor="middle" letter-spacing="1">TSM 40%</text>
 
   <!-- PocketETF Badge -->
   <rect x="80" y="325" width="240" height="38" rx="19" fill="#0c231c" stroke="url(#neonGreen)" stroke-width="1.5" />

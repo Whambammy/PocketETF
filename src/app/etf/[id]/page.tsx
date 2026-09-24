@@ -47,7 +47,7 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
     'nasdaq-growth': '/etfs/nasdaq-growth-banner.png',
     'crypto-frontier': '/etfs/crypto-frontier-banner.png',
     'hard-assets': '/etfs/hard-assets-banner.png',
-    'backpack-titans': '/etfs/mag-titans-banner.png',
+    'backpack-titans': '/etfs/backpack-titans-banner.png',
     'ai-chipset': '/etfs/silicon-ai-banner.png',
     'us-mega': '/etfs/mag-titans-banner.png',
     'index-proxy': '/etfs/spy-benchmark-banner.png',

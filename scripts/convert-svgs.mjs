@@ -88,7 +88,7 @@ const ETF_CONFIGS = [
   },
   {
     id: 'crypto-frontier',
-    name: 'Crypto &amp; Infrastructure Frontier',
+    name: 'Solana &amp; DEX Infrastructure',
     symbol: 'PETF-FRONTIER',
     holdings: '50% SOL • 50% JUP',
     tagline: 'High-Throughput L1 &amp; DEX Liquidity Engines',
@@ -99,14 +99,25 @@ const ETF_CONFIGS = [
   },
   {
     id: 'hard-assets',
-    name: 'Macro Hard Assets &amp; Gold',
+    name: 'Gold &amp; US Treasuries',
     symbol: 'PETF-GOLD',
-    holdings: '100% Tokenized Gold Proxy',
-    tagline: 'Inflation Hedge &amp; Sound Capital Store',
+    holdings: '50% GLD • 50% TLT',
+    tagline: 'Inflation Hedge &amp; Risk-Off Wealth Preservation',
     color1: '#EAB308',
     color2: '#CA8A04',
     bg: '#171203',
     svgFile: 'hard-assets.svg',
+  },
+  {
+    id: 'backpack-titans',
+    name: 'Backpack Equity Titans',
+    symbol: 'PETF-BPK',
+    holdings: '50% NVDA • 50% MSTR',
+    tagline: '1:1 Regulated Custody Tokenized Stocks',
+    color1: '#E11D48',
+    color2: '#6366F1',
+    bg: '#1a0614',
+    svgFile: 'mag-titans.svg',
   },
   {
     id: 'custom',
@@ -128,71 +139,78 @@ function generateWideBanners() {
     if (fs.existsSync(svgBadgePath)) {
       badgeContent = fs.readFileSync(svgBadgePath, 'utf8')
         .replace(/<\?xml.*?\?>/g, '')
-        .replace(/width="100%" height="100%"/g, 'width="420" height="420"')
-        .replace(/<svg /, '<svg x="70" y="105" ');
+        .replace(/width="100%" height="100%"/g, 'width="390" height="390"')
+        .replace(/<svg /, '<svg x="55" y="115" ');
     }
+
+    const titleFontSize = cfg.name.length > 24 ? '44' : '50';
 
     const bannerSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
   <defs>
     <linearGradient id="bgGrad_${cfg.id}" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#060A17" />
+      <stop offset="0%" stop-color="#050814" />
       <stop offset="50%" stop-color="${cfg.bg}" />
-      <stop offset="100%" stop-color="#060A17" />
+      <stop offset="100%" stop-color="#02040a" />
     </linearGradient>
     <linearGradient id="brandGrad_${cfg.id}" x1="0%" y1="0%" x2="100%" y2="0%">
       <stop offset="0%" stop-color="${cfg.color1}" />
       <stop offset="100%" stop-color="${cfg.color2}" />
     </linearGradient>
+    <filter id="glowOrb_${cfg.id}" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="60" result="blur" />
+    </filter>
   </defs>
 
-  <!-- Background -->
+  <!-- Deep Background -->
   <rect width="1200" height="630" fill="url(#bgGrad_${cfg.id})" />
 
-  <!-- Outer Border -->
-  <rect x="16" y="16" width="1168" height="598" rx="24" fill="none" stroke="${cfg.color1}" stroke-width="1.5" opacity="0.3" />
+  <!-- Ambient Glowing Orb behind badge -->
+  <circle cx="250" cy="310" r="220" fill="${cfg.color1}" opacity="0.14" filter="url(#glowOrb_${cfg.id})" />
 
-  <!-- Top Hairline -->
-  <rect x="16" y="16" width="1168" height="4" fill="url(#brandGrad_${cfg.id})" />
+  <!-- Outer Border Frame -->
+  <rect x="14" y="14" width="1172" height="602" rx="26" fill="none" stroke="${cfg.color1}" stroke-width="2" opacity="0.35" />
+
+  <!-- Top Hairline Accent -->
+  <rect x="14" y="14" width="1172" height="6" rx="3" fill="url(#brandGrad_${cfg.id})" />
 
   <!-- Embedded Left Badge -->
   ${badgeContent}
 
   <!-- Right Information Column -->
-  <g transform="translate(540, 0)">
-    <!-- Header Brand Pill -->
-    <rect x="0" y="125" width="230" height="32" rx="16" fill="${cfg.color1}" fill-opacity="0.15" stroke="${cfg.color1}" stroke-width="1" stroke-opacity="0.4" />
-    <text x="115" y="146" font-family="system-ui, -apple-system, sans-serif" font-weight="800" font-size="12" fill="${cfg.color1}" text-anchor="middle" letter-spacing="1.5">SOLANA BLINK ACTION</text>
+  <g transform="translate(485, 0)">
+    <!-- Header Pill Row -->
+    <rect x="0" y="68" width="240" height="40" rx="20" fill="${cfg.color1}" fill-opacity="0.18" stroke="${cfg.color1}" stroke-width="1.5" stroke-opacity="0.5" />
+    <text x="120" y="93" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="14" fill="${cfg.color1}" text-anchor="middle" letter-spacing="1.5">SOLANA BLINK ACTION</text>
 
-    <!-- Symbol Tag -->
-    <text x="250" y="147" font-family="monospace" font-weight="700" font-size="13" fill="#64748b">${cfg.symbol}</text>
+    <!-- Symbol Pill -->
+    <rect x="252" y="68" width="150" height="40" rx="20" fill="#0f172a" stroke="#334155" stroke-width="1.5" />
+    <text x="327" y="93" font-family="monospace" font-weight="800" font-size="16" fill="#F8FAFC" text-anchor="middle">${cfg.symbol}</text>
 
-    <!-- Main Title -->
-    <text x="0" y="215" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="38" fill="#ffffff" letter-spacing="-0.5">${cfg.name}</text>
+    <!-- Main Title (Giant & Bold) -->
+    <text x="0" y="172" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="${titleFontSize}" fill="#ffffff" letter-spacing="-1">${cfg.name}</text>
 
-    <!-- Tagline -->
-    <text x="0" y="260" font-family="system-ui, -apple-system, sans-serif" font-weight="600" font-size="19" fill="#94a3b8">${cfg.tagline}</text>
+    <!-- Tagline (Subhead) -->
+    <text x="0" y="215" font-family="system-ui, -apple-system, sans-serif" font-weight="600" font-size="22" fill="#94A3B8">${cfg.tagline}</text>
 
-    <!-- Holdings Box -->
-    <rect x="0" y="300" width="580" height="76" rx="16" fill="#030712" fill-opacity="0.7" stroke="#ffffff" stroke-width="1" stroke-opacity="0.1" />
-    <text x="24" y="332" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="12" fill="#64748b" letter-spacing="1">TARGET ALLOCATION</text>
-    <text x="24" y="360" font-family="monospace" font-weight="800" font-size="20" fill="${cfg.color1}">${cfg.holdings}</text>
+    <!-- Target Allocation Box (Hero Element with Giant Font) -->
+    <rect x="0" y="250" width="650" height="142" rx="20" fill="#020617" fill-opacity="0.9" stroke="${cfg.color1}" stroke-width="2" stroke-opacity="0.4" />
+    <text x="28" y="292" font-family="system-ui, -apple-system, sans-serif" font-weight="800" font-size="15" fill="#64748B" letter-spacing="2">TARGET ALLOCATION</text>
+    <text x="28" y="356" font-family="monospace" font-weight="900" font-size="44" fill="${cfg.color1}">${cfg.holdings}</text>
 
-    <!-- Feature Indicators -->
-    <g transform="translate(0, 415)">
-      <circle cx="8" cy="8" r="4" fill="#14F195" />
-      <text x="22" y="12" font-family="monospace" font-weight="700" font-size="13" fill="#cbd5e1">1-Click Execution via Jupiter DEX</text>
+    <!-- Execution Badges -->
+    <g transform="translate(0, 420)">
+      <rect x="0" y="0" width="295" height="46" rx="14" fill="#00D69F" fill-opacity="0.12" stroke="#00D69F" stroke-width="1.5" stroke-opacity="0.4" />
+      <text x="20" y="29" font-family="system-ui, -apple-system, sans-serif" font-weight="800" font-size="16" fill="#00D69F">⚡ 1-Click Jupiter DEX</text>
 
-      <circle cx="8" cy="38" r="4" fill="#38BDF8" />
-      <text x="22" y="42" font-family="monospace" font-weight="700" font-size="13" fill="#cbd5e1">Pyth Hermes v2 Sub-400ms NAV</text>
-
-      <circle cx="8" cy="68" r="4" fill="#F59E0B" />
-      <text x="22" y="72" font-family="monospace" font-weight="700" font-size="13" fill="#cbd5e1">Atomic Versioned Transaction (v0)</text>
+      <rect x="310" y="0" width="340" height="46" rx="14" fill="#38BDF8" fill-opacity="0.12" stroke="#38BDF8" stroke-width="1.5" stroke-opacity="0.4" />
+      <text x="330" y="29" font-family="system-ui, -apple-system, sans-serif" font-weight="800" font-size="16" fill="#38BDF8">🔮 Pyth Hermes v2 Sub-400ms</text>
     </g>
   </g>
 
   <!-- Bottom Brand Watermark -->
-  <text x="1140" y="580" font-family="system-ui, -apple-system, sans-serif" font-weight="800" font-size="15" fill="#475569" text-anchor="end" letter-spacing="2">POCKETETF PROTOCOL • SOLANA MAINNET</text>
+  <text x="1140" y="582" font-family="system-ui, -apple-system, sans-serif" font-weight="800" font-size="18" fill="#64748B" text-anchor="end" letter-spacing="2">POCKETETF PROTOCOL • SOLANA MAINNET</text>
 </svg>`;
+
 
     const bannerPngPath = path.join(ETFS_DIR, `${cfg.id}-banner.png`);
     try {

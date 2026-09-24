@@ -16,7 +16,7 @@
   <circle cx="200" cy="180" r="75" fill="#0c1f36" stroke="url(#neonCyanBlue)" stroke-width="2.5" />
   <text x="200" y="165" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="24" fill="#00F0FF" text-anchor="middle">NASDAQ-100</text>
   <text x="200" y="190" font-family="system-ui, -apple-system, sans-serif" font-weight="800" font-size="14" fill="#ffffff" text-anchor="middle">GROWTH TITANS</text>
-  <text x="200" y="212" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="11" fill="#818CF8" text-anchor="middle">50% QQQ • 25% AMZN • 25% META</text>
+  <text x="200" y="214" font-family="system-ui, -apple-system, sans-serif" font-weight="800" font-size="13" fill="#818CF8" text-anchor="middle">60% QQQ • 40% AMZN</text>
 
   <rect x="70" y="325" width="260" height="38" rx="19" fill="#0c2038" stroke="url(#neonCyanBlue)" stroke-width="1.5" />
   <text x="200" y="349" font-family="system-ui, -apple-system, sans-serif" font-weight="800" font-size="13" fill="#ffffff" text-anchor="middle" letter-spacing="2">POCKETETF • NASDAQ GROWTH</text>
