@@ -21,12 +21,14 @@ import { ETFDefinition } from '@/lib/constants';
 import { DonutChart } from '@/components/DonutChart';
 import { PythInspectorModal } from '@/components/PythInspectorModal';
 import { MobileQRModal } from '@/components/MobileQRModal';
+import { copyToClipboard } from '@/lib/clipboard';
 
 interface Props {
   etf: ETFDefinition;
+  queryStr?: string;
 }
 
-export default function ETFDetailClient({ etf }: Props) {
+export default function ETFDetailClient({ etf, queryStr = '' }: Props) {
   const [amount, setAmount] = useState<number>(10);
   const [customAmount, setCustomAmount] = useState<string>('');
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
@@ -42,6 +44,7 @@ export default function ETFDetailClient({ etf }: Props) {
   const [copiedLink, setCopiedLink] = useState<boolean>(false);
   const [copiedEndpoint, setCopiedEndpoint] = useState<boolean>(false);
   const [origin, setOrigin] = useState<string>('https://pocketetf.vercel.app');
+  const [activeQuery, setActiveQuery] = useState<string>(queryStr || '');
   const [isPythModalOpen, setIsPythModalOpen] = useState<boolean>(false);
   const [isMobileQrOpen, setIsMobileQrOpen] = useState<boolean>(false);
   const [prices, setPrices] = useState<Record<string, any>>({});
@@ -49,6 +52,9 @@ export default function ETFDetailClient({ etf }: Props) {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       setOrigin(window.location.origin);
+      if (window.location.search) {
+        setActiveQuery(window.location.search);
+      }
       if ((window as any).solana?.isConnected) {
         const addr = (window as any).solana.publicKey?.toString();
         if (addr) {
@@ -194,12 +200,13 @@ export default function ETFDetailClient({ etf }: Props) {
     }
   };
 
-  const currentSearch = typeof window !== 'undefined' ? window.location.search : '';
+  const effectiveQuery = activeQuery || queryStr || (typeof window !== 'undefined' ? window.location.search : '');
   const publicOrigin = origin.includes('localhost') ? 'https://pocketetf.vercel.app' : origin;
-  const sharePageUrl = etf.id === 'custom' ? `${publicOrigin}/etf/custom${currentSearch}` : `${publicOrigin}/etf/${etf.id}`;
+  const sharePageUrl = etf.id === 'custom' ? `${publicOrigin}/etf/custom${effectiveQuery}` : `${publicOrigin}/etf/${etf.id}`;
+  const shareTweetLead = `Invest in ${etf.name} (${etf.symbol}) with 1-click on @solana via @PocketETF:`;
   const shareTweetUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
-    `Invest in ${etf.name} (${etf.symbol}) with 1-click on @solana via @PocketETF!\n\n${sharePageUrl}\n\n#Solana #Blinks #PocketETF`
-  )}`;
+    shareTweetLead
+  )}&url=${encodeURIComponent(sharePageUrl)}&hashtags=Solana,Blinks,PocketETF`;
 
   return (
     <div className="min-h-screen bg-[#0A1128] text-white">
@@ -361,9 +368,11 @@ export default function ETFDetailClient({ etf }: Props) {
                 <button
                   type="button"
                   onClick={async () => {
-                    await navigator.clipboard.writeText(sharePageUrl);
-                    setCopiedLink(true);
-                    setTimeout(() => setCopiedLink(false), 2500);
+                    const success = await copyToClipboard(sharePageUrl);
+                    if (success) {
+                      setCopiedLink(true);
+                      setTimeout(() => setCopiedLink(false), 2500);
+                    }
                   }}
                   className="px-4 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] border border-white/10 text-white font-semibold text-xs transition-all flex items-center gap-2"
                 >

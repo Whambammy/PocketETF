@@ -26,6 +26,7 @@ export async function OPTIONS() {
 }
 
 import { resolveETF } from '@/lib/etfResolver';
+import { resolveDirectImageUrl } from '@/lib/imageResolver';
 export { resolveETF };
 
 /**
@@ -68,10 +69,12 @@ export async function GET(
       baseOrigin = `${proto}://${host}`;
     }
 
-    const absoluteIconUrl =
+    const rawIconUrl =
       etf.iconPath.startsWith('http://') || etf.iconPath.startsWith('https://')
         ? etf.iconPath
         : `${baseOrigin}${etf.iconPath.startsWith('/') ? '' : '/'}${etf.iconPath}`;
+
+    const absoluteIconUrl = await resolveDirectImageUrl(rawIconUrl);
 
     const baseActionHref = `${baseOrigin}${url.pathname}${url.search}`;
 

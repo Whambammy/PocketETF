@@ -32,6 +32,7 @@ import { CURATED_ETFS, ETFDefinition, TOKEN_CATALOG } from '@/lib/constants';
 import { ComparisonMatrix } from '@/components/ComparisonMatrix';
 import { FAQSection } from '@/components/FAQSection';
 import { MobileQRModal } from '@/components/MobileQRModal';
+import { copyToClipboard } from '@/lib/clipboard';
 
 export default function HomePage() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -151,10 +152,13 @@ export default function HomePage() {
   };
 
   const handleCopyBlink = async (id: string) => {
-    const shareUrl = `${origin}/etf/${id}`;
-    await navigator.clipboard.writeText(shareUrl);
-    setCopiedId(id);
-    setTimeout(() => setCopiedId(null), 2500);
+    const publicOrigin = origin.includes('localhost') ? 'https://pocketetf.vercel.app' : origin;
+    const shareUrl = `${publicOrigin}/etf/${id}`;
+    const success = await copyToClipboard(shareUrl);
+    if (success) {
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 2500);
+    }
   };
 
   const handleLiveBuy = async (etfId: string) => {
@@ -689,7 +693,7 @@ export default function HomePage() {
                         setSelectedQrEtf({
                           id: etf.id,
                           name: etf.name,
-                          url: `${origin}/etf/${etf.id}`,
+                          url: `${origin.includes('localhost') ? 'https://pocketetf.vercel.app' : origin}/etf/${etf.id}`,
                         })
                       }
                       className="py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-[10px] font-semibold text-[#00D69F] hover:text-white transition-all flex items-center justify-center gap-1 font-mono"
@@ -701,8 +705,10 @@ export default function HomePage() {
 
                     <a
                       href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(
-                        `Invest in ${etf.name} with 1-click on @solana via @PocketETF!\n\n${origin}/etf/${etf.id}\n\n#Solana #Blinks #PocketETF`
-                      )}`}
+                        `Invest in ${etf.name} with 1-click on @solana via @PocketETF:`
+                      )}&url=${encodeURIComponent(
+                        `${origin.includes('localhost') ? 'https://pocketetf.vercel.app' : origin}/etf/${etf.id}`
+                      )}&hashtags=Solana,Blinks,PocketETF`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="py-1.5 rounded-lg bg-[#146EF5]/15 hover:bg-[#146EF5]/25 border border-[#146EF5]/30 text-[10px] font-semibold text-blue-300 hover:text-white transition-all flex items-center justify-center gap-1 font-mono"

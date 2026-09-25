@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { resolveETF, safeDecode } from '@/lib/etfResolver';
+import { resolveDirectImageUrl } from '@/lib/imageResolver';
 import ETFDetailClient from './ETFDetailClient';
 
 interface Props {
@@ -72,14 +73,15 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
   if (params.id === 'custom') {
     const rawCustomImg = sp.get('image');
     let customImg = rawCustomImg ? safeDecode(rawCustomImg).trim() : null;
-    if (customImg && !customImg.startsWith('/') && !customImg.startsWith('http://') && !customImg.startsWith('https://')) {
-      customImg = `https://${customImg}`;
-    }
-
-    if (customImg && (customImg.startsWith('http://') || customImg.startsWith('https://'))) {
-      previewImage = customImg;
-    } else if (customImg && customImg.startsWith('/')) {
-      previewImage = `${baseUrl}${customImg}`;
+    if (customImg) {
+      const resolved = await resolveDirectImageUrl(customImg);
+      if (resolved && (resolved.startsWith('http://') || resolved.startsWith('https://'))) {
+        previewImage = resolved;
+      } else if (resolved && resolved.startsWith('/')) {
+        previewImage = `${baseUrl}${resolved}`;
+      } else {
+        previewImage = `${baseUrl}/etfs/custom-banner.png`;
+      }
     } else {
       previewImage = `${baseUrl}/etfs/custom-banner.png`;
     }
@@ -126,13 +128,18 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
   };
 }
 
-export default function ETFPage({ params, searchParams }: Props) {
+export default async function ETFPage({ params, searchParams }: Props) {
   const sp = buildSearchParams(searchParams);
   const etf = resolveETF(params.id, sp);
   if (!etf) {
     notFound();
   }
 
-  return <ETFDetailClient etf={etf} />;
-}
+  // Auto-resolve indirect image URLs (e.g. Postimages) to direct raw image for clean client display
+  if (params.id === 'custom' && etf.iconPath) {
+    etf.iconPath = await resolveDirectImageUrl(etf.iconPath);
+  }
 
+  const queryStr = sp.toString() ? `?${sp.toString()}` : '';
+  return <ETFDetailClient etf={etf} queryStr={queryStr} />;
+}

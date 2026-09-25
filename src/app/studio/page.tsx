@@ -29,6 +29,7 @@ import {
 import { TOKEN_CATALOG, MAX_ETF_ASSETS, ETFAsset, getDEXConflictStatus } from '@/lib/constants';
 import { DonutChart } from '@/components/DonutChart';
 import { MobileQRModal } from '@/components/MobileQRModal';
+import { copyToClipboard } from '@/lib/clipboard';
 
 interface ActiveStock {
   ticker: string;
@@ -111,6 +112,29 @@ export default function StudioPage() {
     const interval = setInterval(fetchLivePrices, 15000);
     return () => clearInterval(interval);
   }, []);
+
+  // Auto-resolve indirect image links (e.g. Postimages gallery URLs) to raw direct image assets
+  useEffect(() => {
+    let active = true;
+    const trimmed = customImageUrl.trim();
+    if (
+      trimmed &&
+      (trimmed.includes('postimg.cc/') || trimmed.includes('postimages.org/')) &&
+      !trimmed.includes('i.postimg.cc/')
+    ) {
+      fetch(`/api/resolve-image?url=${encodeURIComponent(trimmed)}`)
+        .then((r) => r.json())
+        .then((data) => {
+          if (active && data?.directUrl && data.directUrl !== trimmed) {
+            setCustomImageUrl(data.directUrl);
+          }
+        })
+        .catch(() => {});
+    }
+    return () => {
+      active = false;
+    };
+  }, [customImageUrl]);
 
   const totalWeight = activeStocks.reduce((sum, s) => sum + s.weight, 0);
 
@@ -277,20 +301,37 @@ export default function StudioPage() {
       ? cleanCustomImg
       : selectedBadge;
   const imageParam = effectiveImage ? `&image=${encodeURIComponent(effectiveImage)}` : '';
+  const isDefaultDescription =
+    !etfDescription.trim() ||
+    etfDescription.startsWith('1-Click execution for') ||
+    etfDescription ===
+      'Custom user-generated multi-asset equity ETF executed atomically via PocketETF and Jupiter DEX aggregation.';
+
+  const descParam = isDefaultDescription
+    ? ''
+    : `&description=${encodeURIComponent(etfDescription.trim()).replace(/\(/g, '%28').replace(/\)/g, '%29')}`;
+
   const queryParams = `assets=${encodeURIComponent(assetQuery)}&name=${encodeURIComponent(
-    etfName
-  )}&description=${encodeURIComponent(etfDescription)}${imageParam}`;
+    etfName.trim()
+  )}${descParam}${imageParam}`;
   const actionUrl = `${origin}/api/actions/etf/custom?${queryParams}`;
   const shareUrl = `${origin}/etf/custom?${queryParams}`;
   const publicOrigin = origin.includes('localhost') ? 'https://pocketetf.vercel.app' : origin;
   const publicShareUrl = `${publicOrigin}/etf/custom?${queryParams}`;
-  const tweetText = `Check out my custom tokenized stock ETF "${etfName}" on Solana! Execute 1-click with @JupiterExchange & @PocketETF:\n\n${publicShareUrl}\n\n#Solana #Blinks #PocketETF`;
-  const twitterIntentUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}`;
+
+  // Twitter Official Web Intent: pass URL via &url= so Twitter shortens it to 23 chars
+  // and keeps tweet well within the 280-character limit, preventing the "Post" button from being disabled.
+  const tweetLead = `Check out my custom tokenized stock ETF "${etfName}" on @Solana! Execute 1-click via @JupiterExchange & @PocketETF:`;
+  const twitterIntentUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
+    tweetLead
+  )}&url=${encodeURIComponent(publicShareUrl)}&hashtags=Solana,Blinks,PocketETF`;
 
   const handleCopyLink = async () => {
-    await navigator.clipboard.writeText(shareUrl);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2500);
+    const success = await copyToClipboard(shareUrl);
+    if (success) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    }
   };
 
   const categories = [
@@ -505,7 +546,7 @@ export default function StudioPage() {
                       />
                     </div>
                     <p className="text-[11px] text-slate-400 font-mono">
-                      Direct image links are saved directly in your share link with zero backend. You can host any image for free on{' '}
+                      Auto-resolves Postimages &amp; Imgur links into direct badges with zero backend. For instant rendering, paste image links from{' '}
                       <a
                         href="https://postimages.org"
                         target="_blank"
