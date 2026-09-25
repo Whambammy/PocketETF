@@ -37,7 +37,7 @@ You can verify the entire protocol live on Solana Mainnet in under 60 seconds:
    * Pick up to 3 stocks from the 25+ verified token catalog (or enter any SPL token mint).
    * Adjust allocation weights with the interactive donut chart.
    * Paste any custom image badge (supports Postimages, Imgur, or preset badges).
-   * Click **Post on 𝕏** or **Copy Share Link**—the entire portfolio thesis is encoded URL-safe with zero backend required!
+   * Click **Post on 𝕏** or **Copy Share Link**: the entire portfolio thesis is encoded URL-safe with zero backend required!
 
 4. **Verify Automated Testing & Guardrails**:
    * Run `npm test` locally to execute the automated 82-test suite verifying the 1232B MTU packet limit guard, zero-dust integer base unit math, zero-gas balance checks, and Pyth oracle confidence intervals.
@@ -50,7 +50,7 @@ Traditional ETF investing on Solana suffers from severe friction: purchasing mul
 
 **PocketETF solves this end-to-end**:
 * **1-Click Social Execution**: Shareable directly inside Twitter/X feeds, Telegram, Discord, and Phantom/Backpack wallets via the official Solana Actions & Blinks standard.
-* **Single Atomic Transaction**: Swaps USDC into up to 3 diversified assets in a single `VersionedTransaction (v0)`. Either all swaps execute or none do—eliminating partial portfolio drift.
+* **Single Atomic Transaction**: Swaps USDC into up to 3 diversified assets in a single `VersionedTransaction (v0)`. Either all swaps execute or none do, eliminating partial portfolio drift.
 * **Creator Studio**: Enables anyone to construct a custom stock ETF, adjust weights with interactive dynamic donut charts, and generate an instant Blink Action URL with rich social preview cards.
 * **Real-Time Oracles**: Powered by Pyth Network Hermes v2 with sub-second price streaming and institutional confidence intervals.
 * **Zero-Backend Architecture**: 100% decentralized, serverless, and non-custodial. Custom portfolios are serialized into shareable query states.
@@ -134,12 +134,12 @@ PocketETF deeply integrates the **Pyth Network Hermes v2 Oracle Engine** to prov
 | Dimension | PocketETF (Solana) | Traditional Brokerages (Robinhood/Schwab) | EVM Index Protocols (Index Coop) | Manual DEX Swaps |
 | :--- | :--- | :--- | :--- | :--- |
 | **Execution Friction** | **1 Click (Social Feed)** | Account signup, KYC, ACH deposit | Multi-step approval + swap | 3+ separate transactions |
-| **Settlement Speed** | **< 400ms (Atomic)** | T+1 business days | 12–15 seconds | ~1.2 seconds (sequential) |
-| **Transaction Fees** | **< $0.001 (Solana)** | Hidden PFOF, exchange spreads | $15–$50+ (Ethereum L1 gas) | 3x base fees + drift |
+| **Settlement Speed** | **< 400ms (Atomic)** | T+1 business days | 12-15 seconds | ~1.2 seconds (sequential) |
+| **Transaction Fees** | **< $0.001 (Solana)** | Hidden PFOF, exchange spreads | $15-$50+ (Ethereum L1 gas) | 3x base fees + drift |
 | **Asset Self-Custody** | **100% Non-Custodial** | 0% (Custodial brokerage) | 100% Non-Custodial | 100% Non-Custodial |
 | **Social Distribution** | **Native Blinks (X, TG)** | None (walled garden) | None (dApp connection only) | None |
 | **Portfolio Drift Risk** | **0% (Atomic v0 Tx)** | High (manual rebalancing) | Low | High (partial execution fails) |
-| **Trading Hours** | **24/7/365 On-Chain** | 9:30 AM – 4:00 PM EST | 24/7/365 | 24/7/365 |
+| **Trading Hours** | **24/7/365 On-Chain** | 9:30 AM - 4:00 PM EST | 24/7/365 | 24/7/365 |
 
 ---
 
