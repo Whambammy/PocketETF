@@ -261,39 +261,6 @@ export default function HomePage() {
     }
   };
 
-  const handleSimulateSwap = async (etfId: string) => {
-    setSimulationState((prev) => ({
-      ...prev,
-      [etfId]: { loading: true, error: undefined, result: undefined },
-    }));
-
-    try {
-      const amount = selectedAmounts[etfId] || 50;
-      const testAccount = '11111111111111111111111111111111';
-      const res = await fetch(`/api/actions/etf/${etfId}?amount=${amount}&simulate=true`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ account: testAccount }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.message || 'Simulation failed');
-      }
-
-      setSimulationState((prev) => ({
-        ...prev,
-        [etfId]: { loading: false, result: data },
-      }));
-    } catch (err: unknown) {
-      const error = err as Error;
-      setSimulationState((prev) => ({
-        ...prev,
-        [etfId]: { loading: false, error: error.message },
-      }));
-    }
-  };
-
   const categories = ['All', 'AI & Semiconductors', 'Mega-Cap Tech', 'Broad Market', 'Growth & Commodities', 'Web3'];
 
   const filteredETFs = Object.values(CURATED_ETFS).filter((etf) => {

@@ -5,15 +5,41 @@
 
 [![Solana Actions](https://img.shields.io/badge/Solana%20Actions-v2.1.3-14F195?style=flat-square&logo=solana)](https://actions.dialect.to)
 [![Jupiter DEX](https://img.shields.io/badge/DEX%20Routing-Jupiter%20v6-00D69F?style=flat-square)](https://jup.ag)
+[![Pyth Network](https://img.shields.io/badge/Oracles-Pyth%20Hermes%20v2-7B3FE4?style=flat-square)](https://pyth.network)
 [![Next.js](https://img.shields.io/badge/Next.js-14.2%20App%20Router-000000?style=flat-square&logo=nextdotjs)](https://nextjs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178C6?style=flat-square&logo=typescript)](https://www.typescriptlang.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
 
 **PocketETF** is a decentralized execution protocol that bundles diversified tokenized US stocks, S&P 500 benchmarks, and commodities into a single atomic transaction native to **Solana Actions & Blinks**.
 
-[Explore Curated ETFs](https://pocketetf.vercel.app) • [Interactive Blink Simulator](https://pocketetf.vercel.app/studio) • [Compare vs. Traditional](https://pocketetf.vercel.app/compare)
+[Explore Curated ETFs](https://pocketetf.vercel.app) • [Creator Studio](https://pocketetf.vercel.app/studio) • [Compare vs. Traditional](https://pocketetf.vercel.app/compare)
 
 </div>
+
+---
+
+## 🏆 Hackathon Quick-Testing Guide (60-Second Walkthrough for Judges)
+
+If you are evaluating this submission, you can verify the entire protocol live on Solana Mainnet in under 60 seconds:
+
+1. **Live 1-Click Execution (Desktop or Mobile)**:
+   * Visit [`https://pocketetf.vercel.app/etf/silicon-ai`](https://pocketetf.vercel.app/etf/silicon-ai).
+   * **Desktop**: Connect your Phantom or Backpack wallet, select a dollar tier (e.g. $10 USDC), and click **1-Click Buy**. PocketETF checks your on-chain balance, queries Jupiter v6 for optimal routes, compiles a single atomic `VersionedTransaction (v0)`, and prompts your wallet for 1-click execution.
+   * **Mobile-First**: Click **Trade on Mobile (QR)** to open an authentic QR modal. Scanning with Phantom or Backpack Mobile opens the Action URL directly inside your phone's wallet browser.
+
+2. **Inspect Pyth Hermes v2 Oracles & Confidence Bounds**:
+   * On any ETF card or detail page, click the **Pyth Hermes Feeds (±σ)** pill badge.
+   * An interactive modal displays real-time price feeds, confidence intervals ($\pm\sigma$), latency, and Pyth Feed IDs directly from Pyth Hermes REST API.
+
+3. **Compose a Custom ETF in Creator Studio**:
+   * Navigate to [`/studio`](https://pocketetf.vercel.app/studio).
+   * Pick up to 3 stocks from the 25+ verified token catalog (or enter any SPL token mint).
+   * Adjust allocation weights with the interactive donut chart.
+   * Paste any custom image badge (supports Postimages, Imgur, or preset badges).
+   * Click **Post on 𝕏** or **Copy Share Link**—the entire portfolio thesis is encoded URL-safe with zero backend required!
+
+4. **Verify Automated Testing & Guardrails**:
+   * Run `npm test` locally to execute the automated 82-test suite verifying the 1232B MTU packet limit guard, zero-dust integer base unit math, zero-gas balance checks, and Pyth oracle confidence intervals.
 
 ---
 
@@ -24,8 +50,9 @@ Traditional ETF investing on Solana suffers from severe friction: purchasing mul
 **PocketETF solves this end-to-end**:
 * **1-Click Social Execution**: Shareable directly inside Twitter/X feeds, Telegram, Discord, and Phantom/Backpack wallets via the official Solana Actions & Blinks standard.
 * **Single Atomic Transaction**: Swaps USDC into up to 3 diversified assets in a single `VersionedTransaction (v0)`. Either all swaps execute or none do—eliminating partial portfolio drift.
-* **Creator Studio**: Enables anyone to construct a custom stock ETF, adjust weights with interactive dynamic donut charts, and generate an instant Blink Action URL.
-* **Real-Time Oracles**: Powered by Pyth Network and Jupiter on-chain AMM feeds.
+* **Creator Studio**: Enables anyone to construct a custom stock ETF, adjust weights with interactive dynamic donut charts, and generate an instant Blink Action URL with rich social preview cards.
+* **Real-Time Oracles**: Powered by Pyth Network Hermes v2 with sub-second price streaming and institutional confidence intervals.
+* **Zero-Backend Architecture**: 100% decentralized, serverless, and non-custodial. Custom portfolios are serialized into shareable query states.
 
 ---
 
@@ -53,7 +80,7 @@ Executing multi-token swaps inside a single Solana transaction presents hard tec
                                        ▼
                   ┌─────────────────────────────────────────┐
                   │        Solana Runtime & DEX AMMs        │
-                  │    [NVDA 40%]   [TSM 30%]   [AMD 30%]   │
+                  │    [NVDA 60%]          [TSM 40%]        │
                   └─────────────────────────────────────────┘
 ```
 
@@ -70,8 +97,8 @@ Executing multi-token swaps inside a single Solana transaction presents hard tec
 ### 4. Zero-Dust Atomic Allocation Math
 * Dollar allocations are computed in integer base units (e.g. 6 decimals for USDC = $1.00 = `1,000,000` base units). Truncation dust is tracked and assigned to the primary asset so 100% of input capital is deployed.
 
-### 5. Multi-RPC Failover Rotation
-* High-availability RPC cluster rotates between primary endpoints (Helius, QuickNode, Solana Mainnet-Beta) with automated retry on HTTP 429 rate limits.
+### 5. Zero-Gas Wallet Protection
+* Before assembling transactions, PocketETF verifies that the user's connected wallet has sufficient on-chain USDC to cover the swap, preventing users from wasting network gas on failed executions.
 
 ---
 
@@ -152,8 +179,8 @@ PocketETF strictly follows the official [Solana Actions Spec v2.1.3](https://doc
 
 ### 1. Clone & Install Dependencies
 ```bash
-git clone https://github.com/Whambammy/PocketEFT.git
-cd PocketEFT
+git clone https://github.com/Whambammy/PocketETF.git
+cd PocketETF
 npm install
 ```
 
@@ -180,14 +207,14 @@ npm start
 ## 🧪 Verification & Testing Suite
 
 ```bash
-# Run automated 21-point protocol audit (CORS, actions.json, Solana spec, price feeds)
-npm run audit
+# Run complete automated 82-test protocol test suite
+npm test
 
 # Run TypeScript compilation check
 npx tsc --noEmit
 
-# Test zero-dust integer math allocations
-npm run test:dust
+# Run automated protocol audit
+npm run audit
 ```
 
 ---
