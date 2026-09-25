@@ -105,6 +105,20 @@ export function HeaderNav() {
             <PieChart className="w-3.5 h-3.5 text-[#00D69F]" />
             <span>My Portfolio</span>
           </button>
+
+          {/* Official X / Twitter Link */}
+          <a
+            href="https://x.com/PocketETF"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white transition-colors border border-white/10 flex items-center justify-center"
+            title="Follow @PocketETF on X"
+            aria-label="PocketETF on X"
+          >
+            <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+            </svg>
+          </a>
         </nav>
 
         {/* Mobile Header Controls (< sm) */}
@@ -185,6 +199,25 @@ export function HeaderNav() {
               <div className="text-[11px] text-slate-300 font-mono">Build & mint 1-click social ETFs</div>
             </div>
           </Link>
+
+          {/* Official X Link in Mobile Drawer */}
+          <a
+            href="https://x.com/PocketETF"
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => setMobileMenuOpen(false)}
+            className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/5 text-slate-200 active:bg-white/10 transition-colors"
+          >
+            <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center shrink-0 text-white">
+              <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+              </svg>
+            </div>
+            <div>
+              <div className="text-sm font-bold text-white">Follow @PocketETF</div>
+              <div className="text-[11px] text-slate-400 font-mono">Official updates &amp; drops on 𝕏</div>
+            </div>
+          </a>
 
           {/* Status and Ecosystem Links Bar */}
           <div className="pt-2 border-t border-white/[0.08] flex items-center justify-between text-xs font-mono">

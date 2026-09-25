@@ -1,86 +1,74 @@
-# PocketETF — The 1-Click Social Index Protocol on Solana
+# PocketETF — 1-Click Social Index Protocol on Solana
 
 > **Wall Street indices, sized for your pocket and native to your social timeline.**
 
----
-
-## 📌 Short Pitch
-**PocketETF** turns any investment thesis into a tradeable, fractional equity index fund discovered and purchased directly inside social feeds in under 400ms. Powered by Solana Actions, Blinks, Pyth oracles, and Jupiter, PocketETF bridges social discovery and instant on-chain execution.
-
----
-
-## 🚨 The Problem
-Millions of retail investors discover stock ideas on X, Reddit, and Discord, but execution is broken:
-* **Context Switching:** Acting on an analyst's thesis requires leaving feeds, opening a brokerage, and searching tickers.
-* **Manual Math & Drag:** Building a thematic basket (e.g., 50% NVDA, 30% TSM, 20% AMD) requires calculating fractional shares and submitting multiple orders.
-* **Fees & High Minimums:** Brokerages enforce deposit minimums, while traditional ETFs extract recurring expense ratios (0.20%–1.50%).
-* **Siloed Equities & Gas Loss:** Tokenized stocks lack consumer indexing; multi-swaps risk 1232B MTU packet failure or burning gas on unfunded wallets.
+* **Live Protocol:** [https://pocketetf.vercel.app](https://pocketetf.vercel.app)
+* **Creator Studio:** [https://pocketetf.vercel.app/studio](https://pocketetf.vercel.app/studio)
+* **GitHub:** [https://github.com/Whambammy/PocketETF](https://github.com/Whambammy/PocketETF)
+* **Official 𝕏:** [https://x.com/PocketETF](https://x.com/PocketETF)
+* **Solana Action:** [https://pocketetf.vercel.app/api/actions/etf/silicon-ai](https://pocketetf.vercel.app/api/actions/etf/silicon-ai)
 
 ---
 
-## 💡 The Solution
-PocketETF transforms thematic equity investing into a frictionless, 1-click social experience:
-* **No-Code Studio:** Analysts assemble stock baskets in seconds, set weights, and generate a **Solana Blink URL**.
-* **1-Click Social Discovery:** When users see a Blink on X, an interactive card renders holdings, weights, and Pyth confidence intervals. Clicking a preset ($5–$100) executes an atomic swap through Jupiter.
-* **Direct Self-Custody:** Users receive underlying SPL stock tokens directly in their wallet with zero lockups, zero management fees, and Pyth NAV benchmarking.
+## ⚡ 60-Second Walkthrough (Live on Solana Mainnet)
+*Zero mock data. Fully deployed and production-ready:*
+1. **1-Click Buy & Pyth Oracles:** Open [pocketetf.vercel.app/etf/silicon-ai](https://pocketetf.vercel.app/etf/silicon-ai). Click **"Pyth Hermes Feeds (±σ)"** to inspect sub-second live prices & confidence intervals. Select $10 USDC and click **1-Click Buy**—routes multi-swaps into a single atomic `v0` transaction via Jupiter v6.
+2. **Trade on Mobile:** Click **"Trade on Mobile (QR)"** on any ETF to open the QR modal. Scan with Phantom or Backpack Mobile to execute directly in your wallet browser.
+3. **Studio & 𝕏 Simulation:** Visit [/studio](https://pocketetf.vercel.app/studio). Pick 2-3 stocks from the 25+ verified token catalog (NVDA, AAPL, TSM), adjust weights with the interactive donut chart, and toggle **"Feed View (𝕏)"** to preview the live Blink action card.
+4. **Safety Suite:** Run `npm test` locally to verify 82 passing tests covering MTU limits, zero-dust math, and fallbacks.
 
 ---
 
-## ⚡ How It Works
+## 📌 Executive Summary
+**PocketETF** turns any investment thesis into a fractional equity index fund discovered and purchased directly inside social feeds in < 400ms. Powered by Solana Actions, Blinks, Pyth Hermes v2, and Jupiter, PocketETF eliminates brokerage friction, high fees, and fragmented swaps.
+
+---
+
+## 🚨 The Problem & 💡 The Solution
+* **Context Switching & Drift:** Acting on a social thesis requires leaving feeds and manually executing multiple stock orders. PocketETF packages thematic baskets into a **Solana Blink URL** that executes in 1 click.
+* **Recurring Fees:** Traditional ETFs charge 0.20%–1.50% annual expense ratios. PocketETF offers **0% expense ratios** with direct self-custody of underlying 1:1 backed SPL stocks.
+* **Failed Multi-Swaps:** Chaining DEX swaps manually risks partial failure and burns gas. PocketETF synthesizes all swaps into a **single atomic VersionedTransaction (v0)**—all legs succeed or none do.
+
+---
+
+## ⚡ Architecture Flow
 
 ```
-[Social Feed: X / Discord] 
-       │ (1) Analyst shares Blink URL: pocketetf.app/etf/silicon-ai
-       ▼
-[Interactive Blink Card] 
-       │ (2) User selects amount ($50) & clicks "Invest"
-       ▼
-[PocketETF Engine + Pyth & Jupiter] 
-       │ (3) Checks USDC balance, computes Pyth NAV, routes swaps
-       ▼
-[Atomic Versioned Transaction (v0)] 
-       │ (4) 1 biometric approval signs all swaps + ATA creations
-       ▼
-[User Wallet] ──── Settles all underlying SPL stocks in <400ms
+[Social Feed: X / Discord] ──> (1) Shares Blink: pocketetf.vercel.app/etf/silicon-ai
+          │
+          ▼
+[Interactive Blink Card]   ──> (2) User selects amount ($50) & clicks "1-Click Buy"
+          │
+          ▼
+[PocketETF Engine]         ──> (3) Injects 1.2M CU, checks balance, creates ATAs,
+                               queries Pyth NAV & Jupiter v6 swap instructions
+          │
+          ▼
+[Atomic v0 Tx (< 1232B)]   ──> (4) 1 biometric wallet approval signs all swaps
+          │
+          ▼
+[Solana AMMs & Wallet]     ──> (5) Settles underlying stocks in wallet in < 400ms
 ```
 
-1. **Curation:** Creators bundle 1:1 backed equities (Backpack/Sunrise) on Whirlpool, Meteora, and Raydium.
-2. **Social Unfurl:** Solana Actions & Blinks convert the URL into an interactive card inside social timelines.
-3. **Atomic Synthesis:** The backend validates on-chain USDC balances, computes Pyth NAV, and queries Jupiter v6 (`/swap-instructions`).
-4. **Single-Tx Execution:** Swap instructions, compute budget, and idempotent ATAs compile into a `v0` transaction under 1232B.
-5. **Instant Settlement:** The investor signs once; diversified equities settle in under 400ms.
+---
+
+## 🛡️ 5 Core Protocol Engineering Safeguards
+1. **Strict 1232B MTU Guard:** Baskets capped at 3 assets with parallel-loaded ALTs, keeping `v0` tx size strictly under 1232B.
+2. **1.2M Compute Budget & Priority Fees:** Pre-allocates CU and priority pricing to guarantee instant inclusion without out-of-gas reverts.
+3. **Idempotent ATAs:** Injects `createAssociatedTokenAccountIdempotentInstruction` so non-holders receive tokens without collision.
+4. **Zero-Dust Base-Unit Math:** Calculates allocations in integer base units (USDC 6 decimals). Truncation dust goes to the lead asset.
+5. **Zero-Gas Balance Protection:** Pre-flight balance checks reject unfunded wallets before signing, preventing wasted network gas.
 
 ---
 
-## 🌟 Key Features
-* **In-Feed Execution:** Invest directly on X without leaving the timeline via Solana Blinks.
-* **Pyth Real-Time NAV:** Computes true basket Net Asset Value with live confidence intervals (±σ).
-* **Zero-Gas Guardrails:** Pre-flight balance checks block unfunded transactions, saving SOL.
-* **Micro-Investing:** Put $5, $10, or $50 to work across multiple equities in 1 atomic v0 swap.
-* **Zero Expense Ratios:** Free self-custody holding with no recurring management drag.
-* **Permissionless Indexing:** Anyone can launch, share, and monetize custom indices.
+## 🔮 Sponsor Integrations
+* **Pyth Network (Hermes v2):** Sub-second price feeds across 25+ tokenized assets with confidence intervals ($\pm\sigma$) and dynamic Basket NAV aggregation: `Basket NAV = Σ(w_i × P_i) ± Σ(w_i × σ_i)`.
+* **Solana Actions & Blinks:** Spec v2.1.3 compliant with `/actions.json` wildcard discovery, universal CORS, and dynamic Twitter Card unfurl metadata.
+* **Jupiter Aggregator (v6):** Optimal multi-hop routing across Whirlpool, Meteora, and Raydium.
 
 ---
 
-## 🛠️ Why Solana
-PocketETF is impossible on legacy finance or alternative blockchains:
-* **Micro-Cent Fees:** Executing a multi-stock basket costs <**$0.002** on Solana (vs. $5–$25+ on EVM chains), making micro-investing mathematically viable.
-* **Sub-Second Finality:** 400ms slots deliver the instant responsiveness expected in consumer social apps.
-* **Blinks Distribution:** Solana Actions transform web links into interactive on-chain transaction interfaces across the web.
-* **Address Lookup Tables (ALTs):** ALTs compress multi-hop Jupiter instructions to strictly respect Solana's 1232-byte MTU limit.
-
----
-
-## 🏗️ Technical Architecture & Stack
-* **Stack:** Next.js 14 App Router, TypeScript, Vanilla CSS, `@solana/wallet-adapter`.
-* **Pyth Oracles:** Pyth Hermes v2 API, equity/crypto feed IDs, and real-time Basket NAV engine.
-* **Routing:** Jupiter v6 (`/swap-instructions`) across Whirlpool, Meteora, and Raydium.
-* **Solana Primitives:** Actions & Blinks Spec v2.1.3, Versioned Transactions (`v0`) with ALTs, idempotent ATAs, and dynamic priority fees.
-
----
-
-## 📊 Business Model & Viability
-* **Protocol Routing Fee:** A modest 10–15 bps fee on swap volume via Action endpoints.
-* **Creator Revenue Share:** Curators earn a 50% programmatic split of routing fees generated by their baskets.
-* **B2B Media Embeds:** Embeddable 1-click portfolios for financial newsletters, Substacks, and research hubs.
-* **Roadmap:** Expand from 3-asset baskets to 10+ asset funds as Solana activates **Transaction V1 (SIMD-0385)**.
+## 🛠️ Architecture & Scalability
+* **Zero-Backend Protocol:** 100% serverless and non-custodial. Portfolios serialize into URL-safe state with zero database reliance.
+* **Stack:** Next.js 14, TypeScript (Strict), `@solana/web3.js`, Jupiter v6, Pyth Hermes v2.
+* **SIMD-0385 Ready:** Ready to expand from 3 to 10+ asset funds once Solana activates Transaction V1 (4096B).

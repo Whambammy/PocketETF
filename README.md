@@ -9,18 +9,19 @@
 [![Next.js](https://img.shields.io/badge/Next.js-14.2%20App%20Router-000000?style=flat-square&logo=nextdotjs)](https://nextjs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178C6?style=flat-square&logo=typescript)](https://www.typescriptlang.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
+[![X (Twitter)](https://img.shields.io/badge/X-@PocketETF-000000?style=flat-square&logo=x)](https://x.com/PocketETF)
 
 **PocketETF** is a decentralized execution protocol that bundles diversified tokenized US stocks, S&P 500 benchmarks, and commodities into a single atomic transaction native to **Solana Actions & Blinks**.
 
-[Explore Curated ETFs](https://pocketetf.vercel.app) • [Creator Studio](https://pocketetf.vercel.app/studio) • [Compare vs. Traditional](https://pocketetf.vercel.app/compare)
+[Explore Curated ETFs](https://pocketetf.vercel.app) • [Creator Studio](https://pocketetf.vercel.app/studio) • [Compare vs. Traditional](https://pocketetf.vercel.app/compare) • [Official 𝕏 (@PocketETF)](https://x.com/PocketETF)
 
 </div>
 
 ---
 
-## 🏆 Hackathon Quick-Testing Guide (60-Second Walkthrough for Judges)
+## ⚡ Live Protocol Walkthrough & Key Flows
 
-If you are evaluating this submission, you can verify the entire protocol live on Solana Mainnet in under 60 seconds:
+You can verify the entire protocol live on Solana Mainnet in under 60 seconds:
 
 1. **Live 1-Click Execution (Desktop or Mobile)**:
    * Visit [`https://pocketetf.vercel.app/etf/silicon-ai`](https://pocketetf.vercel.app/etf/silicon-ai).
@@ -148,7 +149,7 @@ PocketETF is architected for sustainable, high-margin unit economics without sac
 
 * **Jupiter Platform Fee Integration**: Swap routes support dynamic `platformFeeBps` injection into the Jupiter v6 API.
 * **Creator Affiliate Split (50/50)**: When enabled, 50% of the platform fee is automatically routed to the curation wallet that generated the Blink Action URL, incentivizing top financial influencers and analysts to distribute PocketETFs.
-* **Hackathon Alpha Promotion**: `DEFAULT_PLATFORM_FEE_BPS` is currently set to **0%** so judges, testers, and early users experience zero-fee atomic execution.
+* **Zero-Fee Early Adoption**: `DEFAULT_PLATFORM_FEE_BPS` is currently set to **0%** so testers and early adopters experience zero-fee atomic execution.
 
 ---
 

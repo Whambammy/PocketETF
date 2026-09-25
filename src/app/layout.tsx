@@ -154,6 +154,21 @@ export default function RootLayout({
                       /actions.json
                     </Link>
                   </div>
+                  <div className="flex justify-between items-center pt-1 border-t border-white/5">
+                    <span>Official 𝕏:</span>
+                    <a
+                      href="https://x.com/PocketETF"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-mono text-white hover:text-[#00D69F] flex items-center gap-1.5 transition-colors"
+                      title="Follow @PocketETF on X"
+                    >
+                      <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                      </svg>
+                      <span>@PocketETF</span>
+                    </a>
+                  </div>
                 </div>
               </div>
             </div>
