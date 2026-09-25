@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import {
   ArrowLeft,
   Zap,
@@ -196,9 +195,10 @@ export default function ETFDetailClient({ etf }: Props) {
   };
 
   const currentSearch = typeof window !== 'undefined' ? window.location.search : '';
-  const sharePageUrl = etf.id === 'custom' ? `${origin}/etf/custom${currentSearch}` : `${origin}/etf/${etf.id}`;
+  const publicOrigin = origin.includes('localhost') ? 'https://pocketetf.vercel.app' : origin;
+  const sharePageUrl = etf.id === 'custom' ? `${publicOrigin}/etf/custom${currentSearch}` : `${publicOrigin}/etf/${etf.id}`;
   const shareTweetUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
-    `Invest in the ${etf.name} with 1-click on @solana via @PocketETF!\n\n${sharePageUrl}\n\n#Solana #Blinks #PocketETF`
+    `Invest in ${etf.name} (${etf.symbol}) with 1-click on @solana via @PocketETF!\n\n${sharePageUrl}\n\n#Solana #Blinks #PocketETF`
   )}`;
 
   return (
@@ -207,7 +207,7 @@ export default function ETFDetailClient({ etf }: Props) {
       <div className="bg-[#0A1128]/80 border-b border-white/[0.06]">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-3">
           <Link
-            href="/"
+            href="/#etfs"
             className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-300 hover:text-white transition-colors"
           >
             <ArrowLeft className="w-4 h-4 text-[#146EF5]" />
@@ -248,12 +248,12 @@ export default function ETFDetailClient({ etf }: Props) {
             <div className="fintech-card p-6 sm:p-8 rounded-2xl">
               <div className="flex items-start gap-4 mb-4">
                 <div className="w-16 h-16 rounded-2xl overflow-hidden bg-black/40 border border-white/10 flex-shrink-0 flex items-center justify-center p-2">
-                  <Image
+                  <img
                     src={etf.iconPath}
                     alt={etf.name}
-                    width={64}
-                    height={64}
-                    unoptimized
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = '/etfs/custom.png';
+                    }}
                     className="w-full h-full object-contain"
                   />
                 </div>

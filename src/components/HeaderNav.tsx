@@ -50,7 +50,7 @@ export function HeaderNav() {
         {/* Desktop Navigation Links (hidden on mobile) */}
         <nav className="hidden sm:flex items-center gap-3 md:gap-5">
           <Link
-            href="/"
+            href="/#etfs"
             className="text-xs sm:text-sm font-semibold text-slate-300 hover:text-white transition-colors px-2.5 py-1.5 rounded-lg hover:bg-white/5"
           >
             Explore ETFs
@@ -135,7 +135,7 @@ export function HeaderNav() {
       {mobileMenuOpen && (
         <div className="sm:hidden border-t border-[#146EF5]/20 bg-[#060A17]/98 backdrop-blur-2xl px-4 py-4 space-y-2.5 shadow-2xl transition-all">
           <Link
-            href="/"
+            href="/#etfs"
             onClick={() => setMobileMenuOpen(false)}
             className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/5 text-slate-200 active:bg-white/10 transition-colors"
           >

@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { resolveETF } from '@/lib/etfResolver';
+import { resolveETF, safeDecode } from '@/lib/etfResolver';
 import ETFDetailClient from './ETFDetailClient';
 
 interface Props {
@@ -25,20 +25,34 @@ function buildSearchParams(searchParams?: { [key: string]: string | string[] | u
 }
 
 export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL
+    ? (process.env.NEXT_PUBLIC_BASE_URL.startsWith('http') ? process.env.NEXT_PUBLIC_BASE_URL : `https://${process.env.NEXT_PUBLIC_BASE_URL}`)
+    : 'https://pocketetf.vercel.app';
+
   const sp = buildSearchParams(searchParams);
   const etf = resolveETF(params.id, sp);
+
   if (!etf) {
     return {
+      metadataBase: new URL(baseUrl),
       title: 'PocketETF | The 1-Click Solana ETF Protocol',
       description: 'Diversified thematic stock & crypto portfolios on Solana.',
+      openGraph: {
+        title: 'PocketETF | The 1-Click Solana ETF Protocol',
+        description: 'Diversified thematic stock & crypto portfolios on Solana.',
+        images: [`${baseUrl}/og-image.png`],
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title: 'PocketETF | The 1-Click Solana ETF Protocol',
+        description: 'Diversified thematic stock & crypto portfolios on Solana.',
+        images: [`${baseUrl}/og-image.png`],
+      },
     };
   }
 
   const title = `PocketETF: ${etf.name} (${etf.symbol})`;
   const description = etf.description;
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL
-    ? (process.env.NEXT_PUBLIC_BASE_URL.startsWith('http') ? process.env.NEXT_PUBLIC_BASE_URL : `https://${process.env.NEXT_PUBLIC_BASE_URL}`)
-    : 'https://pocketetf.vercel.app';
 
   const BANNER_MAP: Record<string, string> = {
     'silicon-ai': '/etfs/silicon-ai-banner.png',
@@ -56,7 +70,12 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
 
   let previewImage = `${baseUrl}/og-image.png`;
   if (params.id === 'custom') {
-    const customImg = sp.get('image');
+    const rawCustomImg = sp.get('image');
+    let customImg = rawCustomImg ? safeDecode(rawCustomImg).trim() : null;
+    if (customImg && !customImg.startsWith('/') && !customImg.startsWith('http://') && !customImg.startsWith('https://')) {
+      customImg = `https://${customImg}`;
+    }
+
     if (customImg && (customImg.startsWith('http://') || customImg.startsWith('https://'))) {
       previewImage = customImg;
     } else if (customImg && customImg.startsWith('/')) {

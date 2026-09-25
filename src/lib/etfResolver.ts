@@ -10,6 +10,23 @@ import {
 } from '@/lib/constants';
 
 /**
+ * Robust URI decoder that unwraps single- or multi-level percent-encoding
+ */
+export function safeDecode(val: string): string {
+  let decoded = val;
+  try {
+    for (let i = 0; i < 3 && decoded.includes('%'); i++) {
+      const next = decodeURIComponent(decoded);
+      if (next === decoded) break;
+      decoded = next;
+    }
+  } catch {
+    // Return best effort
+  }
+  return decoded;
+}
+
+/**
  * Universal resolver for both curated static PocketETFs and dynamic user-minted custom baskets
  */
 export function resolveETF(id: string, searchParams: URLSearchParams): ETFDefinition | null {
@@ -25,23 +42,25 @@ export function resolveETF(id: string, searchParams: URLSearchParams): ETFDefini
 
   // 3. Check dynamic custom ETF
   if (id === 'custom') {
-    const rawAssets = searchParams.get('assets'); // e.g. "NVDA:40,TSM:30,AMD:30"
+    const rawAssetsParam = searchParams.get('assets'); // e.g. "NVDA:60,TSM:40"
+    if (!rawAssetsParam) {
+      return null;
+    }
+
+    const decodedAssets = safeDecode(rawAssetsParam);
     const rawName = searchParams.get('name') || 'Custom Stock ETF';
     const rawDescription =
       searchParams.get('description') ||
       'Custom user-generated multi-asset equity ETF executed atomically via PocketETF and Jupiter DEX aggregation.';
 
-    if (!rawAssets) {
-      return null;
-    }
-
     // Sanitize user-provided text to prevent XSS / injection attacks
-    const name = rawName.replace(/[^a-zA-Z0-9 \-_().,]/g, '').trim().slice(0, 60) || 'Custom Stock ETF';
+    const name = safeDecode(rawName).replace(/[^a-zA-Z0-9 \-_().,]/g, '').trim().slice(0, 60) || 'Custom Stock ETF';
     const description =
-      rawDescription.replace(/[^a-zA-Z0-9 \-_().,!?]/g, '').trim().slice(0, 250) ||
+      safeDecode(rawDescription).replace(/[^a-zA-Z0-9 \-_().,!?]/g, '').trim().slice(0, 250) ||
       'Custom equity ETF executed atomically via PocketETF.';
 
-    const assetPairs = rawAssets.split(',').filter(Boolean);
+    // Split by comma, semicolon, or whitespace
+    const assetPairs = decodedAssets.split(/[,;\s]+/).filter(Boolean);
     if (assetPairs.length === 0 || assetPairs.length > MAX_ETF_ASSETS) {
       return null;
     }
@@ -51,7 +70,9 @@ export function resolveETF(id: string, searchParams: URLSearchParams): ETFDefini
     const targetAssets: ETFAsset[] = [];
 
     for (const pair of assetPairs) {
-      const [tickerRaw, weightStr] = pair.split(':');
+      const parts = pair.split(/[:=]/);
+      const tickerRaw = parts[0];
+      const weightStr = parts[1];
       const ticker = (tickerRaw || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
       const weight = parseFloat(weightStr || '0');
 
@@ -103,7 +124,10 @@ export function resolveETF(id: string, searchParams: URLSearchParams): ETFDefini
     const rawImage = searchParams.get('image');
     let iconPath = '/etfs/custom.png';
     if (rawImage) {
-      const trimmed = rawImage.trim();
+      let trimmed = safeDecode(rawImage).trim();
+      if (!trimmed.startsWith('/') && !trimmed.startsWith('http://') && !trimmed.startsWith('https://')) {
+        trimmed = `https://${trimmed}`;
+      }
       if (trimmed.startsWith('/') && !trimmed.startsWith('//')) {
         iconPath = trimmed.slice(0, 500);
       } else if (trimmed.startsWith('https://') || trimmed.startsWith('http://')) {

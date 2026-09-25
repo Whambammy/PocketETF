@@ -268,23 +268,24 @@ export default function StudioPage() {
 
   // Build Action & Share URLs
   const assetQuery = activeStocks.map((s) => `${s.ticker}:${s.weight}`).join(',');
+  let cleanCustomImg = customImageUrl.trim();
+  if (cleanCustomImg && !cleanCustomImg.startsWith('http://') && !cleanCustomImg.startsWith('https://') && !cleanCustomImg.startsWith('/')) {
+    cleanCustomImg = `https://${cleanCustomImg}`;
+  }
   const effectiveImage =
-    imageInputMode === 'custom' && customImageUrl.trim()
-      ? customImageUrl.trim()
+    imageInputMode === 'custom' && cleanCustomImg
+      ? cleanCustomImg
       : selectedBadge;
-  const imageParam =
-    effectiveImage && effectiveImage !== '/etfs/custom.png'
-      ? `&image=${encodeURIComponent(effectiveImage)}`
-      : '';
+  const imageParam = effectiveImage ? `&image=${encodeURIComponent(effectiveImage)}` : '';
   const queryParams = `assets=${encodeURIComponent(assetQuery)}&name=${encodeURIComponent(
     etfName
   )}&description=${encodeURIComponent(etfDescription)}${imageParam}`;
   const actionUrl = `${origin}/api/actions/etf/custom?${queryParams}`;
   const shareUrl = `${origin}/etf/custom?${queryParams}`;
-  const tweetText = `Check out my custom tokenized stock ETF "${etfName}" on Solana! Execute 1-click with @JupiterExchange & @PocketETF:`;
-  const twitterIntentUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
-    tweetText
-  )}&url=${encodeURIComponent(shareUrl)}`;
+  const publicOrigin = origin.includes('localhost') ? 'https://pocketetf.vercel.app' : origin;
+  const publicShareUrl = `${publicOrigin}/etf/custom?${queryParams}`;
+  const tweetText = `Check out my custom tokenized stock ETF "${etfName}" on Solana! Execute 1-click with @JupiterExchange & @PocketETF:\n\n${publicShareUrl}\n\n#Solana #Blinks #PocketETF`;
+  const twitterIntentUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}`;
 
   const handleCopyLink = async () => {
     await navigator.clipboard.writeText(shareUrl);
