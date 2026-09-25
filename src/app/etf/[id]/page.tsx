@@ -93,6 +93,8 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
 
   const queryStr = params.id === 'custom' && sp.toString() ? `?${sp.toString()}` : '';
 
+  const isBanner = previewImage.includes('-banner.png') || previewImage.includes('og-image.png');
+
   return {
     metadataBase: new URL(baseUrl),
     title: `${title} | PocketETF`,
@@ -106,16 +108,14 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
         {
           url: previewImage,
           secureUrl: previewImage,
-          width: 1200,
-          height: 630,
-          type: 'image/png',
+          ...(isBanner ? { width: 1200, height: 630, type: 'image/png' } : {}),
           alt: `${etf.name} (${etf.symbol}) - PocketETF Protocol`,
         },
       ],
       type: 'website',
     },
     twitter: {
-      card: 'summary_large_image',
+      card: isBanner ? 'summary_large_image' : 'summary',
       title,
       description,
       images: [previewImage],

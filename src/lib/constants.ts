@@ -180,7 +180,7 @@ export const TOKEN_CATALOG: ETFAsset[] = [
     ticker: 'META',
     name: 'Meta Platforms Inc.',
     weightPercent: 0,
-    mint: process.env.MINT_META || '7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU',
+    mint: process.env.MINT_META || '39dsMJzCWKfqkFHP31pog88M2bd8fjQzYTyJKSoU6sGY',
     decimals: 6,
     color: '#0284C7',
     category: 'Mega-Cap Tech',

@@ -101,12 +101,7 @@ export function resolveETF(id: string, searchParams: URLSearchParams): ETFDefini
         return null;
       }
 
-      if (seenMints.has(mint)) {
-        return null; // Duplicate mint address forbidden
-      }
-      seenMints.add(mint);
-
-      const catalogMatch = TOKEN_CATALOG.find((t) => t.ticker === ticker || t.mint === mint);
+      const catalogMatch = TOKEN_CATALOG.find((t) => t.ticker === ticker) || TOKEN_CATALOG.find((t) => t.mint === mint);
 
       targetAssets.push({
         ticker,
