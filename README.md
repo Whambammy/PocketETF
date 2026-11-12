@@ -1,224 +1,81 @@
-<div align="center">
+# PocketETF
 
-# PocketETF 🚀
-### 1-Click Tokenized Stock & Index ETF Protocol for Solana Blinks
+Self-custodied baskets of verified Solana tokens. PocketETF assembles atomic Jupiter swaps; it does not issue ETF shares or operate a pooled fund.
 
-[![Solana Actions](https://img.shields.io/badge/Solana%20Actions-v2.1.3-14F195?style=flat-square&logo=solana)](https://actions.dialect.to)
-[![Jupiter DEX](https://img.shields.io/badge/DEX%20Routing-Jupiter%20v6-00D69F?style=flat-square)](https://jup.ag)
-[![Pyth Network](https://img.shields.io/badge/Oracles-Pyth%20Hermes%20v2-7B3FE4?style=flat-square)](https://pyth.network)
-[![Next.js](https://img.shields.io/badge/Next.js-14.2%20App%20Router-000000?style=flat-square&logo=nextdotjs)](https://nextjs.org)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178C6?style=flat-square&logo=typescript)](https://www.typescriptlang.org)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
-[![X (Twitter)](https://img.shields.io/badge/X-@PocketETF-000000?style=flat-square&logo=x)](https://x.com/PocketETF)
+## Implemented
 
-**PocketETF** is a decentralized execution protocol that bundles diversified tokenized US stocks, S&P 500 benchmarks, and commodities into a single atomic transaction native to **Solana Actions & Blinks**.
+- A pinned registry of 23 issuer/crypto token identities, checked against actual mint accounts, token programs, decimals and exact Pyth symbols.
+- Server validation of exact amounts, distinct mints and weights totaling 100%. Custom links retain case-sensitive mint addresses.
+- Wallet Standard discovery, shared connection state and capability-gated v1 signing with v0 support.
+- Jupiter Swap API V2 build instructions, bounded concurrent requests, explicit slippage and price-impact limits.
+- Buy, percentage sell and manual rebalance previews. Rebalancing spends only minimum guaranteed sale proceeds; existing USDC is preserved and surplus remains USDC.
+- Actual transaction size/account/compute checks, dynamic resource sizing, final simulation, minimum token receipt checks and SOL fee/rent estimates.
+- The client compares the signed message with the reviewed transaction. A stateless relay verifies the user's wallet signature, message digest and lifetime; no operator authorization or server signing secret is required.
+- Honest oracle availability and original timestamps. Missing, old or imprecise reference prices block trading.
+- Portfolio valuation uses real token quantities, including RPC-scaled Token-2022 balances. Missing prices produce an incomplete valuation.
+- On-chain status tracking, wallet-scoped browser-local history and CSV export with spreadsheet formula neutralization.
+- No server fetching of user image URLs. Strict image allowlist, CSP nonces, security headers, bounded JSON responses and requests, and optional distributed rate limiting.
+- No protocol fee or creator revenue share is collected.
 
-[Explore Curated ETFs](https://pocketetf.vercel.app) • [Creator Studio](https://pocketetf.vercel.app/studio) • [Compare vs. Traditional](https://pocketetf.vercel.app/compare) • [Official 𝕏 (@PocketETF)](https://x.com/PocketETF)
+## Local development
 
-</div>
+Use Node.js 22.14 or newer and the committed lockfile.
 
----
-
-## ⚡ Live Protocol Walkthrough & Key Flows
-
-You can verify the entire protocol live on Solana Mainnet in under 60 seconds:
-
-1. **Live 1-Click Execution (Desktop or Mobile)**:
-   * Visit [`https://pocketetf.vercel.app/etf/silicon-ai`](https://pocketetf.vercel.app/etf/silicon-ai).
-   * **Desktop**: Connect your Phantom or Backpack wallet, select a dollar tier (e.g. $10 USDC), and click **1-Click Buy**. PocketETF checks your on-chain balance, queries Jupiter v6 for optimal routes, compiles a single atomic `VersionedTransaction (v0)`, and prompts your wallet for 1-click execution.
-   * **Mobile-First**: Click **Trade on Mobile (QR)** to open an authentic QR modal. Scanning with Phantom or Backpack Mobile opens the Action URL directly inside your phone's wallet browser.
-
-2. **Inspect Pyth Hermes v2 Oracles & Confidence Bounds**:
-   * On any ETF card or detail page, click the **Pyth Hermes Feeds (±σ)** pill badge.
-   * An interactive modal displays real-time price feeds, confidence intervals ($\pm\sigma$), latency, and Pyth Feed IDs directly from Pyth Hermes REST API.
-
-3. **Compose a Custom ETF in Creator Studio**:
-   * Navigate to [`/studio`](https://pocketetf.vercel.app/studio).
-   * Pick up to 3 stocks from the 25+ verified token catalog (or enter any SPL token mint).
-   * Adjust allocation weights with the interactive donut chart.
-   * Paste any custom image badge (supports Postimages, Imgur, or preset badges).
-   * Click **Post on 𝕏** or **Copy Share Link**: the entire portfolio thesis is encoded URL-safe with zero backend required!
-
-4. **Verify Automated Testing & Guardrails**:
-   * Run `npm test` locally to execute the automated 82-test suite verifying the 1232B MTU packet limit guard, zero-dust integer base unit math, zero-gas balance checks, and Pyth oracle confidence intervals.
-
----
-
-## 📌 Executive Overview
-
-Traditional ETF investing on Solana suffers from severe friction: purchasing multiple tokenized equities (e.g. NVDA, TSM, AMD) requires multiple separate wallet confirmations, multiple DEX swaps, high cumulative fees, and the risk of partial execution failure.
-
-**PocketETF solves this end-to-end**:
-* **1-Click Social Execution**: Shareable directly inside Twitter/X feeds, Telegram, Discord, and Phantom/Backpack wallets via the official Solana Actions & Blinks standard.
-* **Single Atomic Transaction**: Swaps USDC into up to 3 diversified assets in a single `VersionedTransaction (v0)`. Either all swaps execute or none do, eliminating partial portfolio drift.
-* **Creator Studio**: Enables anyone to construct a custom stock ETF, adjust weights with interactive dynamic donut charts, and generate an instant Blink Action URL with rich social preview cards.
-* **Real-Time Oracles**: Powered by Pyth Network Hermes v2 with sub-second price streaming and institutional confidence intervals.
-* **Zero-Backend Architecture**: 100% decentralized, serverless, and non-custodial. Custom portfolios are serialized into shareable query states.
-
----
-
-## ⚡ Core Protocol Engineering & Safeguards
-
-Executing multi-token swaps inside a single Solana transaction presents hard technical constraints. PocketETF enforces 5 protocol safeguards:
-
-```
-                  ┌─────────────────────────────────────────┐
-                  │          PocketETF Blink URL            │
-                  │   /api/actions/etf/silicon-ai?amount=50 │
-                  └────────────────────┬────────────────────┘
-                                       │ (1) User signs $50 USDC
-                                       ▼
-                  ┌─────────────────────────────────────────┐
-                  │       PocketETF Execution Engine        │
-                  ├─────────────────────────────────────────┤
-                  │ • 1.2M ComputeBudget + Priority Fee     │
-                  │ • Pre-create Idempotent ATAs            │
-                  │ • Atomic Zero-Dust Math (Base Units)    │
-                  │ • Fetch Jupiter v6 Swap Instructions    │
-                  │ • Deduplicate Address Lookup Tables     │
-                  └────────────────────┬────────────────────┘
-                                       │ (2) Compile v0 Tx (<1232B)
-                                       ▼
-                  ┌─────────────────────────────────────────┐
-                  │        Solana Runtime & DEX AMMs        │
-                  │    [NVDA 60%]          [TSM 40%]        │
-                  └─────────────────────────────────────────┘
-```
-
-### 1. Strict 1232-Byte IPv6 MTU Guard
-* **The Problem**: Solana transactions strictly fail if serialized size exceeds 1232 bytes. Multiple Jupiter swap instructions combined with account keys easily overflow this limit.
-* **PocketETF Solution**: Baskets are capped at 3 assets per Blink. All Address Lookup Tables (ALTs) are deduplicated, loaded in parallel, and compiled strictly to `VersionedTransaction` (v0), guaranteeing payload size remains well under 1232 bytes.
-
-### 2. 1.2M Compute Unit Budget & Priority Pricing
-* Default 200,000 CU fails when chaining multi-leg DEX swaps. PocketETF prepends `ComputeBudgetProgram.setComputeUnitLimit({ units: 1_200_000 })` and `setComputeUnitPrice({ microLamports: 50_000 })` to ensure instant inclusion without out-of-gas reverts.
-
-### 3. Idempotent Associated Token Accounts (ATAs)
-* If an investor does not yet hold an equity token, the transfer fails. PocketETF automatically injects `createAssociatedTokenAccountIdempotentInstruction` for all output tokens before DEX routing. If an ATA already exists, execution continues smoothly without collision.
-
-### 4. Zero-Dust Atomic Allocation Math
-* Dollar allocations are computed in integer base units (e.g. 6 decimals for USDC = $1.00 = `1,000,000` base units). Truncation dust is tracked and assigned to the primary asset so 100% of input capital is deployed.
-
-### 5. Zero-Gas Wallet Protection
-* Before assembling transactions, PocketETF verifies that the user's connected wallet has sufficient on-chain USDC to cover the swap, preventing users from wasting network gas on failed executions.
-
----
-
-## 📊 Curated PocketETFs
-
-| ETF ID | Name | Holdings | Category | 1-Click Live Link |
-| :--- | :--- | :--- | :--- | :--- |
-| `silicon-ai` | **Silicon AI Supercycle** | 60% NVDA, 40% TSM | Semiconductors & AI | [Trade Silicon AI](https://pocketetf.vercel.app/etf/silicon-ai) |
-| `backpack-titans` | **Backpack Tokenized Titans** | 50% NVDA, 50% MSTR | Tokenized Equities | [Trade Backpack Titans](https://pocketetf.vercel.app/etf/backpack-titans) |
-| `mag-titans` | **Magnificent Tech Titans** | 50% AAPL, 50% MSFT | Mega-Cap Tech | [Trade Magnificent Titans](https://pocketetf.vercel.app/etf/mag-titans) |
-| `spy-benchmark` | **S&P 500 Benchmark Proxy** | 100% SPY | Broad Market Index | [Trade SPY Benchmark](https://pocketetf.vercel.app/etf/spy-benchmark) |
-| `nasdaq-growth` | **Nasdaq-100 Growth Titans** | 50% QQQ, 25% AMZN, 25% META | Growth Equities | [Trade Nasdaq Growth](https://pocketetf.vercel.app/etf/nasdaq-growth) |
-| `hard-assets` | **All-Weather Gold & Yield** | 50% GLD, 50% TLT | Commodities & Yield | [Trade Hard Assets](https://pocketetf.vercel.app/etf/hard-assets) |
-| `crypto-frontier` | **Web3 & DEX Infrastructure** | 50% COIN, 25% SOL, 25% JUP | Crypto Equities | [Trade Crypto Frontier](https://pocketetf.vercel.app/etf/crypto-frontier) |
-
----
-
-## 🔮 Pyth Network Hermes Live Oracles (Sponsor Track)
-
-PocketETF deeply integrates the **Pyth Network Hermes v2 Oracle Engine** to provide sub-second price feeds, institutional confidence bounds, and real-time Net Asset Value (NAV) calculation for all ETF baskets:
-
-* **Sub-Second Low-Latency Streaming**: Queries official Pyth Price Feed IDs across 25 tokenized equities, benchmarks, and crypto assets.
-* **Confidence Interval Slippage Guard ($\pm\sigma$)**: Extracts Pyth confidence intervals to ensure user swaps are never executed against stale, disjoint, or manipulated AMM pools.
-* **Dynamic Basket NAV Aggregation**: Computes real-time basket NAV dynamically on-chain and in client previews:
-  $$\text{Basket NAV} = \sum_{i=1}^{n} \left( w_i \cdot P_i \right) \pm \sum_{i=1}^{n} \left( w_i \cdot \sigma_i \right)$$
-* **15-Second In-Memory Deduplication**: Prevents API throttling and guarantees instant Blink response times (<400ms) under heavy social volume.
-
----
-
-## ⚖️ PocketETF vs. Traditional & EVM Alternatives
-
-| Dimension | PocketETF (Solana) | Traditional Brokerages (Robinhood/Schwab) | EVM Index Protocols (Index Coop) | Manual DEX Swaps |
-| :--- | :--- | :--- | :--- | :--- |
-| **Execution Friction** | **1 Click (Social Feed)** | Account signup, KYC, ACH deposit | Multi-step approval + swap | 3+ separate transactions |
-| **Settlement Speed** | **< 400ms (Atomic)** | T+1 business days | 12-15 seconds | ~1.2 seconds (sequential) |
-| **Transaction Fees** | **< $0.001 (Solana)** | Hidden PFOF, exchange spreads | $15-$50+ (Ethereum L1 gas) | 3x base fees + drift |
-| **Asset Self-Custody** | **100% Non-Custodial** | 0% (Custodial brokerage) | 100% Non-Custodial | 100% Non-Custodial |
-| **Social Distribution** | **Native Blinks (X, TG)** | None (walled garden) | None (dApp connection only) | None |
-| **Portfolio Drift Risk** | **0% (Atomic v0 Tx)** | High (manual rebalancing) | Low | High (partial execution fails) |
-| **Trading Hours** | **24/7/365 On-Chain** | 9:30 AM - 4:00 PM EST | 24/7/365 | 24/7/365 |
-
----
-
-## 💰 Protocol Revenue & Creator Monetization Architecture
-
-PocketETF is architected for sustainable, high-margin unit economics without sacrificing social distribution:
-
-* **Jupiter Platform Fee Integration**: Swap routes support dynamic `platformFeeBps` injection into the Jupiter v6 API.
-* **Creator Affiliate Split (50/50)**: When enabled, 50% of the platform fee is automatically routed to the curation wallet that generated the Blink Action URL, incentivizing top financial influencers and analysts to distribute PocketETFs.
-* **Zero-Fee Early Adoption**: `DEFAULT_PLATFORM_FEE_BPS` is currently set to **0%** so testers and early adopters experience zero-fee atomic execution.
-
----
-
-## 🛠️ Solana Actions & Blinks Specification
-
-PocketETF strictly follows the official [Solana Actions Spec v2.1.3](https://docs.dialect.to/blinks/actions-specification):
-
-* **Discovery Rules (`/actions.json`)**: Wildcard mapping routes `/etf/*` and `/basket/*` to corresponding API endpoints.
-* **Universal CORS**: All endpoints include wildcard CORS (`Access-Control-Allow-Origin: *`) and handle preflight `OPTIONS` requests.
-* **Header Compliance**: Responses include `x-action-version: 2.1.3` and `x-blockchain-ids: solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp`.
-* **Input Validation**: All POST requests validate Base58 public keys, bounded investment amounts ($0.10 – $100,000), and sanitize inputs against XSS.
-
----
-
-## 💻 Tech Stack
-
-* **Framework**: Next.js 14+ (App Router, React 18)
-* **Language & Typing**: TypeScript 5.7 (Strict Mode)
-* **Oracles**: Pyth Network Hermes v2 REST API (Confidence intervals $\pm\sigma$, NAV engine)
-* **Solana SDK**: `@solana/web3.js` (v0 VersionedTransactions, AddressLookupTableAccount), `@solana/spl-token`
-* **DEX Routing**: Jupiter Aggregator v6 REST API
-* **Styling & Tokens**: Tailwind CSS, Lucide React, Custom Dark Mode Tokens
-* **Charts**: Real-time dynamic SVG Donut Chart engine
-
----
-
-## 🚀 Quickstart & Local Setup
-
-### 1. Clone & Install Dependencies
-```bash
-git clone https://github.com/Whambammy/PocketETF.git
-cd PocketETF
-npm install
-```
-
-### 2. Configure Environment
-```bash
+```sh
+npm ci
 cp .env.example .env.local
-```
-*(Optional: add your dedicated Helius or QuickNode RPC URL in `.env.local`)*
-
-### 3. Run Development Server
-```bash
 npm run dev
 ```
-Open [http://localhost:3000](http://localhost:3000) to view the application.
 
-### 4. Build for Production
-```bash
-npm run build
-npm start
-```
+On Windows PowerShell, use `npm.cmd` if execution policy prevents `npm.ps1`.
 
----
+Swapping is available without operator enablement or a separate account approval service. Users authorize atomic swaps with their own wallets. Never put a private key or seed phrase in app configuration.
 
-## 🧪 Verification & Testing Suite
+## Configuration
 
-```bash
-# Run complete automated 82-test protocol test suite
+See [.env.example](.env.example). Deploy through the existing GitHub -> Vercel integration. There is no separate hosting service or release approval workflow in the app.
+
+The server needs ordinary network access to Solana RPC, Jupiter and Pyth. Public RPC fallbacks and keyless Jupiter requests are supported. Keyless routing is paced to the published request limit; concurrent traffic may receive a retry message. A Jupiter API key and a dedicated HTTPS RPC endpoint are optional reliability improvements, configured in Vercel and kept server-side.
+
+Redis rate limiting is optional. Without it, bounded per-instance request limits remain active. To share counters across instances, configure UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN. Neither Redis nor a server signing secret is required for a user to swap.
+
+Set NEXT_PUBLIC_BASE_URL to the canonical HTTPS Vercel/custom domain for metadata and Action links. No deployment credentials or private keys belong in the repository.
+
+## Asset provenance
+
+The registry pins specific token addresses, token programs and issuer sources. Token identity checks and issuer transfer/pause controls remain technical protections. The app does not add geography checks, a platform account approval step or an external eligibility service. External token and service terms remain separate from the app's self-custody architecture. See the linked provenance for each asset.
+
+## Execution boundaries
+
+- At most eight registered assets per basket. This is a product cap, not a guarantee of transaction fit. v0 remains 1,232 bytes; v1 is 4,096 bytes with explicit limits. Both paths enforce a 64-account ceiling.
+- External Solana Actions retain v0 because the endpoint has not negotiated v1 signing capabilities with the client.
+- The UI requires the selected Wallet Standard `solana:signTransaction` feature to advertise the transaction version used. Sign-and-send-only wallets are not supported by this reviewed-message submission flow.
+- Purchases use spendable USDC in the canonical associated account. Sales/rebalancing use spendable canonical associated accounts for the chosen tokens. Other accounts are visible but are not automatically consolidated.
+- SOL basket exposure is wrapped SOL. Native SOL is kept separate for network fees.
+- Only supported associated-account setup instructions and the pinned Jupiter program's current RouteV2 instruction layout are accepted. Encoded spend, recipient accounts, mint identities, slippage and zero platform/capture fees are independently checked. Unknown layouts, extra signers, tips, cleanup, unrelated wallet token access, unsupported token extensions and failed simulations are rejected.
+- Pyth data must be no more than 60 seconds old with relative confidence at most 1%. Quote price impact and deviation from the reference price are capped at 3%. These are preflight gates, not on-chain oracle conditions; Jupiter minimum receipts enforce the transaction's output bounds.
+- Equity oracles may stop updating outside exchange hours. This implementation deliberately blocks trading when the reference data is stale.
+- A quote normally expires within 30 seconds after preparation and no later than 45 seconds after preparation starts. Wallet approval delays may require a fresh preview.
+- A broadcast signature is not confirmation. Failed submitted transactions can still incur fees.
+- History is local to this browser and may be incomplete. Use the explorer to resolve uncertain submission status before submitting another trade.
+
+## Verification
+
+```sh
 npm test
-
-# Run TypeScript compilation check
-npx tsc --noEmit
-
-# Run automated protocol audit
+npm run typecheck
+npm run build
 npm run audit
 ```
 
----
+The regression suite uses real SDK compilation and cryptographic signatures with **mocked** Jupiter, oracle and RPC responses. It never submits real transactions.
 
-## 📄 License
-MIT License. Open-source decentralized finance infrastructure for the Solana ecosystem.
+For browser checks, start the app on `127.0.0.1:3210`, then run `npm run test:browser`. The test uses installed Microsoft Edge, intercepts price/trade endpoints, and supplies ephemeral mock wallets. Screenshots are written to the ignored `.test-artifacts/` directory. Browser testing in other operating systems requires configuring an installed Playwright browser.
+
+Registry maintenance is explicit: `npm run sync:assets` contacts the issuer, Solana RPC and Hermes. Review all changed addresses, metadata, supported extensions and feeds before release. It is never run automatically during install or build.
+
+## Security status
+
+This is a hardened application implementation, **not an independent audit or a security guarantee**. Dependency advisories change. Live wallet/provider compatibility still needs validation. An independent security review is recommended; it is not an application permission gate.
+
+See [SECURITY.md](SECURITY.md) for trust assumptions, reporting and release checks.

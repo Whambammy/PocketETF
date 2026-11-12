@@ -1,16 +1,22 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { resolveDirectImageUrl } from '@/lib/imageResolver';
-
+import { NextRequest, NextResponse } from "next/server";
+import { validateImageUrl } from "@/lib/imageResolver";
+import { AppError } from "@/lib/amounts";
+import { errorResponse, limitRequests } from "@/lib/server";
 export async function GET(request: NextRequest) {
-  const url = request.nextUrl.searchParams.get('url');
-  if (!url) {
-    return NextResponse.json({ error: 'Missing url query parameter' }, { status: 400 });
-  }
-
   try {
-    const directUrl = await resolveDirectImageUrl(url);
-    return NextResponse.json({ original: url, directUrl });
-  } catch {
-    return NextResponse.json({ original: url, directUrl: url });
+    await limitRequests("images", 120);
+    const original = request.nextUrl.searchParams.get("url");
+    let directUrl: string;
+    try {
+      directUrl = validateImageUrl(original);
+    } catch {
+      throw new AppError("Use an approved direct HTTPS image URL.");
+    }
+    return NextResponse.json(
+      { directUrl },
+      { headers: { "Cache-Control": "no-store" } },
+    );
+  } catch (e) {
+    return errorResponse(e);
   }
 }

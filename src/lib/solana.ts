@@ -1,346 +1,298 @@
 import {
-  Connection,
-  PublicKey,
-  TransactionInstruction,
-  TransactionMessage,
-  VersionedTransaction,
-  AddressLookupTableAccount,
-  ComputeBudgetProgram,
-} from '@solana/web3.js';
+  address,
+  isOffCurveAddress,
+  getProgramDerivedAddress,
+  getAddressEncoder,
+} from "@solana/kit";
 import {
-  createAssociatedTokenAccountIdempotentInstruction,
-  getAssociatedTokenAddressSync,
-  TOKEN_PROGRAM_ID,
-  ASSOCIATED_TOKEN_PROGRAM_ID,
-} from '@solana/spl-token';
-import {
-  SOLANA_RPC_ENDPOINT,
-  COMPUTE_UNIT_LIMIT,
-  COMPUTE_UNIT_PRICE_MICRO_LAMPORTS,
-} from './constants';
-
-export interface RawJupiterInstruction {
-  programId: string;
-  accounts: Array<{
-    pubkey: string;
-    isSigner: boolean;
-    isWritable: boolean;
-  }>;
-  data: string;
-}
-
-/**
- * Safely sanitizes an RPC candidate URL.
- * Automatically prepends https:// if protocol was omitted (e.g. mainnet.helius-rpc.com/?api-key=xyz).
- * Filters out accidental non-RPC domains (e.g. vercel.app app domains).
- */
-function sanitizeRpcUrl(raw?: string): string | null {
-  if (!raw) return null;
-  let trimmed = raw.trim();
-  if (!trimmed) return null;
-
-  // Prepend https:// if protocol is missing
-  if (!trimmed.startsWith('http://') && !trimmed.startsWith('https://')) {
-    trimmed = `https://${trimmed}`;
-  }
-
-  try {
-    const parsed = new URL(trimmed);
-    // Discard accidental deployment domain inputs
-    if (parsed.hostname.endsWith('vercel.app')) {
-      console.warn(`[Solana RPC] Ignored deployment domain in RPC configuration: ${parsed.hostname}`);
-      return null;
-    }
-    return parsed.toString();
-  } catch {
-    return null;
-  }
-}
-
-const DEFAULT_MAINNET_RPC = 'https://solana-rpc.publicnode.com';
-const FALLBACK_PUBLIC_RPCS = [
-  'https://solana-rpc.publicnode.com',
-  'https://nodes.mewapi.io/rpc/sol',
-  'https://api.mainnet-beta.solana.com',
+  TOKEN_CATALOG,
+  TOKEN_PROGRAM,
+  TOKEN_2022_PROGRAM,
+  USDC_MINT_ADDRESS,
+  type ETFAsset,
+} from "./constants";
+import { AppError } from "./amounts";
+import { fetchJson } from "./server";
+const ENDPOINTS = [
+  "https://solana-rpc.publicnode.com",
+  "https://api.mainnet-beta.solana.com",
 ];
-
-function buildEndpointsList(): string[] {
-  const candidates = [
-    process.env.SOLANA_RPC_URL,
-    process.env.NEXT_PUBLIC_SOLANA_RPC_URL,
-    ...FALLBACK_PUBLIC_RPCS,
-  ];
-
-  const valid = candidates
-    .map(sanitizeRpcUrl)
-    .filter((url): url is string => Boolean(url));
-
-  const unique = Array.from(new Set(valid));
-  if (!unique.includes(DEFAULT_MAINNET_RPC)) {
-    unique.push(DEFAULT_MAINNET_RPC);
-  }
-  return unique;
-}
-
-let sharedConnection: Connection | null = null;
-let currentRpcIndex = 0;
-
-function createConnectionSafely(endpoint: string): Connection {
+export function publicKey(value: unknown): string {
   try {
-    return new Connection(endpoint, {
-      commitment: 'confirmed',
-      confirmTransactionInitialTimeout: 30000,
-    });
-  } catch (err) {
-    console.error(`[Solana RPC] Failed to create connection for ${endpoint}, falling back to default:`, err);
-    return new Connection(DEFAULT_MAINNET_RPC, {
-      commitment: 'confirmed',
-      confirmTransactionInitialTimeout: 30000,
-    });
+    if (typeof value !== "string") throw new Error();
+    const p = address(value);
+    if (isOffCurveAddress(p)) throw new Error();
+    return p;
+  } catch {
+    throw new AppError("A valid signing wallet address is required.");
   }
 }
-
-/**
- * Returns a resilient Solana RPC Connection with fallback capability
- */
-export function getSolanaConnection(): Connection {
-  if (!sharedConnection) {
-    const endpoints = buildEndpointsList();
-    const endpoint = endpoints[currentRpcIndex] || DEFAULT_MAINNET_RPC;
-    sharedConnection = createConnectionSafely(endpoint);
-  }
-  return sharedConnection;
-}
-
-/**
- * Rotates to the next available RPC endpoint if the current one experiences 429 rate limits or errors
- */
-export function rotateRpcConnection(): Connection {
-  const endpoints = buildEndpointsList();
-  if (endpoints.length > 1) {
-    currentRpcIndex = (currentRpcIndex + 1) % endpoints.length;
-    const nextEndpoint = endpoints[currentRpcIndex];
-    console.warn(`[Solana RPC] Switching to fallback RPC endpoint: ${nextEndpoint}`);
-    sharedConnection = createConnectionSafely(nextEndpoint);
-  }
-  return getSolanaConnection();
-}
-
-/**
- * Converts a raw Jupiter JSON instruction into a Solana Web3 TransactionInstruction
- */
-export function deserializeInstruction(raw: RawJupiterInstruction): TransactionInstruction {
-  return new TransactionInstruction({
-    programId: new PublicKey(raw.programId),
-    keys: raw.accounts.map((acc) => ({
-      pubkey: new PublicKey(acc.pubkey),
-      isSigner: Boolean(acc.isSigner),
-      isWritable: Boolean(acc.isWritable),
-    })),
-    data: Buffer.from(raw.data, 'base64'),
-  });
-}
-
-// In-memory cache for frozen on-chain Address Lookup Tables (ALTs)
-const altAccountCache = new Map<string, AddressLookupTableAccount>();
-
-/**
- * Batch resolves Address Lookup Table accounts from Solana RPC with caching & retry fallback
- */
-export async function resolveAddressLookupTables(
-  connection: Connection,
-  altAddresses: string[]
-): Promise<AddressLookupTableAccount[]> {
-  if (!altAddresses || altAddresses.length === 0) {
-    return [];
-  }
-
-  // Deduplicate address strings
-  const uniqueAddresses = Array.from(new Set(altAddresses));
-
-  const endpoints = buildEndpointsList();
-
-  const lookups = await Promise.all(
-    uniqueAddresses.map(async (address) => {
-      if (altAccountCache.has(address)) {
-        return altAccountCache.get(address)!;
-      }
-
-      const pubkey = new PublicKey(address);
-
-      // 1. Try active connection first
-      try {
-        const res = await connection.getAddressLookupTable(pubkey);
-        if (res.value) {
-          altAccountCache.set(address, res.value);
-          return res.value;
-        }
-      } catch {
-        // proceed to fallbacks
-      }
-
-      // 2. Iterate across all fallback endpoints
-      for (const ep of endpoints) {
-        try {
-          const conn = createConnectionSafely(ep);
-          const res = await conn.getAddressLookupTable(pubkey);
-          if (res.value) {
-            altAccountCache.set(address, res.value);
-            return res.value;
-          }
-        } catch {
-          // continue to next endpoint
-        }
-      }
-
-      console.warn(`[resolveAddressLookupTables] Failed to fetch ALT across all endpoints: ${address}`);
-      return null;
-    })
-  );
-
-  return lookups.filter((acc): acc is AddressLookupTableAccount => acc !== null);
-}
-
-/**
- * Creates Compute Budget instructions (Limit: COMPUTE_UNIT_LIMIT)
- */
-export function createComputeBudgetInstructions(): TransactionInstruction[] {
-  return [
-    ComputeBudgetProgram.setComputeUnitLimit({
-      units: COMPUTE_UNIT_LIMIT,
-    }),
-  ];
-}
-
-/**
- * Creates an Idempotent Associated Token Account creation instruction.
- * Safe to execute whether the ATA exists or not.
- */
-export function createIdempotentAtaInstruction(
-  payer: PublicKey,
-  owner: PublicKey,
-  mint: PublicKey
-): { ata: PublicKey; instruction: TransactionInstruction } {
-  const ata = getAssociatedTokenAddressSync(
-    mint,
-    owner,
-    false,
-    TOKEN_PROGRAM_ID,
-    ASSOCIATED_TOKEN_PROGRAM_ID
-  );
-
-  const instruction = createAssociatedTokenAccountIdempotentInstruction(
-    payer,
-    ata,
-    owner,
-    mint,
-    TOKEN_PROGRAM_ID,
-    ASSOCIATED_TOKEN_PROGRAM_ID
-  );
-
-  return { ata, instruction };
-}
-
-/**
- * Compiles an array of instructions into a VersionedTransaction v0 with ALTs,
- * and validates that the serialized byte size stays strictly within the 1232 MTU limit.
- */
-export async function compileAndValidateV0Transaction(params: {
-  connection: Connection;
-  payerKey: PublicKey;
-  instructions: TransactionInstruction[];
-  lookupTableAccounts: AddressLookupTableAccount[];
-}): Promise<{
-  transaction: VersionedTransaction;
-  serializedBase64: string;
-  byteLength: number;
-}> {
-  const { connection, payerKey, instructions, lookupTableAccounts } = params;
-
-  // Fetch recent blockhash with automatic fallback rotation
-  let blockhash: string;
-  try {
-    const res = await connection.getLatestBlockhash('confirmed');
-    blockhash = res.blockhash;
-  } catch (primaryErr) {
-    console.warn('[Solana RPC] Blockhash fetch failed on primary, retrying with fallback RPC...', primaryErr);
-    const fallbackConn = rotateRpcConnection();
-    const res = await fallbackConn.getLatestBlockhash('confirmed');
-    blockhash = res.blockhash;
-  }
-
-  // Compile v0 Message
-  const messageV0 = new TransactionMessage({
-    payerKey,
-    recentBlockhash: blockhash,
-    instructions,
-  }).compileToV0Message(lookupTableAccounts);
-
-  let transaction: VersionedTransaction;
-  let serialized: Uint8Array;
-  try {
-    transaction = new VersionedTransaction(messageV0);
-    serialized = transaction.serialize();
-  } catch (err: unknown) {
-    const error = err as Error;
-    if (error.message && error.message.includes('encoding overruns Uint8Array')) {
-      throw new Error(
-        `Transaction size limit exceeded: serialized transaction exceeds Solana 1232B MTU packet limit. Reduce basket asset count or instructions.`
-      );
+export async function rpc<T>(
+  method: string,
+  params: unknown[] = [],
+): Promise<T> {
+  const custom = process.env.SOLANA_RPC_URL;
+  const endpoints = custom ? [custom, ...ENDPOINTS] : ENDPOINTS;
+  for (const endpoint of endpoints) {
+    try {
+      const u = new URL(endpoint);
+      if (u.protocol !== "https:" || u.username || u.password)
+        throw new AppError("RPC must use HTTPS.", 503);
+      const data = await fetchJson<{ result?: T; error?: unknown }>(u.href, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
+      });
+      if (data.error || data.result === undefined) continue;
+      return data.result;
+    } catch {
+      /* try the next read/submission endpoint; never log credentials */
     }
-    throw error;
   }
-  const byteLength = serialized.length;
-
-  // Strict 1232-byte MTU check
-  if (byteLength > 1232) {
-    throw new Error(
-      `Transaction size limit exceeded: serialized message is ${byteLength} bytes (maximum allowed: 1232 bytes MTU). Reduce basket asset count or instructions.`
-    );
-  }
-
-  const serializedBase64 = Buffer.from(serialized).toString('base64');
-
-  return {
-    transaction,
-    serializedBase64,
-    byteLength,
-  };
+  throw new AppError(
+    "Solana RPC is unavailable. Your balance could not be verified.",
+    503,
+    "RPC_UNAVAILABLE",
+  );
 }
-
-/**
- * Checks a user's on-chain token balance (e.g. USDC).
- * Returns { balanceAtomic: bigint, uiAmount: number, exists: boolean }.
- * If the account does not exist or has 0 balance, returns uiAmount: 0, exists: false.
- */
-export async function getOnChainTokenBalance(
-  connection: Connection,
-  walletAddress: PublicKey,
-  mintAddress: PublicKey
-): Promise<{ balanceAtomic: bigint; uiAmount: number; exists: boolean }> {
-  try {
-    const ata = getAssociatedTokenAddressSync(
-      mintAddress,
-      walletAddress,
-      false,
-      TOKEN_PROGRAM_ID,
-      ASSOCIATED_TOKEN_PROGRAM_ID
+export async function ata(
+  account: string,
+  mint: string,
+  program = TOKEN_PROGRAM,
+): Promise<string> {
+  const encode = getAddressEncoder();
+  return (
+    await getProgramDerivedAddress({
+      programAddress: address("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"),
+      seeds: [
+        encode.encode(address(account)),
+        encode.encode(address(program)),
+        encode.encode(address(mint)),
+      ],
+    })
+  )[0];
+}
+export interface MintState {
+  decimals: number;
+  program: string;
+  multiplier: number;
+}
+export async function verifyMints(
+  assets: ETFAsset[],
+): Promise<Record<string, MintState>> {
+  const result: Record<string, MintState> = {};
+  // Small batches work with conservative public RPC limits.
+  for (let i = 0; i < assets.length; i += 5) {
+    const batch = assets.slice(i, i + 5);
+    await Promise.all(
+      batch
+        .filter((a) => a.kind === "equity")
+        .map(async (a) => {
+          const issuer = await fetchJson<{
+            symbol: string;
+            isTradingHalted: boolean;
+            deployments: { network: string; address: string }[];
+          }>(a.provenanceUrl);
+          if (
+            issuer.symbol !== a.tokenSymbol ||
+            issuer.isTradingHalted !== false ||
+            !issuer.deployments?.some(
+              (d) => d.network === "Solana" && d.address === a.mint,
+            )
+          )
+            throw new AppError(
+              "Issuer verification failed or trading is halted for " +
+                a.ticker +
+                ".",
+              503,
+              "ASSET_UNVERIFIED",
+            );
+        }),
     );
-    const balanceRes = await connection.getTokenAccountBalance(ata);
-    if (balanceRes && balanceRes.value) {
-      return {
-        balanceAtomic: BigInt(balanceRes.value.amount),
-        uiAmount: balanceRes.value.uiAmount ?? 0,
-        exists: true,
+    const response = await rpc<{
+      value: ({
+        owner: string;
+        data: {
+          parsed: {
+            type: string;
+            info: {
+              decimals: number;
+              isInitialized: boolean;
+              extensions?: {
+                extension: string;
+                state: Record<string, unknown>;
+              }[];
+            };
+          };
+        };
+      } | null)[];
+    }>("getMultipleAccounts", [
+      batch.map((a) => a.mint),
+      { encoding: "jsonParsed", commitment: "finalized" },
+    ]);
+    for (const [index, a] of batch.entries()) {
+      const value = response.value[index];
+      const info = value?.data?.parsed?.info;
+      if (
+        !value ||
+        value.owner !== a.tokenProgram ||
+        value.data?.parsed?.type !== "mint" ||
+        info?.decimals !== a.decimals ||
+        !info.isInitialized
+      )
+        throw new AppError(
+          "Mint metadata changed for " + a.ticker + ". Trading blocked.",
+          503,
+          "ASSET_UNVERIFIED",
+        );
+      const extensions = info.extensions || [];
+      if (
+        extensions.some(
+          (e) => e.extension === "pausableConfig" && e.state.paused === true,
+        )
+      )
+        throw new AppError(a.ticker + " transfers are paused.");
+      if (
+        extensions.some(
+          (e) => e.extension === "transferHook" && e.state.programId !== null,
+        )
+      )
+        throw new AppError("Unsupported token transfer hook.");
+      if (
+        extensions.some((e) =>
+          [
+            "transferFeeConfig",
+            "nonTransferable",
+            "confidentialTransferFeeConfig",
+          ].includes(e.extension),
+        )
+      )
+        throw new AppError("Unsupported token extension.");
+      const scaled = extensions.find(
+        (e) => e.extension === "scaledUiAmountConfig",
+      )?.state;
+      const multiplier = scaled
+        ? Number(
+            Number(scaled.newMultiplierEffectiveTimestamp) <= Date.now() / 1000
+              ? scaled.newMultiplier
+              : scaled.multiplier,
+          )
+        : 1;
+      if (!Number.isFinite(multiplier) || multiplier <= 0)
+        throw new AppError("Invalid token scaling.", 503);
+      result[a.mint] = {
+        decimals: a.decimals,
+        program: a.tokenProgram,
+        multiplier,
       };
     }
-  } catch {
-    // Expected when ATA is uninitialized or wallet has 0 token balance
+  }
+  return result;
+}
+export interface Holding {
+  mint: string;
+  ticker: string;
+  amountAtomic: string;
+  quantity: number;
+  spendableAtomic: string;
+}
+export async function walletBalances(account: string) {
+  publicKey(account);
+  const [sol, classic, extended] = await Promise.all([
+    rpc<{ value: number }>("getBalance", [
+      account,
+      { commitment: "finalized" },
+    ]),
+    rpc<{ value: ParsedAccount[] }>("getTokenAccountsByOwner", [
+      account,
+      { programId: TOKEN_PROGRAM },
+      { encoding: "jsonParsed", commitment: "finalized" },
+    ]),
+    rpc<{ value: ParsedAccount[] }>("getTokenAccountsByOwner", [
+      account,
+      { programId: TOKEN_2022_PROGRAM },
+      { encoding: "jsonParsed", commitment: "finalized" },
+    ]),
+  ]);
+  const map = new Map<string, Holding>();
+  let usdc = 0n;
+  let usdcSpendable = 0n;
+  const associated = new Map(
+    await Promise.all(
+      TOKEN_CATALOG.map(
+        async (a) =>
+          [a.mint, await ata(account, a.mint, a.tokenProgram)] as const,
+      ),
+    ),
+  );
+  const usdcAta = await ata(account, USDC_MINT_ADDRESS);
+  for (const entry of [...classic.value, ...extended.value]) {
+    const info = entry.account.data.parsed.info;
+    const amount = BigInt(info.tokenAmount.amount);
+    if (
+      info.mint === USDC_MINT_ADDRESS &&
+      entry.account.owner === TOKEN_PROGRAM
+    ) {
+      usdc += amount;
+      if (
+        entry.pubkey === usdcAta &&
+        info.state === "initialized" &&
+        !info.delegate
+      )
+        usdcSpendable = amount;
+    }
+    const known = TOKEN_CATALOG.find(
+      (a) => a.mint === info.mint && a.tokenProgram === entry.account.owner,
+    );
+    if (!known || amount === 0n) continue;
+    const existing = map.get(known.mint);
+    const quantity = Number(info.tokenAmount.uiAmountString);
+    if (!Number.isFinite(quantity) || quantity < 0)
+      throw new AppError("Invalid balance response.", 503);
+    const spendable =
+      entry.pubkey === associated.get(known.mint) &&
+      info.state === "initialized" &&
+      !info.delegate
+        ? amount
+        : 0n;
+    map.set(known.mint, {
+      mint: known.mint,
+      ticker: known.ticker,
+      quantity: (existing?.quantity || 0) + quantity,
+      amountAtomic: (BigInt(existing?.amountAtomic || "0") + amount).toString(),
+      spendableAtomic: (
+        BigInt(existing?.spendableAtomic || "0") + spendable
+      ).toString(),
+    });
   }
   return {
-    balanceAtomic: BigInt(0),
-    uiAmount: 0,
-    exists: false,
+    account,
+    solLamports: sol.value,
+    sol: sol.value / 1e9,
+    usdc: Number(usdc) / 1e6,
+    usdcAtomic: usdc.toString(),
+    usdcSpendableAtomic: usdcSpendable.toString(),
+    holdings: [...map.values()],
+    tokenAccounts: [...classic.value, ...extended.value].map((a) => ({
+      address: a.pubkey,
+      mint: a.account.data.parsed.info.mint,
+      amountAtomic: a.account.data.parsed.info.tokenAmount.amount,
+    })),
   };
 }
-
+interface ParsedAccount {
+  pubkey: string;
+  account: {
+    owner: string;
+    data: {
+      parsed: {
+        info: {
+          mint: string;
+          state: string;
+          delegate?: string;
+          tokenAmount: { amount: string; uiAmountString: string };
+        };
+      };
+    };
+  };
+}

@@ -1,147 +1,65 @@
-import { PublicKey } from '@solana/web3.js';
 import {
   CURATED_ETFS,
   PRE_BAKED_BASKETS,
-  STOCK_MINTS,
-  TOKEN_CATALOG,
-  ETFDefinition,
-  ETFAsset,
-  MAX_ETF_ASSETS,
-} from '@/lib/constants';
-
-/**
- * Robust URI decoder that unwraps single- or multi-level percent-encoding
- */
+  findAsset,
+  type ETFDefinition,
+} from "./constants";
+import { validateAssets } from "./amounts";
+import { validateImageUrl } from "./imageResolver";
 export function safeDecode(val: string): string {
-  let decoded = val;
+  return val;
+} // URLSearchParams already decoded once.
+export function resolveETF(
+  id: string,
+  sp: URLSearchParams,
+): ETFDefinition | null {
+  if (Object.hasOwn(CURATED_ETFS, id)) return CURATED_ETFS[id];
+  if (Object.hasOwn(PRE_BAKED_BASKETS, id)) return PRE_BAKED_BASKETS[id];
+  if (id !== "custom") return null;
   try {
-    for (let i = 0; i < 3 && decoded.includes('%'); i++) {
-      const next = decodeURIComponent(decoded);
-      if (next === decoded) break;
-      decoded = next;
-    }
-  } catch {
-    // Return best effort
-  }
-  return decoded;
-}
-
-/**
- * Universal resolver for both curated static PocketETFs and dynamic user-minted custom baskets
- */
-export function resolveETF(id: string, searchParams: URLSearchParams): ETFDefinition | null {
-  // 1. Check curated PocketETFs
-  if (CURATED_ETFS[id]) {
-    return CURATED_ETFS[id];
-  }
-
-  // 2. Check legacy alias
-  if (PRE_BAKED_BASKETS[id]) {
-    return PRE_BAKED_BASKETS[id];
-  }
-
-  // 3. Check dynamic custom ETF
-  if (id === 'custom') {
-    const rawAssetsParam = searchParams.get('assets'); // e.g. "NVDA:60,TSM:40"
-    if (!rawAssetsParam) {
-      return null;
-    }
-
-    const decodedAssets = safeDecode(rawAssetsParam);
-    const rawName = searchParams.get('name') || 'Custom Stock ETF';
-    const rawDescription =
-      searchParams.get('description') ||
-      'Custom user-generated multi-asset equity ETF executed atomically via PocketETF and Jupiter DEX aggregation.';
-
-    // Sanitize user-provided text to prevent XSS / injection attacks
-    const name = safeDecode(rawName).replace(/[^a-zA-Z0-9 \-_().,]/g, '').trim().slice(0, 60) || 'Custom Stock ETF';
-    const description =
-      safeDecode(rawDescription).replace(/[^a-zA-Z0-9 \-_().,!?]/g, '').trim().slice(0, 250) ||
-      'Custom equity ETF executed atomically via PocketETF.';
-
-    // Split by comma, semicolon, or whitespace
-    const assetPairs = decodedAssets.split(/[,;\s]+/).filter(Boolean);
-    if (assetPairs.length === 0 || assetPairs.length > MAX_ETF_ASSETS) {
-      return null;
-    }
-
-    const seenTickers = new Set<string>();
-    const seenMints = new Set<string>();
-    const targetAssets: ETFAsset[] = [];
-
-    for (const pair of assetPairs) {
-      const parts = pair.split(/[:=]/);
-      const tickerRaw = parts[0];
-      const weightStr = parts[1];
-      const ticker = (tickerRaw || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
-      const weight = parseFloat(weightStr || '0');
-
-      if (!ticker || ticker.length > 10 || isNaN(weight) || !Number.isFinite(weight) || weight <= 0 || weight > 100) {
-        return null;
-      }
-
-      if (seenTickers.has(ticker)) {
-        return null; // Duplicate ticker forbidden
-      }
-      seenTickers.add(ticker);
-
-      // Check if ticker is in known STOCK_MINTS or direct base58 pubkey
-      let mint = STOCK_MINTS[ticker];
-      if (!mint && ticker.length >= 32 && ticker.length <= 44) {
-        mint = ticker;
-      }
-      if (!mint) {
-        mint = STOCK_MINTS.NVDA; // fallback default
-      }
-
-      // Strict Base58 public key validation
-      try {
-        new PublicKey(mint);
-      } catch {
-        return null;
-      }
-
-      const catalogMatch = TOKEN_CATALOG.find((t) => t.ticker === ticker) || TOKEN_CATALOG.find((t) => t.mint === mint);
-
-      targetAssets.push({
-        ticker,
-        name: catalogMatch?.name || `${ticker} Asset`,
-        weightPercent: weight,
-        mint,
-        decimals: catalogMatch?.decimals || 6,
-        color: catalogMatch?.color || '#10B981',
-        category: catalogMatch?.category || 'Semiconductors & AI',
-        primaryDex: catalogMatch?.primaryDex || 'Whirlpool',
-      });
-    }
-
-    // Optional custom badge/image URL or preset path
-    const rawImage = searchParams.get('image');
-    let iconPath = '/etfs/custom.png';
-    if (rawImage) {
-      let trimmed = safeDecode(rawImage).trim();
-      if (!trimmed.startsWith('/') && !trimmed.startsWith('http://') && !trimmed.startsWith('https://')) {
-        trimmed = `https://${trimmed}`;
-      }
-      if (trimmed.startsWith('/') && !trimmed.startsWith('//')) {
-        iconPath = trimmed.slice(0, 500);
-      } else if (trimmed.startsWith('https://') || trimmed.startsWith('http://')) {
-        iconPath = trimmed.slice(0, 500);
-      }
-    }
-
+    for (const key of ["assets", "name", "description", "image"])
+      if (sp.getAll(key).length > 1) return null;
+    const raw = sp.get("assets");
+    if (!raw || raw.length > 1000) return null;
+    const assets = raw.split(",").map((pair) => {
+      const parts = pair.split(":");
+      if (parts.length !== 2 || !/^\d+(\.\d{1,2})?$/.test(parts[1]))
+        throw new Error();
+      const known = findAsset(parts[0]);
+      if (!known) throw new Error();
+      return { ...known, weightPercent: Number(parts[1]) };
+    });
+    validateAssets(assets);
+    const name = (sp.get("name") || "Custom Basket").trim().slice(0, 60);
+    const description = (
+      sp.get("description") || "A self-custodied basket of verified tokens."
+    )
+      .trim()
+      .slice(0, 250);
+    if (!name || /[\u0000-\u001f]/.test(name + description)) return null;
     return {
-      id: 'custom',
+      id: "custom",
       name,
-      symbol: 'CUSTOM',
-      tagline: 'Custom Multi-Asset PocketETF',
+      symbol: "CUSTOM",
       description,
-      iconPath,
-      category: 'Broad Market',
-      colorGradient: { from: '#10B981', to: '#9945FF' },
-      targetAssets,
+      tagline: "Your allocation, your wallet",
+      category: "Custom",
+      iconPath: validateImageUrl(sp.get("image") || "/etfs/custom.png"),
+      colorGradient: { from: "#10B981", to: "#146EF5" },
+      targetAssets: assets,
     };
+  } catch {
+    return null;
   }
-
-  return null;
+}
+export function serializeBasket(etf: ETFDefinition): string {
+  validateAssets(etf.targetAssets);
+  return new URLSearchParams({
+    assets: etf.targetAssets
+      .map((a) => a.mint + ":" + a.weightPercent)
+      .join(","),
+    name: etf.name,
+    description: etf.description,
+    image: validateImageUrl(etf.iconPath),
+  }).toString();
 }
