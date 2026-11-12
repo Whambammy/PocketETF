@@ -27,6 +27,65 @@ import {
 import { POST as prepare } from "../src/app/api/trades/prepare/route";
 import { POST as submit } from "../src/app/api/trades/submit/route";
 import { proxy } from "../src/proxy";
+import { normalizeSiteOrigin, DEFAULT_SITE_ORIGIN } from "../src/lib/siteUrl";
+
+test("site origins accept bare Vercel domains and safely handle malformed configuration", () => {
+  for (const input of [
+    "pocketetf.vercel.app",
+    " pocketetf.vercel.app ",
+    "https://pocketetf.vercel.app/",
+    "//pocketetf.vercel.app",
+  ]) {
+    assert.equal(normalizeSiteOrigin(input), DEFAULT_SITE_ORIGIN);
+  }
+  assert.equal(
+    normalizeSiteOrigin("custom.example/path?query=1#fragment"),
+    "https://custom.example",
+  );
+  assert.equal(
+    normalizeSiteOrigin("http://localhost:3000/"),
+    "http://localhost:3000",
+  );
+  for (const input of [
+    undefined,
+    "",
+    "  ",
+    "https://",
+    "not a url",
+    "ftp://custom.example",
+    "https://user:password@custom.example",
+  ]) {
+    assert.equal(normalizeSiteOrigin(input), DEFAULT_SITE_ORIGIN);
+  }
+  assert.equal(
+    normalizeSiteOrigin("", "http://127.0.0.1:3210"),
+    "http://127.0.0.1:3210",
+  );
+});
+
+test("Action metadata uses HTTPS links when Vercel is configured with a bare hostname", async () => {
+  const previous = process.env.NEXT_PUBLIC_BASE_URL;
+  process.env.NEXT_PUBLIC_BASE_URL = "pocketetf.vercel.app";
+  try {
+    const result = await metadata(
+      new NextRequest(
+        "https://preview.example/api/actions/etf/crypto-frontier",
+      ),
+      { params: Promise.resolve({ id: "crypto-frontier" }) },
+    );
+    assert.equal(result.status, 200);
+    const data = await result.json();
+    assert.ok(data.icon.startsWith(DEFAULT_SITE_ORIGIN + "/"));
+    assert.ok(
+      data.links.actions.every((action: { href: string }) =>
+        action.href.startsWith(DEFAULT_SITE_ORIGIN + "/api/actions/etf/"),
+      ),
+    );
+  } finally {
+    if (previous === undefined) delete process.env.NEXT_PUBLIC_BASE_URL;
+    else process.env.NEXT_PUBLIC_BASE_URL = previous;
+  }
+});
 
 const basket = CURATED_ETFS["crypto-frontier"];
 test("registry identities are unique, pinned, and include Token-2022 metadata", () => {

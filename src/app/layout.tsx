@@ -4,10 +4,9 @@ import Link from "next/link";
 import { HeaderNav } from "@/components/HeaderNav";
 import { WalletProvider } from "@/components/WalletProvider";
 import { headers } from "next/headers";
+import { getSiteOrigin } from "@/lib/siteUrl";
 export const metadata: Metadata = {
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_BASE_URL || "https://pocketetf.vercel.app",
-  ),
+  metadataBase: new URL(getSiteOrigin()),
   title: {
     default: "PocketETF | Self-custodied baskets on Solana",
     template: "%s | PocketETF",

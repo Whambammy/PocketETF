@@ -4,6 +4,7 @@ import { resolveETF } from "@/lib/etfResolver";
 import { buildTrade } from "@/lib/jupiter";
 import { readJson, errorResponse, limitRequests } from "@/lib/server";
 import { AppError } from "@/lib/amounts";
+import { getSiteOrigin } from "@/lib/siteUrl";
 export { resolveETF };
 type Context = { params: Promise<{ id: string }> };
 export async function OPTIONS() {
@@ -17,7 +18,7 @@ export async function GET(request: NextRequest, { params }: Context) {
     const etf = resolveETF(id, sp);
     if (!etf)
       throw new AppError("Basket not found or invalid allocation.", 404);
-    const origin = process.env.NEXT_PUBLIC_BASE_URL || request.nextUrl.origin;
+    const origin = getSiteOrigin(request.nextUrl.origin);
     const href = new URL("/api/actions/etf/" + encodeURIComponent(id), origin);
     href.search = sp.toString();
     href.searchParams.delete("amount");
