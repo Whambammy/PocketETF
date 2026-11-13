@@ -1,67 +1,208 @@
-import type { Metadata } from "next";
-import "./globals.css";
-import Link from "next/link";
-import { HeaderNav } from "@/components/HeaderNav";
-import { WalletProvider } from "@/components/WalletProvider";
-import { headers } from "next/headers";
-import { getSiteOrigin } from "@/lib/siteUrl";
+import type { Metadata } from 'next';
+import './globals.css';
+import Link from 'next/link';
+import { PocketLogo } from '@/components/PocketLogo';
+import { HeaderNav } from '@/components/HeaderNav';
+import { ShieldCheck, Zap, Terminal, Activity } from 'lucide-react';
+
+import { WalletProvider } from '@/components/WalletProvider';
+import { headers } from 'next/headers';
+import { getSiteOrigin } from '@/lib/siteUrl';
+const siteOrigin = getSiteOrigin();
+
 export const metadata: Metadata = {
-  metadataBase: new URL(getSiteOrigin()),
+  metadataBase: new URL(siteOrigin),
   title: {
-    default: "PocketETF | Self-custodied baskets on Solana",
-    template: "%s | PocketETF",
+    default: 'PocketETF | 1-Click Tokenized Stock ETFs for Solana Blinks',
+    template: '%s | PocketETF',
   },
   description:
-    "Preview and trade baskets of verified Solana tokens. Exact allocations, wallet signing, simulated transactions and explicit price freshness.",
-  icons: { icon: "/favicon.png" },
-  openGraph: { images: ["/og-image.png"] },
+    'Institutional-grade 1-click tokenized stock and ETF execution protocol for Solana Blinks and Jupiter DEX aggregation. Execute NVDA, AAPL, SPY, QQQ, and Gold proxies atomically in a single transaction.',
+  keywords: [
+    'PocketETF',
+    'Solana',
+    'Blinks',
+    'Solana Actions',
+    'Jupiter Exchange',
+    'Tokenized Stocks',
+    'RWAs',
+    'DeFi',
+    'NVDA',
+    'SPY',
+  ],
+  icons: {
+    icon: '/favicon.png',
+    shortcut: '/favicon.png',
+    apple: '/favicon.png',
+  },
+  openGraph: {
+    title: 'PocketETF | 1-Click Tokenized Stock ETFs for Solana Blinks',
+    description:
+      'Institutional-grade 1-click tokenized stock and ETF execution protocol for Solana Blinks and Jupiter DEX aggregation.',
+    url: siteOrigin,
+    siteName: 'PocketETF Protocol',
+    images: [
+      {
+        url: `${siteOrigin}/og-image.png`,
+        secureUrl: `${siteOrigin}/og-image.png`,
+        width: 1024,
+        height: 510,
+        type: 'image/png',
+        alt: 'PocketETF - 1-Click Tokenized Stock ETFs Native to Solana Blinks',
+      },
+    ],
+    locale: 'en_US',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'PocketETF | 1-Click Tokenized Stock ETFs for Solana Blinks',
+    description:
+      'Execute multi-asset stock and index ETFs natively via Solana Blinks and Jupiter DEX aggregation.',
+    images: [`${siteOrigin}/og-image.png`],
+    creator: '@PocketETF',
+    site: '@PocketETF',
+  },
 };
+
 export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  await headers(); // Request-time rendering is required for per-request CSP nonces.
+  await headers();
   return (
     <html lang="en" className="dark">
-      <body className="min-h-screen flex flex-col">
-        <div className="h-1 bg-gradient-to-r from-blue-600 via-emerald-400 to-cyan-400" />
+      <head>
+        <link rel="icon" href="/favicon.png" type="image/png" />
+      </head>
+      <body className="min-h-screen flex flex-col bg-[#0A1128] text-slate-100 antialiased selection:bg-[#00D69F] selection:text-black">
+        {/* Top Brand Hairline Indicator */}
+        <div className="h-[3px] w-full bg-gradient-to-r from-[#146EF5] via-[#00D69F] to-[#14F195]" />
+
+        {/* Global Responsive Navigation Header */}
         <WalletProvider>
-          <HeaderNav />
-          <main className="flex-1">{children}</main>
-        </WalletProvider>
-        <footer className="border-t border-slate-700 mt-20 py-10 px-4 text-xs text-slate-400">
-          <div className="max-w-7xl mx-auto space-y-3">
-            <p>
-              PocketETF assembles baskets of tokens held in your wallet. It does
-              not issue ETF shares or manage a pooled fund.
-            </p>
-            <p>
-              Tokenized equities carry issuer, custody, liquidity and
-              transfer-control risks. Review the terms of the specific assets
-              and external providers. Quotes and oracle reference prices can
-              differ. No return, execution speed or security guarantee is made.
-            </p>
-            <div className="flex gap-5 flex-wrap">
-              <Link href="/portfolio">Portfolio & transaction history</Link>
-              <a
-                href="https://docs.xstocks.fi/docs"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Issuer information
-              </a>
-              <a
-                href="https://developers.jup.ag/docs/swap"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Jupiter routing
-              </a>
-              <Link href="/actions.json">Solana Actions</Link>
+        <HeaderNav />
+
+        {/* Main Application Content */}
+        <main className="flex-grow">{children}</main>
+
+        {/* Protocol Security & Architecture Footer */}
+        <footer className="border-t border-[#146EF5]/20 bg-[#060A17] py-12 mt-24">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-10">
+              <div className="md:col-span-2 space-y-3">
+                <PocketLogo size={34} />
+                <p className="text-xs text-slate-400 max-w-md leading-relaxed">
+                  PocketETF is a decentralized multi-asset ETF execution engine engineered for the Solana
+                  Actions &amp; Blinks standard. Bundles tokenized stocks, index ETFs, and commodities into a
+                  single atomic transaction using a wallet-supported v0 or v1 format and Jupiter DEX aggregation.
+                </p>
+                <div className="flex items-center gap-3 text-[11px] font-mono text-slate-500 pt-1">
+                  <span>Solana Spec: Actions v2.1.3</span>
+                  <span>•</span>
+                  <span>Execution: v0 / v1</span>
+                  <span>•</span>
+                  <span>Oracle: Pyth Hermes v2</span>
+                </div>
+              </div>
+
+              <div>
+                <h4 className="text-[11px] font-bold text-slate-300 uppercase tracking-widest mb-3 font-mono">
+                  Execution Safeguards
+                </h4>
+                <ul className="text-xs text-slate-400 space-y-2 font-mono">
+                  <li className="flex items-center gap-2">
+                    <ShieldCheck className="w-3.5 h-3.5 text-[#00D69F]" />
+                    <span>Transaction Size Guard</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Zap className="w-3.5 h-3.5 text-[#146EF5]" />
+                    <span>Simulated Compute Budget</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Activity className="w-3.5 h-3.5 text-purple-400" />
+                    <span>Pyth Hermes Feeds (±σ)</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Terminal className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Zero-Dust Atomic Math</span>
+                  </li>
+                </ul>
+              </div>
+
+              <div>
+                <h4 className="text-[11px] font-bold text-slate-300 uppercase tracking-widest mb-3 font-mono">
+                  Network &amp; Discovery
+                </h4>
+                <div className="text-xs text-slate-400 space-y-2">
+                  <div className="flex justify-between">
+                    <span>Universal CORS:</span>
+                    <span className="font-mono text-[#00D69F] font-semibold">Enabled (*)</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Protocol Comparison:</span>
+                    <Link href="/compare" className="font-mono text-[#00D69F] hover:underline">
+                      PocketETF vs X
+                    </Link>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Oracle Feeds:</span>
+                    <Link href="/api/prices" className="font-mono text-purple-400 hover:underline">
+                      /api/prices (Pyth)
+                    </Link>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Action Rules:</span>
+                    <Link href="/actions.json" className="font-mono text-[#146EF5] hover:underline">
+                      /actions.json
+                    </Link>
+                  </div>
+                  <div className="flex justify-between items-center pt-1 border-t border-white/5">
+                    <span>Official 𝕏:</span>
+                    <a
+                      href="https://x.com/PocketETF"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-mono text-white hover:text-[#00D69F] flex items-center gap-1.5 transition-colors"
+                      title="Follow @PocketETF on X"
+                    >
+                      <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                      </svg>
+                      <span>@PocketETF</span>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="border-t border-white/[0.06] pt-8 flex flex-col sm:flex-row items-center justify-between gap-6 text-xs text-slate-500 font-mono">
+              <p>© 2026 PocketETF Protocol. Open-source decentralized finance infrastructure.</p>
+              <div className="flex flex-wrap items-center gap-5">
+                <a
+                  href="https://solana.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/40 border border-[#14F195]/25 hover:border-[#14F195]/50 transition-all shadow-sm group"
+                  title="Built natively on Solana"
+                >
+                  <span className="text-[10px] text-slate-400 font-mono">Built natively on</span>
+                  <img
+                    src="/solanaLogo.png"
+                    alt="Solana"
+                    className="h-3 sm:h-3.5 w-auto object-contain transition-transform group-hover:scale-105"
+                  />
+                </a>
+                <span className="flex items-center gap-2 text-slate-400 text-xs">
+                  <span className="w-2 h-2 rounded-full bg-[#00D69F] animate-pulse" />
+                  Solana Mainnet-Beta
+                </span>
+              </div>
             </div>
           </div>
         </footer>
+        </WalletProvider>
       </body>
     </html>
   );

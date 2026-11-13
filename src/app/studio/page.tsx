@@ -1,214 +1,1136 @@
-"use client";
-import { useState } from "react";
-import Link from "next/link";
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import {
-  TOKEN_CATALOG,
-  findAsset,
-  type ETFDefinition,
-  type ETFAsset,
-} from "@/lib/constants";
-import { serializeBasket } from "@/lib/etfResolver";
-import { validateAssets } from "@/lib/amounts";
-import { validateImageUrl } from "@/lib/imageResolver";
-export default function Studio() {
-  const [name, setName] = useState("My Basket");
-  const [description, setDescription] = useState(
-    "My allocation of verified Solana tokens.",
+  Sparkles,
+  Layers,
+  ArrowLeft,
+  Copy,
+  Check,
+  ShieldAlert,
+  ShieldCheck,
+  Sliders,
+  Plus,
+  Trash2,
+  Share2,
+  RefreshCw,
+  Search,
+  CheckCircle2,
+  Database,
+  PieChart,
+  HelpCircle,
+  Smartphone,
+  MessageCircle,
+  Repeat2,
+  Heart,
+  Bookmark,
+} from 'lucide-react';
+import { TOKEN_CATALOG, MAX_ETF_ASSETS, ETFAsset, getDEXConflictStatus, findAsset } from '@/lib/constants';
+import { DonutChart } from '@/components/DonutChart';
+import { MobileQRModal } from '@/components/MobileQRModal';
+import { copyToClipboard } from '@/lib/clipboard';
+
+interface ActiveStock {
+  ticker: string;
+  name: string;
+  weight: number;
+  color: string;
+  mint: string;
+  category: string;
+  primaryDex?: string;
+  underlyingPrice?: string;
+}
+
+export default function StudioPage() {
+  const [etfName, setEtfName] = useState('Silicon AI Supercycle');
+  const [etfDescription, setEtfDescription] = useState(
+    '1-Click execution for 60% NVIDIA (NVDA) and 40% Taiwan Semiconductor (TSM) via Jupiter DEX aggregation.'
   );
-  const [assets, setAssets] = useState<ETFAsset[]>(
-    TOKEN_CATALOG.filter((a) => a.kind === "crypto").map((a) => ({
-      ...a,
-      weightPercent: 50,
-    })),
-  );
-  const [identity, setIdentity] = useState("");
-  const [image, setImage] = useState("/etfs/custom.png");
-  const [error, setError] = useState("");
-  let href = "";
-  try {
-    const etf: ETFDefinition = {
-      id: "custom",
-      name: name.trim(),
-      description,
-      iconPath: validateImageUrl(image),
-      targetAssets: assets,
-      symbol: "CUSTOM",
-      tagline: "",
-      category: "Custom",
-      colorGradient: { from: "#10B981", to: "#146EF5" },
+
+  const [activeStocks,setActiveStocks]=useState<ActiveStock[]>(['NVDA','TSM'].map((ticker,index)=>{
+    const asset=findAsset(ticker)!;return {...asset,weight:index===0?60:40,underlyingPrice:'Unavailable'};
+  }));
+
+  const [copied, setCopied] = useState(false);
+  const [origin, setOrigin] = useState('https://pocketetf.vercel.app');
+  const [isAssetDrawerOpen, setIsAssetDrawerOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeCategoryFilter, setActiveCategoryFilter] = useState('All');
+  const [customMintInput, setCustomMintInput] = useState('');
+  const [customTickerInput, setCustomTickerInput] = useState('');
+  const [previewMode, setPreviewMode] = useState<'widget' | 'twitter'>('twitter');
+  const [isMobileQrOpen, setIsMobileQrOpen] = useState(false);
+  const [selectedBadge, setSelectedBadge] = useState('/etfs/custom.png');
+  const [customImageUrl, setCustomImageUrl] = useState('');
+  const [imageInputMode, setImageInputMode] = useState<'preset' | 'custom'>('preset');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setOrigin(window.location.origin);
+    }
+
+    const fetchLivePrices = async () => {
+      try {
+        const res = await fetch('/api/prices');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && data.prices) {
+            setActiveStocks((prev) =>
+              prev.map((s) => {
+                const live = data.prices[s.ticker];
+                return live ? { ...s, underlyingPrice: live.formatted } : s;
+              })
+            );
+          }
+        }
+      } catch {
+        // Fallback silently to initial prices
+      }
     };
-    if (!etf.name || etf.name.length > 60) throw new Error();
-    validateAssets(assets);
-    href = "/etf/custom?" + serializeBasket(etf);
-  } catch {
-    /* invalid drafts remain editable */
-  }
-  const add = () => {
-    setError("");
-    const known = findAsset(identity.trim());
-    if (!known) {
-      setError(
-        "This mint is not in the verified registry. Unknown tokens cannot be traded.",
-      );
+
+    fetchLivePrices();
+    const interval = setInterval(fetchLivePrices, 15000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Auto-resolve indirect image links (e.g. Postimages gallery URLs) to raw direct image assets
+  useEffect(() => {
+    let active = true;
+    const trimmed = customImageUrl.trim();
+    if (
+      trimmed &&
+      (trimmed.includes('postimg.cc/') || trimmed.includes('postimages.org/')) &&
+      !trimmed.includes('i.postimg.cc/')
+    ) {
+      fetch(`/api/resolve-image?url=${encodeURIComponent(trimmed)}`)
+        .then((r) => r.json())
+        .then((data) => {
+          if (active && data?.directUrl && data.directUrl !== trimmed) {
+            setCustomImageUrl(data.directUrl);
+          }
+        })
+        .catch(() => {});
+    }
+    return () => {
+      active = false;
+    };
+  }, [customImageUrl]);
+
+  const totalWeight = activeStocks.reduce((sum, s) => sum + s.weight, 0);
+
+  // Auto-normalize weights to 100%
+  const handleNormalizeWeights = () => {
+    if (activeStocks.length === 0) return;
+    const currentSum = activeStocks.reduce((acc, s) => acc + s.weight, 0);
+    if (currentSum === 0) {
+      handleEqualWeights();
       return;
     }
-    if (assets.length >= 8 || assets.some((a) => a.mint === known.mint)) {
-      setError("Choose up to eight distinct assets.");
-      return;
+
+    const remaining = 100 - activeStocks.length;
+    const normalized = activeStocks.map((s) => ({
+      ...s,
+      weight: 1 + Math.floor((s.weight / currentSum) * remaining),
+    }));
+    let remainder = 100 - normalized.reduce((sum, s) => sum + s.weight, 0);
+    for (let index = 0; remainder > 0; index++, remainder--) {
+      normalized[index % normalized.length].weight++;
     }
-    setAssets([...assets, { ...known, weightPercent: 1 }]);
-    setIdentity("");
+
+    setActiveStocks(normalized);
   };
-  const normalize = () => {
-    if (!assets.length) return;
-    const bp = Math.floor(10000 / assets.length);
-    setAssets(
-      assets.map((a, i) => ({
-        ...a,
-        weightPercent: (bp + (i === 0 ? 10000 - bp * assets.length : 0)) / 100,
-      })),
+
+  // Equal balance weights
+  const handleEqualWeights = () => {
+    const count = activeStocks.length;
+    if (count === 0) return;
+
+    const base = Math.floor(100 / count);
+    setActiveStocks(activeStocks.map((s, index) => ({
+      ...s,
+      weight: base + (index < 100 % count ? 1 : 0),
+    })));
+  };
+
+  // Add stock from catalog
+  const handleAddStock = (asset: ETFAsset) => {
+    if (activeStocks.length >= MAX_ETF_ASSETS) {
+      alert(`Maximum of ${MAX_ETF_ASSETS} assets. Actual transaction capacity is checked during preview.`);
+      return;
+    }
+
+    if (activeStocks.some((s) => s.ticker === asset.ticker)) {
+      return;
+    }
+
+    const nextCount = activeStocks.length + 1;
+    const nextWeight = Math.floor(100 / nextCount);
+
+    const updated = [
+      ...activeStocks.map((s) => ({ ...s, weight: nextWeight })),
+      {
+        ticker: asset.ticker,
+        name: asset.name,
+        weight: nextWeight,
+        color: asset.color,
+        mint: asset.mint,
+        category: asset.category,
+        primaryDex: asset.primaryDex || 'Jupiter route',
+        underlyingPrice: asset.underlyingPrice,
+      },
+    ];
+
+    const currentTotal = updated.reduce((sum, s) => sum + s.weight, 0);
+    if (currentTotal < 100 && updated.length > 0) {
+      updated[0].weight += 100 - currentTotal;
+    }
+
+    setActiveStocks(updated);
+    setIsAssetDrawerOpen(false);
+  };
+
+  // Add custom SPL mint address
+  const handleAddCustomMint = () => {
+    if (activeStocks.length >= MAX_ETF_ASSETS) {
+      alert(`Maximum of ${MAX_ETF_ASSETS} assets. Actual transaction capacity is checked during preview.`);
+      return;
+    }
+
+    const trimmedMint = customMintInput.trim();
+    const verified=findAsset(trimmedMint);
+    if(!verified || verified.mint!==trimmedMint) { alert('This mint is not in the verified token registry.'); return; }
+    if(activeStocks.some(asset=>asset.mint===verified.mint)) { alert('This token is already in the basket.'); return; }
+    const trimmedTicker=verified.ticker;
+
+    const nextCount = activeStocks.length + 1;
+    const nextWeight = Math.floor(100 / nextCount);
+
+    const updated = [
+      ...activeStocks.map((s) => ({ ...s, weight: nextWeight })),
+      {
+        ticker: trimmedTicker,
+        name: verified.name,
+        weight: nextWeight,
+        color: verified.color,
+        mint: verified.mint,
+        category: verified.category,
+        primaryDex: 'Jupiter route',
+        underlyingPrice: 'Unavailable',
+      },
+    ];
+
+    const currentTotal = updated.reduce((sum, s) => sum + s.weight, 0);
+    if (currentTotal < 100 && updated.length > 0) {
+      updated[0].weight += 100 - currentTotal;
+    }
+
+    setActiveStocks(updated);
+    setCustomMintInput('');
+    setCustomTickerInput('');
+    setIsAssetDrawerOpen(false);
+  };
+
+  // Remove stock
+  const handleRemoveStock = (ticker: string) => {
+    if (activeStocks.length <= 1) {
+      alert('A PocketETF must contain at least 1 asset.');
+      return;
+    }
+
+    const remaining = activeStocks.filter((s) => s.ticker !== ticker);
+    const count = remaining.length;
+    const baseWeight = Math.floor(100 / count);
+
+    const rebalanced = remaining.map((s, idx) => ({
+      ...s,
+      weight: idx === 0 ? baseWeight + (100 - baseWeight * count) : baseWeight,
+    }));
+
+    setActiveStocks(rebalanced);
+  };
+
+  // Update specific slider weight
+  const handleWeightChange = (ticker: string, newWeight: number) => {
+    setActiveStocks((prev) =>
+      prev.map((s) => (s.ticker === ticker ? { ...s, weight: newWeight } : s))
     );
   };
+
+  // Build Action & Share URLs
+  const assetQuery = activeStocks.map((s) => `${s.mint}:${s.weight}`).join(',');
+  let cleanCustomImg = customImageUrl.trim();
+  if (cleanCustomImg && !cleanCustomImg.startsWith('http://') && !cleanCustomImg.startsWith('https://') && !cleanCustomImg.startsWith('/')) {
+    cleanCustomImg = `https://${cleanCustomImg}`;
+  }
+  const effectiveImage =
+    imageInputMode === 'custom' && cleanCustomImg
+      ? cleanCustomImg
+      : selectedBadge;
+  const imageParam = effectiveImage ? `&image=${encodeURIComponent(effectiveImage)}` : '';
+  const isDefaultDescription =
+    !etfDescription.trim() ||
+    etfDescription.startsWith('1-Click execution for') ||
+    etfDescription ===
+      'Custom user-generated multi-asset equity ETF executed atomically via PocketETF and Jupiter DEX aggregation.';
+
+  const descParam = isDefaultDescription
+    ? ''
+    : `&description=${encodeURIComponent(etfDescription.trim()).replace(/\(/g, '%28').replace(/\)/g, '%29')}`;
+
+  const queryParams = `assets=${encodeURIComponent(assetQuery)}&name=${encodeURIComponent(
+    etfName.trim()
+  )}${descParam}${imageParam}`;
+  const actionUrl = `${origin}/api/actions/etf/custom?${queryParams}`;
+  const shareUrl = `${origin}/etf/custom?${queryParams}`;
+  const publicOrigin = origin.includes('localhost') ? 'https://pocketetf.vercel.app' : origin;
+  const publicShareUrl = `${publicOrigin}/etf/custom?${queryParams}`;
+
+  // Twitter Official Web Intent: pass URL via &url= so Twitter shortens it to 23 chars
+  // and keeps tweet well within the 280-character limit, preventing the "Post" button from being disabled.
+  const tweetLead = `Check out my custom tokenized stock ETF "${etfName}" on @Solana! Execute 1-click via @JupiterExchange & @PocketETF:`;
+  const twitterIntentUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
+    tweetLead
+  )}&url=${encodeURIComponent(publicShareUrl)}&hashtags=Solana,Blinks,PocketETF`;
+
+  const handleCopyLink = async () => {
+    const success = await copyToClipboard(shareUrl);
+    if (success) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    }
+  };
+
+  const categories = [
+    'All',
+    'Semiconductors & AI',
+    'Mega-Cap Tech',
+    'Indices & Benchmarks',
+    'Commodities & Yield',
+    'Web3 Equities',
+  ];
+
+  const filteredCatalog = TOKEN_CATALOG.filter((token) => {
+    const matchesCategory =
+      activeCategoryFilter === 'All' || token.category === activeCategoryFilter;
+    const matchesSearch =
+      token.ticker.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      token.name.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
+
+  const conflictStatus = getDEXConflictStatus(
+    activeStocks.map((s) => ({
+      ticker: s.ticker,
+      name: s.name,
+      weightPercent: s.weight,
+      mint: s.mint,
+      decimals: 6,
+      color: s.color,
+      category: s.category as any,
+      primaryDex: s.primaryDex || 'Whirlpool',
+    }))
+  );
+
   return (
-    <div className="max-w-3xl mx-auto px-4 py-12 space-y-7">
-      <h1 className="text-4xl font-bold">Creator Studio</h1>
-      <p className="text-slate-400">
-        Create a shareable allocation of verified assets. Every link preserves
-        the exact mint addresses and weights.
-      </p>
-      <div className="fintech-card rounded-2xl p-6 space-y-5">
-        <label className="block text-sm">
-          Basket name
-          <input
-            className="field"
-            value={name}
-            maxLength={60}
-            onChange={(e) => setName(e.target.value)}
-          />
-        </label>
-        <label className="block text-sm">
-          Description
-          <textarea
-            className="field"
-            value={description}
-            maxLength={250}
-            onChange={(e) => setDescription(e.target.value)}
-          />
-        </label>
-        <label className="block text-sm">
-          Badge image
-          <input
-            className="field"
-            value={image}
-            maxLength={500}
-            onChange={(e) => setImage(e.target.value)}
-          />
-        </label>
-        <p className="text-xs text-slate-400">
-          Use /etfs/custom.png or a direct HTTPS PNG, JPEG or WebP URL on
-          i.imgur.com or i.postimg.cc. Gallery pages and SVGs are not accepted.
-        </p>
-        <div className="space-y-3">
-          {assets.map((a) => (
-            <div key={a.mint} className="flex gap-3 items-center">
-              <span className="w-24 font-semibold">{a.tokenSymbol}</span>
-              <label className="flex-1 text-xs">
-                Weight %
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      {/* Back Link */}
+      <Link
+        href="/"
+        className="inline-flex items-center gap-1.5 text-xs font-mono font-semibold text-slate-400 hover:text-white transition-colors mb-6"
+      >
+        <ArrowLeft className="w-3.5 h-3.5" />
+        <span>Back to Curated ETFs</span>
+      </Link>
+
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+        <div>
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#146EF5]/15 border border-[#146EF5]/30 text-[#00D69F] text-xs font-mono font-bold mb-2">
+            <Sparkles className="w-3.5 h-3.5 text-[#00D69F]" />
+            <span>PocketETF Creator Studio</span>
+          </div>
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+            Build a Custom Stock ETF Blink
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-400 mt-1 max-w-2xl leading-relaxed">
+            Select up to eight verified assets, balance portfolio weights, and generate an instant Solana Action
+            URL ready to execute in Twitter/X feeds and Dialect.
+          </p>
+        </div>
+
+        {/* 1232B MTU Status Pill */}
+        <div
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-mono border transition-all ${
+            conflictStatus.isCompatible
+              ? 'bg-black/40 border-white/10 text-slate-300'
+              : 'bg-red-500/10 border-red-500/30 text-red-300'
+          }`}
+        >
+          {conflictStatus.isCompatible ? (
+            <ShieldCheck className="w-4 h-4 text-[#00D69F]" />
+          ) : (
+            <ShieldAlert className="w-4 h-4 text-red-400" />
+          )}
+          <span>
+            Assets: <strong className="text-white">{activeStocks.length}</strong> /{' '}
+            {MAX_ETF_ASSETS} Max &bull;{' '}
+            <span className={conflictStatus.isCompatible ? 'text-[#00D69F]' : 'text-red-400 font-bold'}>
+              {conflictStatus.statusLabel}
+            </span>
+          </span>
+        </div>
+      </div>
+
+      {/* Main Grid: Studio Builder on Left, Live Blink Preview on Right */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        {/* Left Form: Builder */}
+        <div className="lg:col-span-7 space-y-6">
+          {/* Metadata Form */}
+          <div className="fintech-card p-6 rounded-2xl">
+            <h2 className="text-xs font-mono font-bold text-slate-300 uppercase tracking-widest mb-4 flex items-center gap-2">
+              <Layers className="w-4 h-4 text-[#146EF5]" />
+              <span>1. ETF Metadata</span>
+            </h2>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5 font-mono">
+                  ETF Name
+                </label>
                 <input
-                  aria-label={a.tokenSymbol + " weight percent"}
-                  className="field"
-                  type="number"
-                  min="0.01"
-                  max="100"
-                  step="0.01"
-                  value={a.weightPercent}
-                  onChange={(e) =>
-                    setAssets(
-                      assets.map((t) =>
-                        t.mint === a.mint
-                          ? { ...t, weightPercent: Number(e.target.value) }
-                          : t,
-                      ),
-                    )
-                  }
+                  type="text"
+                  value={etfName}
+                  onChange={(e) => setEtfName(e.target.value)}
+                  placeholder="e.g. AI Titans or Green Energy Duo"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-black/50 border border-white/10 text-sm text-white focus:outline-none focus:border-[#146EF5] font-mono transition-colors"
                 />
-              </label>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5 font-mono">
+                  Description / Investment Thesis
+                </label>
+                <textarea
+                  rows={2}
+                  value={etfDescription}
+                  onChange={(e) => setEtfDescription(e.target.value)}
+                  placeholder="Explain your portfolio thesis for social media followers..."
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-black/50 border border-white/10 text-xs text-white focus:outline-none focus:border-[#146EF5] transition-colors"
+                />
+              </div>
+
+              {/* ETF Cover Badge & Preview Image */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-semibold text-slate-300 font-mono">
+                    Cover Badge &amp; Preview Image
+                  </label>
+                  <div className="flex items-center gap-1 text-[11px] font-mono">
+                    <button
+                      type="button"
+                      onClick={() => setImageInputMode('preset')}
+                      className={`px-2 py-0.5 rounded transition-colors ${
+                        imageInputMode === 'preset'
+                          ? 'bg-[#146EF5] text-white font-bold'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      Presets
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setImageInputMode('custom')}
+                      className={`px-2 py-0.5 rounded transition-colors ${
+                        imageInputMode === 'custom'
+                          ? 'bg-[#146EF5] text-white font-bold'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      Custom URL
+                    </button>
+                  </div>
+                </div>
+
+                {imageInputMode === 'preset' ? (
+                  <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
+                    {[
+                      { id: 'custom', name: 'Solana Gem', path: '/etfs/custom.png' },
+                      { id: 'silicon-ai', name: 'AI Chipset', path: '/etfs/silicon-ai.png' },
+                      { id: 'mag-titans', name: 'Tech Titans', path: '/etfs/mag-titans.png' },
+                      { id: 'spy-benchmark', name: 'S&P 500', path: '/etfs/spy-benchmark.png' },
+                      { id: 'nasdaq-growth', name: 'Growth', path: '/etfs/nasdaq-growth.png' },
+                      { id: 'crypto-frontier', name: 'Web3 & L1', path: '/etfs/crypto-frontier.png' },
+                      { id: 'hard-assets', name: 'Gold / Safe', path: '/etfs/hard-assets.png' },
+                    ].map((preset) => {
+                      const isSelected = selectedBadge === preset.path;
+                      return (
+                        <button
+                          key={preset.id}
+                          type="button"
+                          onClick={() => setSelectedBadge(preset.path)}
+                          className={`flex flex-col items-center p-2 rounded-xl border transition-all ${
+                            isSelected
+                              ? 'border-[#00D69F] bg-[#00D69F]/10 shadow-md shadow-emerald-500/10'
+                              : 'border-white/10 bg-black/40 hover:border-white/20'
+                          }`}
+                        >
+                          <img
+                            src={preset.path}
+                            alt={preset.name}
+                            className="w-9 h-9 object-contain rounded-lg mb-1"
+                          />
+                          <span
+                            className={`text-[9px] font-mono text-center truncate w-full ${
+                              isSelected ? 'text-[#00D69F] font-bold' : 'text-slate-400'
+                            }`}
+                          >
+                            {preset.name}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="flex gap-2 items-center">
+                      <div className="w-12 h-12 rounded-xl border border-white/15 bg-black/60 overflow-hidden flex-shrink-0 flex items-center justify-center p-1">
+                        <img
+                          src={customImageUrl.trim() || '/etfs/custom.png'}
+                          alt="Custom ETF"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = '/etfs/custom.png';
+                          }}
+                          className="w-full h-full object-contain rounded-lg"
+                        />
+                      </div>
+                      <input
+                        type="url"
+                        value={customImageUrl}
+                        onChange={(e) => setCustomImageUrl(e.target.value)}
+                        placeholder="https://... (Imgur, Postimages, Twitter avatar, etc.)"
+                        className="flex-1 px-3.5 py-2.5 rounded-xl bg-black/50 border border-white/10 text-xs text-white focus:outline-none focus:border-[#146EF5] font-mono transition-colors"
+                      />
+                    </div>
+                    <p className="text-[11px] text-slate-400 font-mono">
+                      Auto-resolves Postimages &amp; Imgur links into direct badges with zero backend. For instant rendering, paste image links from{' '}
+                      <a
+                        href="https://postimages.org"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[#146EF5] underline hover:text-[#257BF6]"
+                      >
+                        Postimages
+                      </a>{' '}
+                      or{' '}
+                      <a
+                        href="https://imgur.com/upload"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[#146EF5] underline hover:text-[#257BF6]"
+                      >
+                        Imgur
+                      </a>
+                      .
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Asset Allocation & Interactive Weight Sliders */}
+          <div className="fintech-card p-6 rounded-2xl">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xs font-mono font-bold text-slate-300 uppercase tracking-widest flex items-center gap-2">
+                <Sliders className="w-4 h-4 text-[#00D69F]" />
+                <span>2. Portfolio Weights ({activeStocks.length}/3 Assets)</span>
+              </h2>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleEqualWeights}
+                  className="px-2.5 py-1 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 hover:border-[#146EF5]/40 text-[11px] font-mono font-semibold text-slate-300 hover:text-white transition-colors"
+                >
+                  Equal Split
+                </button>
+                <button
+                  type="button"
+                  onClick={handleNormalizeWeights}
+                  className="px-2.5 py-1 rounded-lg bg-[#146EF5]/20 hover:bg-[#146EF5]/35 border border-[#146EF5]/40 text-[11px] font-mono font-semibold text-[#146EF5] hover:text-white transition-colors flex items-center gap-1"
+                >
+                  <RefreshCw className="w-3 h-3" />
+                  <span>Auto 100%</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Total Weight Warning */}
+            {totalWeight !== 100 && (
+              <div className="mb-4 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs font-mono text-amber-300 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <ShieldAlert className="w-4 h-4 text-amber-400 shrink-0" />
+                  <span>
+                    Current total weight is <strong>{totalWeight}%</strong>. Click auto-normalize to balance to 100%.
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleNormalizeWeights}
+                  className="px-2.5 py-1 rounded bg-amber-500/20 text-amber-200 text-[10px] font-bold hover:bg-amber-500/30"
+                >
+                  Balance
+                </button>
+              </div>
+            )}
+
+            {/* DEX Venue Conflict Warning */}
+            {!conflictStatus.isCompatible && (
+              <div className="mb-4 p-4 rounded-xl bg-red-500/15 border border-red-500/40 text-xs font-mono text-red-200 space-y-1.5">
+                <div className="flex items-center gap-2 font-bold text-red-300">
+                  <ShieldAlert className="w-4 h-4 text-red-400 shrink-0" />
+                  <span>Basket Asset Limit</span>
+                </div>
+                <p className="text-slate-300 text-[11px] leading-relaxed">
+                  {conflictStatus.reason}
+                </p>
+                <div className="pt-1 text-[11px] text-amber-300">
+                  <strong>Trade Preview:</strong> Actual compiled size, account limits, and compute are checked before signing.
+                </div>
+              </div>
+            )}
+
+            {/* Active Stocks List */}
+            <div className="space-y-3 mb-6">
+              {activeStocks.map((stock) => (
+                <div
+                  key={stock.ticker}
+                  className="p-3.5 rounded-xl bg-black/40 border border-white/[0.04] space-y-2.5"
+                >
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span
+                        className="w-2.5 h-2.5 rounded-full shrink-0"
+                        style={{ backgroundColor: stock.color }}
+                      />
+                      <span className="font-mono font-bold text-sm text-white">{stock.ticker}</span>
+                      <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold bg-white/5 border border-white/10 text-slate-300">
+                        {stock.primaryDex || 'Jupiter route'}
+                      </span>
+                      <span className="text-xs text-slate-400 truncate max-w-[150px] sm:max-w-[180px]">
+                        {stock.name}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between sm:justify-end gap-3 font-mono pt-1 sm:pt-0 border-t sm:border-t-0 border-white/[0.04]">
+                      <span className="text-xs text-slate-400">{stock.underlyingPrice}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-[#00D69F] w-12 text-right">
+                          {stock.weight}%
+                        </span>
+                        {activeStocks.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveStock(stock.ticker)}
+                            className="text-slate-500 hover:text-red-400 p-1.5 rounded transition-colors"
+                            title="Remove asset"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Weight Slider */}
+                  <input
+                    type="range"
+                    min="1"
+                    max="99"
+                    value={stock.weight}
+                    onChange={(e) => handleWeightChange(stock.ticker, parseInt(e.target.value))}
+                    className="w-full accent-[#146EF5] cursor-pointer h-1.5 bg-slate-800 rounded-lg appearance-none"
+                  />
+                </div>
+              ))}
+            </div>
+
+            {/* Add Asset Trigger */}
+            {activeStocks.length < MAX_ETF_ASSETS && (
               <button
-                aria-label={"Remove " + a.tokenSymbol}
-                className="text-red-300 text-xs"
-                onClick={() =>
-                  setAssets(assets.filter((t) => t.mint !== a.mint))
-                }
+                type="button"
+                onClick={() => setIsAssetDrawerOpen(true)}
+                className="w-full py-3 rounded-xl border border-dashed border-white/20 hover:border-[#146EF5]/60 hover:bg-[#146EF5]/5 text-xs font-mono font-semibold text-slate-300 flex items-center justify-center gap-2 transition-colors"
               >
-                Remove
+                <Plus className="w-4 h-4 text-[#00D69F]" />
+                <span>Add Asset from Catalog or Custom SPL Mint ({MAX_ETF_ASSETS - activeStocks.length} slot available)</span>
+              </button>
+            )}
+          </div>
+
+          {/* Export & Action URL */}
+          <div className="fintech-card p-6 rounded-2xl">
+            <h2 className="text-xs font-mono font-bold text-slate-300 uppercase tracking-widest mb-3 flex items-center gap-2">
+              <Share2 className="w-4 h-4 text-[#00D69F]" />
+              <span>3. Export Solana Action &amp; Blink Link</span>
+            </h2>
+
+            {!conflictStatus.isCompatible ? (
+              <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-xs font-mono text-red-300 space-y-2">
+                <div className="flex items-center gap-2 font-bold">
+                  <ShieldAlert className="w-4 h-4 text-red-400 shrink-0" />
+                  <span>Blink Generation Paused: Invalid Basket</span>
+                </div>
+                <p className="text-slate-300 text-[11px] leading-relaxed">
+                  Choose between one and eight verified assets. Trade preview checks whether the selected routes can execute atomically.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="p-3 rounded-xl bg-black/60 border border-white/10 flex items-center justify-between gap-2 overflow-hidden">
+                  <span className="font-mono text-xs text-slate-300 truncate">
+                    {shareUrl}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleCopyLink}
+                    className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-[#146EF5] to-[#0D63F8] hover:from-[#257BF6] hover:to-[#146EF5] text-white font-semibold text-xs transition-all shrink-0 flex items-center gap-1.5 font-mono shadow-md shadow-blue-500/25 border border-blue-400/30"
+                  >
+                    {copied ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-[#00D69F]" />
+                        <span className="text-[#00D69F]">Copied!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5" />
+                        <span>Copy Share Link</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2.5 pt-2">
+                  <a
+                    href={twitterIntentUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="py-2.5 rounded-xl bg-[#1DA1F2]/20 hover:bg-[#1DA1F2]/30 border border-[#1DA1F2]/40 text-xs font-mono font-semibold text-[#1DA1F2] flex items-center justify-center gap-2 transition-all shadow-sm"
+                  >
+                    <Share2 className="w-3.5 h-3.5" />
+                    <span>Post on 𝕏</span>
+                  </a>
+
+                  <button
+                    type="button"
+                    onClick={() => setIsMobileQrOpen(true)}
+                    className="py-2.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-xs font-mono font-semibold text-[#00D69F] flex items-center justify-center gap-2 transition-all shadow-sm"
+                  >
+                    <Smartphone className="w-3.5 h-3.5" />
+                    <span>Mobile QR</span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Creator Monetization & Protocol Revenue */}
+          <div className="fintech-card p-5 rounded-2xl border border-[#00D69F]/20 bg-gradient-to-b from-[#00D69F]/5 to-transparent">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-mono font-bold text-white flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-[#00D69F]" />
+                <span>Creator Affiliate Revenue Architecture</span>
+              </span>
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#00D69F]/15 text-[#00D69F] font-mono border border-[#00D69F]/30 font-semibold">
+                0% Fee Alpha
+              </span>
+            </div>
+            <p className="text-xs text-slate-300 leading-relaxed mb-3">
+              Creator revenue sharing is a <strong>future proposal</strong>. No platform routing fee or creator payout is implemented or collected. Network costs and DEX costs still apply.
+            </p>
+            <div className="grid grid-cols-2 gap-2 text-[11px] font-mono">
+              <div className="p-2.5 rounded-lg bg-black/40 border border-white/5">
+                <span className="text-slate-400 block text-[10px]">CURRENT ALPHA FEE</span>
+                <span className="text-white font-bold text-sm">0.00% (0 bps)</span>
+              </div>
+              <div className="p-2.5 rounded-lg bg-black/40 border border-white/5">
+                <span className="text-slate-400 block text-[10px]">CREATOR REVENUE SPLIT</span>
+                <span className="text-[#00D69F] font-bold text-sm">Not implemented</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Form: Real-Time Donut Chart & Live Blink Preview */}
+        <div className="lg:col-span-5 space-y-6">
+          {/* Dynamic Donut Chart Card */}
+          <div className="fintech-card p-6 rounded-2xl">
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-xs font-mono font-bold uppercase tracking-widest text-[#00D69F] flex items-center gap-1.5">
+                <PieChart className="w-4 h-4 text-[#00D69F]" />
+                Dynamic Donut Chart
+              </span>
+              <span className="text-xs font-mono text-slate-400">Real-Time Split</span>
+            </div>
+
+            <div className="py-2 flex justify-center">
+              <DonutChart
+                segments={activeStocks.map((s) => ({
+                  ticker: s.ticker,
+                  name: s.name,
+                  weightPercent: s.weight,
+                  color: s.color,
+                }))}
+                size={190}
+                strokeWidth={22}
+              />
+            </div>
+
+            <div className="grid grid-cols-3 gap-2 mt-4 pt-4 border-t border-white/[0.04] text-center font-mono">
+              {activeStocks.map((s) => (
+                <div key={s.ticker} className="p-2 rounded-lg bg-black/40 border border-white/[0.04]">
+                  <div className="flex items-center justify-center gap-1 mb-0.5">
+                    <span className="w-2 h-2 rounded-full" style={{ backgroundColor: s.color }} />
+                    <span className="text-xs font-bold text-white">{s.ticker}</span>
+                  </div>
+                  <span className="text-xs text-[#00D69F] font-bold">{s.weight}%</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Live Blink Card Preview */}
+          <div className="sticky top-24 space-y-3">
+            <div className="flex items-center justify-between text-xs font-mono">
+              <span className="font-semibold uppercase tracking-wider text-[#146EF5] flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-[#00D69F]" />
+                Live Action Simulation
+              </span>
+              <div className="flex items-center p-0.5 rounded-lg bg-black/60 border border-white/10 text-[11px]">
+                <button
+                  type="button"
+                  onClick={() => setPreviewMode('twitter')}
+                  className={`px-2.5 py-1 rounded-md transition-all font-semibold flex items-center gap-1 ${
+                    previewMode === 'twitter'
+                      ? 'bg-[#1D9BF0] text-white shadow-sm'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <span>Feed View (𝕏)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPreviewMode('widget')}
+                  className={`px-2.5 py-1 rounded-md transition-all font-semibold ${
+                    previewMode === 'widget'
+                      ? 'bg-[#146EF5] text-white shadow-sm'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <span>Widget View</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Social Feed Mockup Frame when in Twitter Mode */}
+            <div className={previewMode === 'twitter' ? 'rounded-2xl border border-white/10 bg-[#000000] p-4 sm:p-5 shadow-2xl space-y-3' : ''}>
+              {previewMode === 'twitter' && (
+                <div>
+                  {/* Tweet Author Row */}
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#146EF5] to-[#00D69F] p-0.5 flex-shrink-0">
+                        <img
+                          src="/favicon.png"
+                          alt="PocketETF"
+                          className="w-full h-full rounded-full bg-black object-contain p-1"
+                        />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-1 leading-tight">
+                          <span className="font-bold text-white text-sm hover:underline cursor-pointer">
+                            PocketETF
+                          </span>
+                          <CheckCircle2 className="w-4 h-4 text-[#1D9BF0] fill-[#1D9BF0]" />
+                          <span className="text-slate-500 text-xs font-normal">@PocketETF</span>
+                          <span className="text-slate-500 text-xs">·</span>
+                          <span className="text-slate-500 text-xs">2m</span>
+                        </div>
+                        <p className="text-[11px] text-slate-400 font-mono">1-Click Equity Baskets on Solana</p>
+                      </div>
+                    </div>
+                    <span className="text-slate-400 text-sm font-bold font-mono">𝕏</span>
+                  </div>
+
+                  {/* Tweet Body Text */}
+                  <p className="text-xs sm:text-sm text-slate-100 leading-relaxed mt-2.5 mb-3 font-sans">
+                    Just created a new equity basket thesis on @Solana:{' '}
+                    <span className="text-[#1D9BF0] font-semibold">${etfName || 'Custom Basket'}</span>! 1-click execution across{' '}
+                    {activeStocks.map((s) => '$' + s.ticker).join(', ')} directly in your timeline via @Solana Actions &amp; @JupiterExchange. 🚀
+                  </p>
+                </div>
+              )}
+
+              {/* Simulated Blink Action Card */}
+              <div className="rounded-2xl border border-white/15 bg-[#0e0f17] overflow-hidden shadow-2xl">
+                <div className="relative w-full h-44 bg-gradient-to-br from-[#0A1128] via-[#0F172A] to-[#060A17] flex items-center justify-center p-4 border-b border-white/10">
+                  <img
+                    src={effectiveImage}
+                    alt={etfName || 'PocketETF'}
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = '/etfs/custom.png';
+                    }}
+                    className="w-20 h-20 object-contain drop-shadow-[0_0_24px_rgba(20,110,245,0.4)] rounded-xl"
+                  />
+                  <div className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-black/70 backdrop-blur-md border border-[#00D69F]/30 text-[10px] font-mono font-bold text-[#00D69F] flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3 text-[#00D69F]" />
+                    <span>PocketETF Action</span>
+                  </div>
+                  <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-black/70 backdrop-blur-md border border-white/10 text-[10px] font-mono text-slate-300">
+                    v2.1.3
+                  </div>
+                </div>
+
+                {/* Card Body */}
+                <div className="p-5 space-y-4">
+                  <div>
+                    <h3 className="text-base font-bold text-white mb-1 font-mono">
+                      PocketETF: {etfName || 'Untitled ETF'}
+                    </h3>
+                    <p className="text-xs text-slate-400 leading-relaxed line-clamp-2">
+                      {etfDescription || 'No description provided.'}
+                    </p>
+                  </div>
+
+                  {/* Weights preview bar */}
+                  <div>
+                    <div className="flex justify-between text-[11px] font-mono text-slate-400 mb-1.5">
+                      <span>Weights</span>
+                      <span className="text-[#00D69F] font-bold">{totalWeight}% Total</span>
+                    </div>
+                    <div className="h-2 w-full rounded-full bg-slate-800 overflow-hidden flex p-[1px] gap-[1px]">
+                      {activeStocks.map((s) => (
+                        <div
+                          key={s.ticker}
+                          style={{
+                            width: `${s.weight}%`,
+                            backgroundColor: s.color,
+                          }}
+                          className="h-full rounded-sm transition-all duration-300"
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Preset Buttons (All 5 Presets) */}
+                  <div className="grid grid-cols-5 gap-1.5 pt-1 font-mono">
+                    {['$5', '$10', '$25', '$50', '$100'].map((amt) => (
+                      <button
+                        key={amt}
+                        type="button"
+                        className="py-2 rounded-xl bg-gradient-to-r from-[#146EF5] to-[#0D63F8] hover:brightness-110 text-white text-xs font-bold transition-all shadow-md shadow-blue-500/20 text-center"
+                      >
+                        {amt}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <span className="absolute left-3 top-2.5 text-xs text-slate-500 font-mono">$</span>
+                      <input
+                        type="number"
+                        placeholder="Custom USDC Amount"
+                        disabled
+                        className="w-full pl-7 pr-3 py-2 rounded-xl bg-black/40 border border-white/10 text-xs text-slate-400 cursor-not-allowed font-mono"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      disabled
+                      className="px-4 py-2 rounded-xl bg-white/10 text-slate-400 text-xs font-mono font-semibold cursor-not-allowed"
+                    >
+                      Buy
+                    </button>
+                  </div>
+
+                  <div className="pt-2 border-t border-white/5 flex items-center justify-between text-[10px] font-mono text-slate-500">
+                    <span className="flex items-center gap-1">
+                      <ShieldCheck className="w-3 h-3 text-[#00D69F]" />
+                      Jupiter v6 Multi-Swap
+                    </span>
+                    <span>pocketetf.vercel.app</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Twitter Engagement Bar when in Feed View */}
+              {previewMode === 'twitter' && (
+                <div className="pt-2 flex items-center justify-between text-slate-500 text-xs font-mono px-2">
+                  <div className="flex items-center gap-1.5 hover:text-[#1D9BF0] transition-colors cursor-pointer">
+                    <MessageCircle className="w-4 h-4" />
+                    <span className="text-[11px]">24</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 hover:text-emerald-400 transition-colors cursor-pointer">
+                    <Repeat2 className="w-4 h-4" />
+                    <span className="text-[11px]">88</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 hover:text-rose-500 transition-colors cursor-pointer">
+                    <Heart className="w-4 h-4" />
+                    <span className="text-[11px]">342</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 hover:text-[#1D9BF0] transition-colors cursor-pointer">
+                    <Bookmark className="w-4 h-4" />
+                    <span className="text-[11px]">49</span>
+                  </div>
+                  <div className="hover:text-[#1D9BF0] transition-colors cursor-pointer">
+                    <Share2 className="w-4 h-4" />
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Asset Catalog Drawer Modal */}
+      {isAssetDrawerOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
+          <div className="fintech-card bg-[#0b0c14] border border-white/15 rounded-2xl w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl">
+            {/* Modal Header */}
+            <div className="p-5 border-b border-white/10 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Database className="w-4 h-4 text-[#146EF5]" />
+                <h3 className="text-sm font-mono font-bold text-white uppercase tracking-wider">
+                  Select Asset or Enter Custom Mint
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsAssetDrawerOpen(false)}
+                className="text-slate-400 hover:text-white text-xs px-2.5 py-1 rounded-md bg-white/5 font-mono"
+              >
+                Close (ESC)
               </button>
             </div>
-          ))}
+
+            {/* Custom Mint Tab / Form */}
+            <div className="p-5 border-b border-white/[0.06] bg-black/30 space-y-3">
+              <div className="text-xs font-mono font-bold text-[#00D69F] flex items-center gap-1.5">
+                <Plus className="w-3.5 h-3.5 text-[#00D69F]" />
+                <span>Add Any Custom Solana SPL Token Mint:</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-12 gap-2">
+                <input
+                  type="text"
+                  value={customTickerInput}
+                  onChange={(e) => setCustomTickerInput(e.target.value)}
+                  placeholder="Ticker (e.g. bNVDA)"
+                  className="sm:col-span-3 px-3 py-2 rounded-xl bg-black/60 border border-white/10 text-xs text-white font-mono focus:outline-none focus:border-[#146EF5]"
+                />
+                <input
+                  type="text"
+                  value={customMintInput}
+                  onChange={(e) => setCustomMintInput(e.target.value)}
+                  placeholder="SPL Token Mint Address (Base58 Public Key)"
+                  className="sm:col-span-7 px-3 py-2 rounded-xl bg-black/60 border border-white/10 text-xs text-white font-mono focus:outline-none focus:border-[#146EF5]"
+                />
+                <button
+                  type="button"
+                  onClick={handleAddCustomMint}
+                  className="sm:col-span-2 px-3 py-2 rounded-xl bg-gradient-to-r from-[#146EF5] to-[#0D63F8] hover:from-[#257BF6] hover:to-[#146EF5] text-white font-mono text-xs font-semibold transition-all shadow-md shadow-blue-500/25 border border-blue-400/25"
+                >
+                  Add Mint
+                </button>
+              </div>
+            </div>
+
+            {/* Filter Tabs & Search */}
+            <div className="p-4 border-b border-white/[0.06] flex flex-col sm:flex-row gap-3 items-center justify-between">
+              <div className="flex flex-wrap gap-1">
+                {categories.map((cat) => (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => setActiveCategoryFilter(cat)}
+                    className={`px-2.5 py-1 rounded-lg text-[11px] font-mono transition-all ${
+                      activeCategoryFilter === cat
+                        ? 'bg-[#146EF5] text-white font-semibold shadow-md shadow-blue-500/20'
+                        : 'text-slate-400 hover:text-white hover:bg-white/5'
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+
+              <div className="relative w-full sm:w-60">
+                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search catalog..."
+                  className="w-full pl-8 pr-3 py-1.5 rounded-lg bg-black/50 border border-white/10 text-xs text-white font-mono focus:outline-none focus:border-[#146EF5]"
+                />
+              </div>
+            </div>
+
+            {/* Assets Grid */}
+            <div className="p-5 overflow-y-auto flex-1 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+              {filteredCatalog.map((asset) => {
+                const isSelected = activeStocks.some((s) => s.ticker === asset.ticker);
+                return (
+                  <button
+                    key={asset.ticker}
+                    type="button"
+                    disabled={isSelected}
+                    onClick={() => handleAddStock(asset)}
+                    className={`p-3.5 rounded-xl border text-left transition-all flex flex-col justify-between ${
+                      isSelected
+                        ? 'bg-black/20 border-white/[0.04] opacity-50 cursor-not-allowed'
+                        : 'bg-black/50 border-white/10 hover:border-[#146EF5]/50 hover:bg-[#146EF5]/5'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between w-full mb-1">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-mono font-bold text-sm text-white">{asset.ticker}</span>
+                        <span className="px-1.5 py-0.5 rounded text-[9px] font-mono bg-white/5 border border-white/10 text-slate-300">
+                          {asset.primaryDex || 'Whirlpool'}
+                        </span>
+                      </div>
+                      <span
+                        className={`text-[10px] font-mono ${
+                          asset.change24h?.startsWith('+') ? 'text-[#00D69F]' : 'text-red-400'
+                        }`}
+                      >
+                        {asset.change24h}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-400 truncate mb-3">{asset.name}</p>
+                    <div className="flex items-center justify-between w-full pt-2 border-t border-white/[0.04] text-[10px] font-mono text-slate-500">
+                      <span>{asset.underlyingPrice}</span>
+                      <span className="text-[#00D69F] font-semibold">
+                        {isSelected ? 'Added' : '+ Add Asset'}
+                      </span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </div>
-        <div className="flex justify-between text-sm">
-          <span>
-            Total: {assets.reduce((s, a) => s + a.weightPercent, 0).toFixed(2)}%
-          </span>
-          <button className="text-emerald-300 underline" onClick={normalize}>
-            Equal weights
-          </button>
-        </div>
-        <label className="block text-sm">
-          Add a verified asset
-          <select
-            className="field"
-            value={identity}
-            onChange={(e) => setIdentity(e.target.value)}
-          >
-            <option value="">Choose a token</option>
-            {TOKEN_CATALOG.filter(
-              (a) => !assets.some((t) => t.mint === a.mint),
-            ).map((a) => (
-              <option key={a.mint} value={a.mint}>
-                {a.tokenSymbol} · {a.issuer}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="block text-sm">
-          Or paste an exact verified mint
-          <input
-            className="field"
-            value={identity}
-            maxLength={44}
-            onChange={(e) => setIdentity(e.target.value.trim())}
-          />
-        </label>
-        <button
-          className="border border-slate-600 rounded-lg px-4 py-2"
-          onClick={add}
-        >
-          Add asset
-        </button>
-        {error && (
-          <p role="alert" className="text-red-300 text-sm">
-            {error}
-          </p>
-        )}
-        {href ? (
-          <Link
-            className="btn-cobalt block text-center rounded-xl px-5 py-3 font-semibold"
-            href={href}
-          >
-            Review and share basket →
-          </Link>
-        ) : (
-          <p className="text-amber-200 text-sm">
-            Choose 1–8 distinct verified tokens, an approved image, a name and
-            weights totaling exactly 100%.
-          </p>
-        )}
-      </div>
-      <p className="text-xs text-slate-400">
-        Final capacity depends on wallet capabilities and actual transaction
-        size, accounts and compute. Creator revenue sharing is not enabled. All
-        swaps require your wallet signature.
-      </p>
+      )}
+
+      {/* Mobile QR Modal for Custom Basket */}
+      <MobileQRModal
+        isOpen={isMobileQrOpen}
+        onClose={() => setIsMobileQrOpen(false)}
+        etfId="custom-basket"
+        etfName={etfName || 'Custom Basket'}
+        url={shareUrl}
+      />
     </div>
   );
 }

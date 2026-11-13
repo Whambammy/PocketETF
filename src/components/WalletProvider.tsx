@@ -9,6 +9,7 @@ import {
 } from "react";
 import { getWallets } from "@wallet-standard/app";
 import type { Wallet, WalletAccount } from "@wallet-standard/base";
+import { Dialog } from "./Dialog";
 type Connect = {
   connect: () => Promise<{ accounts: readonly WalletAccount[] }>;
 };
@@ -37,6 +38,7 @@ interface WalletState {
   disconnect: () => Promise<void>;
   sign: (bytes: Uint8Array) => Promise<Uint8Array>;
   error: string | null;
+  requestConnect: () => void;
 }
 const Context = createContext<WalletState | null>(null);
 function feature<T>(wallet: Wallet, key: `${string}:${string}`): T | undefined {
@@ -47,6 +49,10 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const [wallet, setWallet] = useState<Wallet | null>(null);
   const [account, setAccount] = useState<WalletAccount | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [selectionOpen, setSelectionOpen] = useState(false);
+  useEffect(() => {
+    if (account) setSelectionOpen(false);
+  }, [account]);
   useEffect(() => {
     const api = getWallets();
     const update = () =>
@@ -147,9 +153,40 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         disconnect,
         sign,
         error,
+        requestConnect: () => setSelectionOpen(true),
       }}
     >
       {children}
+      <Dialog
+        open={selectionOpen}
+        onClose={() => setSelectionOpen(false)}
+        title="Connect Wallet"
+      >
+        <div className="space-y-3">
+          {wallets.length ? (
+            wallets.map((item) => (
+              <button
+                key={item.name}
+                type="button"
+                className="block w-full p-3 rounded-xl bg-[#146EF5]/15 border border-[#146EF5]/30 text-left hover:bg-[#146EF5]/25"
+                onClick={() => void connect(item)}
+              >
+                {item.name}
+              </button>
+            ))
+          ) : (
+            <p className="text-sm text-slate-300">
+              Open this site in your wallet browser or install a supported
+              wallet extension.
+            </p>
+          )}
+          {error && (
+            <p role="alert" className="text-sm text-red-300">
+              {error}
+            </p>
+          )}
+        </div>
+      </Dialog>
     </Context.Provider>
   );
 }

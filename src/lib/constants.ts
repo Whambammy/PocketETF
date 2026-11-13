@@ -1,4 +1,5 @@
 import registry from "@/data/assets.json";
+import presentation from "@/data/presentation.json";
 
 export const TOKEN_PROGRAM = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
 export const TOKEN_2022_PROGRAM = "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb";
@@ -45,17 +46,24 @@ export interface ETFDefinition {
   category: string;
   targetAssets: ETFAsset[];
   colorGradient: { from: string; to: string };
+  metrics?: {
+    aumSimulated?: string;
+    benchmarkYield?: string;
+    volatility?: string;
+  };
 }
 export type BasketDefinition = ETFDefinition;
-const colors = ["#10B981", "#38BDF8", "#A78BFA", "#FBBF24", "#F472B6"];
-export const TOKEN_CATALOG: ETFAsset[] = registry.map((a, i) => ({
-  ...a,
-  weightPercent: 0,
-  kind: a.ticker === "SOL" || a.ticker === "JUP" ? "crypto" : "equity",
-  color: colors[i % colors.length],
-  category:
-    a.ticker === "SOL" || a.ticker === "JUP" ? "Crypto" : "Tokenized equities",
-}));
+export const TOKEN_CATALOG: ETFAsset[] = registry.map((a) => {
+  const display = presentation.assets.find((item) => item.ticker === a.ticker);
+  return {
+    ...a,
+    name: display?.name || a.name,
+    weightPercent: 0,
+    kind: a.ticker === "SOL" || a.ticker === "JUP" ? "crypto" : "equity",
+    color: display?.color || "#10B981",
+    category: display?.category || "Web3 Equities",
+  };
+});
 export const STOCK_MINTS = Object.fromEntries(
   TOKEN_CATALOG.map((a) => [a.ticker, a.mint]),
 );
@@ -67,58 +75,23 @@ export function findAsset(identity: string): ETFAsset | undefined {
       a.tokenSymbol === identity,
   );
 }
-function basket(
-  id: string,
-  name: string,
-  category: string,
-  weights: [string, number][],
-): ETFDefinition {
-  return {
-    id,
-    name,
-    symbol: "PETF",
-    category,
-    tagline: "Hold the underlying tokens in your wallet",
-    description:
-      weights.map(([s, w]) => w + "% " + s).join(", ") +
-      ". Atomic basket execution; no pooled fund shares.",
-    iconPath: "/etfs/" + id + ".png",
-    colorGradient: { from: "#00D69F", to: "#146EF5" },
-    targetAssets: weights.map(([s, w]) => {
-      const a = findAsset(s);
-      if (!a) throw new Error("Missing verified asset " + s);
-      return { ...a, weightPercent: w };
-    }),
-  };
-}
 export const CURATED_ETFS: Record<string, ETFDefinition> = Object.fromEntries(
-  [
-    basket("silicon-ai", "Silicon AI Supercycle", "AI & Semiconductors", [
-      ["NVDA", 60],
-      ["TSM", 40],
-    ]),
-    basket("mag-titans", "Magnificent Tech Titans", "Mega-Cap Tech", [
-      ["AAPL", 50],
-      ["MSFT", 50],
-    ]),
-    basket("spy-benchmark", "S&P 500 Exposure", "Broad Market", [["SPY", 100]]),
-    basket("nasdaq-growth", "Nasdaq Growth", "Broad Market", [
-      ["QQQ", 60],
-      ["AMZN", 40],
-    ]),
-    basket("hard-assets", "Gold & Treasuries", "Growth & Commodities", [
-      ["GLD", 50],
-      ["TLT", 50],
-    ]),
-    basket("crypto-frontier", "Solana & Jupiter", "Web3", [
-      ["SOL", 50],
-      ["JUP", 50],
-    ]),
-    basket("backpack-titans", "NVIDIA & Strategy", "Web3", [
-      ["NVDA", 50],
-      ["MSTR", 50],
-    ]),
-  ].map((b) => [b.id, b]),
+  presentation.baskets.map(({ weights, ...display }) => [
+    display.id,
+    {
+      ...display,
+      metrics: {
+        ...display.metrics,
+        aumSimulated: "Not tracked",
+        benchmarkYield: "Not tracked",
+      },
+      targetAssets: weights.map(({ ticker, weightPercent }) => {
+        const verified = findAsset(ticker);
+        if (!verified) throw new Error("Missing verified asset " + ticker);
+        return { ...verified, weightPercent };
+      }),
+    },
+  ]),
 );
 export const PRE_BAKED_BASKETS: Record<string, ETFDefinition> = {
   "ai-chipset": CURATED_ETFS["silicon-ai"],
@@ -138,11 +111,15 @@ export const ACTIONS_CORS_HEADERS = {
   "Cache-Control": "no-store",
 };
 // Only actual compilation/simulation determines whether a basket fits.
-export function getDEXConflictStatus(assets: ETFAsset[]) {
+export function getDEXConflictStatus(assets: readonly unknown[]) {
   return {
     isCompatible: assets.length > 0 && assets.length <= MAX_ETF_ASSETS,
     uniqueDexes: [] as string[],
     estimatedBytes: 0,
     statusLabel: "Capacity checked during trade preview",
+    reason:
+      assets.length > MAX_ETF_ASSETS
+        ? "Choose up to eight assets; actual capacity is checked during trade preview."
+        : undefined,
   };
 }

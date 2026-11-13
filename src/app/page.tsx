@@ -1,107 +1,946 @@
-import Link from "next/link";
-import { CURATED_ETFS, TOKEN_CATALOG } from "@/lib/constants";
-import { FAQSection } from "@/components/FAQSection";
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
+import {
+  Sparkles,
+  Layers,
+  ArrowRight,
+  Copy,
+  Check,
+  ExternalLink,
+  ShieldCheck,
+  Zap,
+  Code2,
+  Cpu,
+  TrendingUp,
+  Activity,
+  DollarSign,
+  Info,
+  CheckCircle2,
+  Sliders,
+  Database,
+  BarChart3,
+  Search,
+  Share2,
+  AlertCircle,
+  Smartphone,
+  Wallet,
+  BookOpen,
+} from 'lucide-react';
+import { CURATED_ETFS, ETFDefinition, TOKEN_CATALOG } from '@/lib/constants';
+import { ComparisonMatrix } from '@/components/ComparisonMatrix';
+import { FAQSection } from '@/components/FAQSection';
+import { MobileQRModal } from '@/components/MobileQRModal';
+import { copyToClipboard } from '@/lib/clipboard';
+import { useWallet } from '@/components/WalletProvider';
+import { Dialog } from '@/components/Dialog';
+import { TradePanel } from '@/components/TradePanel';
+
 export default function HomePage() {
+  const wallet = useWallet();
+  const [activeTrade,setActiveTrade]=useState<{etf:ETFDefinition;amount:string}|null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [activeJsonETF, setActiveJsonETF] = useState<ETFDefinition | null>(null);
+  const [showBlinkGuide, setShowBlinkGuide] = useState<boolean>(false);
+  const [selectedQrEtf, setSelectedQrEtf] = useState<{ id: string; name: string; url: string } | null>(null);
+  const [walletBalance, setWalletBalance] = useState<{
+    sol: number;
+    usdc: number;
+    formattedSol: string;
+    formattedUsdc: string;
+  } | null>(null);
+  const [selectedAmounts, setSelectedAmounts] = useState<Record<string, number>>({
+    'silicon-ai': 10,
+    'mag-titans': 10,
+    'spy-benchmark': 10,
+    'nasdaq-growth': 10,
+    'hard-assets': 10,
+    'crypto-frontier': 10,
+    'backpack-titans': 10,
+  });
+  const [selectedCategory, setSelectedCategory] = useState<string>('All');
+  const [origin, setOrigin] = useState<string>('https://pocketetf.vercel.app');
+  const [simulationState, setSimulationState] = useState<
+    Record<string, { loading: boolean; result?: any; error?: string }>
+  >({});
+  const [catalogSearch, setCatalogSearch] = useState<string>('');
+  const [livePrices, setLivePrices] = useState<
+    Record<string, { formatted: string; change24h: string; price: number }>
+  >({});
+  const [isLiveActive, setIsLiveActive] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setOrigin(window.location.origin);
+    }
+
+    // Live Price Polling from Pyth & Jupiter via /api/prices
+    const fetchPrices = async () => {
+      try {
+        const res = await fetch('/api/prices');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && data.prices) {
+            setLivePrices(data.prices);
+            setIsLiveActive(Object.values(data.prices).some((price:any)=>price.status==='live' && price.publishTime && Date.now()-Date.parse(price.publishTime)<=60000));
+          }
+        }
+      } catch {
+        setLivePrices({});
+        setIsLiveActive(false);
+      }
+    };
+
+    fetchPrices();
+    const interval = setInterval(fetchPrices, 15000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const walletAddress = wallet.account?.address || null;
+  const [walletConnecting, setWalletConnecting] = useState<boolean>(false);
+
+  const fetchBalance = async (account: string) => {
+    try {
+      const res = await fetch(`/api/wallet/balance?account=${account}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) {
+          setWalletBalance({
+            sol: data.sol,
+            usdc: data.usdc,
+            formattedSol: data.formattedSol,
+            formattedUsdc: data.formattedUsdc,
+          });
+        }
+      }
+    } catch {
+      // ignore
+    }
+  };
+
+  useEffect(() => {
+    if (walletAddress) {
+      fetchBalance(walletAddress);
+      const timer = setInterval(() => fetchBalance(walletAddress), 15000);
+      return () => clearInterval(timer);
+    } else {
+      setWalletBalance(null);
+    }
+  }, [walletAddress]);
+
+  const handleConnectWallet = async () => { wallet.requestConnect(); };
+
+  const handleCopyBlink = async (id: string) => {
+    const publicOrigin = origin.includes('localhost') ? 'https://pocketetf.vercel.app' : origin;
+    const shareUrl = `${publicOrigin}/etf/${id}`;
+    const success = await copyToClipboard(shareUrl);
+    if (success) {
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 2500);
+    }
+  };
+
+  const handleLiveBuy = async (etfId:string) => {
+    const etf=CURATED_ETFS[etfId];if(etf)setActiveTrade({etf,amount:String(selectedAmounts[etfId]||10)});
+  };
+
+  const categories = ['All', 'AI & Semiconductors', 'Mega-Cap Tech', 'Broad Market', 'Growth & Commodities', 'Web3'];
+
+  const filteredETFs = Object.values(CURATED_ETFS).filter((etf) => {
+    if (selectedCategory === 'All') return true;
+    return etf.category === selectedCategory;
+  });
+
+  const filteredCatalog = TOKEN_CATALOG.filter(
+    (t) =>
+      t.ticker.toLowerCase().includes(catalogSearch.toLowerCase()) ||
+      t.name.toLowerCase().includes(catalogSearch.toLowerCase()) ||
+      t.category.toLowerCase().includes(catalogSearch.toLowerCase())
+  );
+
   return (
-    <div className="max-w-7xl mx-auto px-4 py-14 space-y-14">
-      <section className="max-w-3xl space-y-6">
-        <span className="inline-flex rounded-full border border-emerald-500/30 px-3 py-1 text-xs text-emerald-300">
-          Self-custody · Atomic execution · Solana
-        </span>
-        <h1 className="text-4xl sm:text-6xl font-extrabold leading-tight">
-          Your basket.
-          <br />
-          <span className="brand-text-gradient">Your wallet.</span>
+    <div className="relative overflow-hidden">
+      {/* Background Decorative Radial Glows */}
+      <div className="absolute top-12 left-1/2 -translate-x-1/2 w-[900px] h-[400px] bg-gradient-to-r from-emerald-600/10 via-cyan-500/10 to-purple-600/10 blur-[140px] pointer-events-none -z-10" />
+
+      {/* Hero Section */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-16 text-center relative">
+        <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-[#146EF5]/10 border border-[#146EF5]/30 text-xs font-mono text-[#00D69F] mb-8 backdrop-blur-md shadow-lg shadow-blue-500/10">
+          <Layers className="w-4 h-4 text-[#00D69F]" />
+          <span className="font-semibold text-white">Built for Solana Actions &amp; Blinks</span>
+          <span className="text-slate-500">•</span>
+          <span className="text-[#00D69F]">1-Click Stock ETFs</span>
+          <span className="w-1.5 h-1.5 rounded-full bg-[#00D69F] animate-ping" />
+        </div>
+
+        <h1 className="text-3xl sm:text-5xl lg:text-7xl font-extrabold tracking-tight max-w-4xl mx-auto leading-[1.12] sm:leading-[1.08] mb-6 text-white">
+          Institutional <span className="bg-gradient-to-r from-[#00D69F] via-[#146EF5] to-[#38BDF8] bg-clip-text text-transparent">Stock ETFs</span>
+          <br className="hidden sm:inline" /> Native to Solana Blinks.
         </h1>
-        <p className="text-slate-300 text-lg">
-          Build an allocation, review the actual token amounts and fees, and
-          approve one atomic transaction. Keep every token in your own wallet.
+
+        <p className="text-sm sm:text-lg text-slate-300 max-w-2xl mx-auto leading-relaxed mb-8 sm:mb-10 px-2 sm:px-0">
+          Execute diversified baskets of tokenized US equities, S&amp;P 500 benchmarks, and gold proxies
+          atomically in a single Solana transaction. Shareable directly on Twitter/X, Discord, and Telegram.
         </p>
-        <div className="flex gap-3">
+
+        {/* Action CTAs */}
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-12 sm:mb-16 w-full max-w-md sm:max-w-none mx-auto">
           <a
             href="#etfs"
-            className="btn-cobalt px-5 py-3 rounded-xl font-semibold"
+            className="w-full sm:w-auto justify-center px-6 py-3.5 rounded-xl bg-gradient-to-r from-[#146EF5] to-[#0D63F8] text-white font-bold text-sm shadow-xl shadow-blue-500/25 hover:from-[#257BF6] hover:to-[#146EF5] hover:scale-105 active:scale-95 transition-all duration-200 flex items-center gap-2 border border-blue-400/30"
           >
-            Explore baskets
+            <Layers className="w-4 h-4 text-[#00D69F]" />
+            <span>Explore Curated ETFs</span>
           </a>
+
           <Link
             href="/studio"
-            className="border border-slate-600 px-5 py-3 rounded-xl"
+            className="w-full sm:w-auto justify-center px-6 py-3.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.08] text-white font-semibold text-sm border border-[#146EF5]/30 hover:border-[#00D69F]/50 backdrop-blur-sm transition-all duration-200 flex items-center gap-2"
           >
-            Create a basket
+            <Sliders className="w-4 h-4 text-[#00D69F]" />
+            <span>Open Creator Studio</span>
+            <ArrowRight className="w-4 h-4 text-slate-400" />
+          </Link>
+        </div>
+
+        {/* Live Market Ticker Strip with Real-Time Feed Indicator */}
+        <div className="max-w-5xl mx-auto mb-10 sm:mb-14 overflow-hidden border-y border-white/[0.06] py-3 bg-black/30 backdrop-blur-md rounded-xl">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between px-3 sm:px-4 mb-2 gap-1.5">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#00D69F] opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#00D69F]" />
+              </span>
+              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#00D69F] flex items-center gap-1.5">
+                <span>Powered by Pyth Network Hermes v2 &amp; Jupiter</span>
+              </span>
+              <span className="px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/30 text-[9px] font-mono text-amber-300">
+                ±σ Confidence Bands
+              </span>
+            </div>
+            <span className="text-[9px] font-mono text-slate-400">Pull Oracle • Freshness Checked</span>
+          </div>
+
+          {/* Horizontal scrollable single-line ticker tape on mobile */}
+          <div className="flex items-center gap-6 overflow-x-auto no-scrollbar py-1 px-3 text-xs font-mono whitespace-nowrap">
+            {TOKEN_CATALOG.slice(0, 8).map((token) => {
+              const live = livePrices[token.ticker];
+              const priceDisplay = live?.formatted || token.underlyingPrice || 'Unavailable';
+              const changeDisplay = live?.change24h || token.change24h || 'Unavailable';
+
+              return (
+                <div key={token.ticker} className="flex items-center gap-2 shrink-0 bg-white/[0.02] px-2.5 py-1 rounded-lg border border-white/[0.04]">
+                  <span className="font-bold text-slate-200">{token.ticker}</span>
+                  <span className="text-white font-semibold transition-all duration-300">
+                    {priceDisplay}
+                  </span>
+                  <span
+                    className={
+                      changeDisplay?.startsWith('+') ? 'text-[#00D69F] font-semibold' : 'text-red-400'
+                    }
+                  >
+                    {changeDisplay}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Key Protocol Safeguards Strip */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 max-w-4xl mx-auto text-left">
+          <div className="fintech-card p-4 rounded-xl">
+            <div className="flex items-center gap-2 text-emerald-400 text-xs font-mono font-bold mb-1">
+              <ShieldCheck className="w-4 h-4" />
+              <span>1232B MTU GUARD</span>
+            </div>
+            <p className="text-xs text-slate-400 leading-relaxed">
+              Actual size is checked for wallet-supported v0 or v1 transactions.
+            </p>
+          </div>
+
+          <div className="fintech-card p-4 rounded-xl">
+            <div className="flex items-center gap-2 text-cyan-400 text-xs font-mono font-bold mb-1">
+              <Zap className="w-4 h-4" />
+              <span>SIMULATED CU BUDGET</span>
+            </div>
+            <p className="text-xs text-slate-400 leading-relaxed">
+              Prepends ComputeBudget limit &amp; priority price to eliminate out-of-gas DEX reverts.
+            </p>
+          </div>
+
+          <div className="fintech-card p-4 rounded-xl">
+            <div className="flex items-center gap-2 text-purple-400 text-xs font-mono font-bold mb-1">
+              <Activity className="w-4 h-4" />
+              <span>IDEMPOTENT ATAs</span>
+            </div>
+            <p className="text-xs text-slate-400 leading-relaxed">
+              Pre-creates output token accounts safely without re-creation collisions.
+            </p>
+          </div>
+
+          <div className="fintech-card p-4 rounded-xl">
+            <div className="flex items-center gap-2 text-amber-400 text-xs font-mono font-bold mb-1">
+              <DollarSign className="w-4 h-4" />
+              <span>ZERO-DUST ATOMIC</span>
+            </div>
+            <p className="text-xs text-slate-400 leading-relaxed">
+              Computes in integer atomic base units, assigning remaining dust lamports to top asset.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Curated PocketETFs Section */}
+      <section id="etfs" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 scroll-mt-20">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-xs font-mono font-bold text-[#00D69F] tracking-widest uppercase">
+                Verified Solana Actions &amp; Blinks
+              </span>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-[#00D69F]/15 text-[#00D69F] border border-[#00D69F]/30 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#00D69F] animate-ping" />
+                MAINNET LIVE
+              </span>
+            </div>
+            <h2 className="text-2xl sm:text-4xl font-black text-white tracking-tight">
+              Curated PocketETFs
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-400 mt-2 max-w-xl leading-relaxed">
+              Pre-baked tokenized equity portfolios compiled into atomic Solana Actions. Execute live in 1-click with your connected wallet, or copy the Blink URL to share on Twitter/X, Dialect, and Discord.
+            </p>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
+            {/* Category Filter Pills (horizontal scrollable on mobile) */}
+            <div className="flex items-center gap-1.5 p-1 rounded-xl bg-black/40 border border-white/[0.06] overflow-x-auto no-scrollbar max-w-full">
+              {categories.map((cat) => (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => setSelectedCategory(cat)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium shrink-0 whitespace-nowrap transition-all ${
+                    selectedCategory === cat
+                      ? 'bg-[#146EF5] text-white font-semibold shadow-md shadow-blue-500/25'
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+
+            {/* How It Works Guide Button */}
+            <button
+              type="button"
+              onClick={() => setShowBlinkGuide(true)}
+              className="px-3.5 py-2 rounded-xl text-xs font-mono font-semibold text-slate-200 hover:text-white bg-white/[0.06] hover:bg-white/[0.1] border border-white/10 flex items-center justify-center gap-1.5 transition-all shrink-0 shadow-sm"
+              title="Learn how PocketETF and Solana Blinks work"
+            >
+              <BookOpen className="w-3.5 h-3.5 text-[#00D69F]" />
+              <span>How It Works</span>
+            </button>
+          </div>
+        </div>
+
+        {/* PocketETFs Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredETFs.map((etf) => {
+            const currentAmount = selectedAmounts[etf.id] || 50;
+            const sim = simulationState[etf.id];
+
+            return (
+              <div
+                key={etf.id}
+                className="fintech-card rounded-2xl p-5 flex flex-col fintech-card-hover relative group border border-white/[0.06]"
+              >
+                {/* Visual Header / SVG Icon */}
+                <div className="relative w-full h-40 rounded-xl overflow-hidden mb-5 bg-[#090a10] border border-white/[0.04] flex items-center justify-center p-3">
+                  <img
+                    src={etf.iconPath}
+                    alt={etf.name}
+                    className="w-full h-full object-contain drop-shadow-xl transition-transform duration-300 group-hover:scale-105"
+                  />
+                  <div className="absolute top-2.5 right-2.5 px-2.5 py-0.5 rounded-full bg-black/70 backdrop-blur-md border border-white/10 text-[10px] font-mono font-semibold text-slate-300">
+                    {etf.category}
+                  </div>
+                  {etf.metrics?.benchmarkYield && (
+                    <div className="absolute bottom-2.5 left-2.5 px-2.5 py-0.5 rounded-full bg-[#0A1128]/90 backdrop-blur-md border border-[#00D69F]/40 text-[10px] font-mono font-bold text-[#00D69F]">
+                      {etf.metrics.benchmarkYield}
+                    </div>
+                  )}
+                </div>
+
+                {/* Info Header */}
+                <div className="mb-2">
+                  <h3 className="text-lg font-bold text-white group-hover:text-[#00D69F] transition-colors">
+                    {etf.name}
+                  </h3>
+                  <div className="flex items-center gap-2 text-xs text-purple-400 font-mono mt-0.5">
+                    <span className="font-semibold">{etf.symbol}</span>
+                    <span>•</span>
+                    <span className="text-slate-400 truncate">{etf.tagline}</span>
+                  </div>
+                </div>
+
+                <p className="text-xs text-slate-400 leading-relaxed mb-5 line-clamp-2">
+                  {etf.description}
+                </p>
+
+                {/* Asset Distribution Breakdown Bar */}
+                <div className="mb-5">
+                  <div className="flex justify-between items-center text-[11px] font-mono text-slate-400 mb-2">
+                    <span>Portfolio Weights</span>
+                    <span className="text-[#00D69F] font-bold">100% Total</span>
+                  </div>
+
+                  {/* Multi-segment progress bar */}
+                  <div className="h-2.5 w-full rounded-full bg-slate-800/80 overflow-hidden flex p-[1px] gap-[1px]">
+                    {etf.targetAssets.map((asset) => (
+                      <div
+                        key={asset.ticker}
+                        style={{
+                          width: `${asset.weightPercent}%`,
+                          backgroundColor: asset.color,
+                        }}
+                        className="h-full rounded-sm transition-all duration-300"
+                        title={`${asset.ticker}: ${asset.weightPercent}%`}
+                      />
+                    ))}
+                  </div>
+
+                  {/* Asset legend pills */}
+                  <div className="flex flex-wrap gap-1.5 mt-2.5">
+                    {etf.targetAssets.map((asset) => (
+                      <div
+                        key={asset.ticker}
+                        className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-white/[0.04] border border-white/[0.04] text-[10px] font-mono text-slate-300"
+                      >
+                        <span
+                          className="w-1.5 h-1.5 rounded-full"
+                          style={{ backgroundColor: asset.color }}
+                        />
+                        <span className="font-bold">{asset.ticker}</span>
+                        <span className="text-slate-400">{asset.weightPercent}%</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Quick-Buy Dollar Preset Simulator */}
+                <div className="bg-black/40 rounded-xl p-3 border border-white/[0.04] mb-5">
+                  <div className="flex items-center justify-between text-xs text-slate-400 mb-2 font-mono">
+                    <span>Preset Allocation:</span>
+                    <span className="text-[#00D69F] font-bold">
+                      ${currentAmount} USDC
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-5 gap-1">
+                    {[5, 10, 25, 50, 100].map((amt) => (
+                      <button
+                        key={amt}
+                        type="button"
+                        onClick={() =>
+                          setSelectedAmounts((prev) => ({ ...prev, [etf.id]: amt }))
+                        }
+                        className={`py-1.5 rounded-lg text-[11px] font-mono font-semibold transition-all ${
+                          currentAmount === amt
+                            ? 'bg-[#146EF5] text-white shadow-md shadow-blue-500/25 font-bold'
+                            : 'bg-white/[0.04] hover:bg-white/[0.08] text-slate-300'
+                        }`}
+                      >
+                        ${amt}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Atomic breakdown */}
+                  <div className="mt-2.5 pt-2 border-t border-white/[0.04] text-[10px] font-mono text-slate-400 space-y-1">
+                    <div className="flex justify-between">
+                      <span>Atomic USDC (6 dec):</span>
+                      <span className="text-slate-200">
+                        {(currentAmount * 1_000_000).toLocaleString()} units
+                      </span>
+                    </div>
+                    {etf.targetAssets.map((a) => {
+                      const allocated = (currentAmount * (a.weightPercent / 100)).toFixed(2);
+                      return (
+                        <div key={a.ticker} className="flex justify-between text-slate-400">
+                          <span>• {a.ticker} ({a.weightPercent}%):</span>
+                          <span className="text-slate-300">${allocated}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Wallet Balance Check Indicator */}
+                {walletAddress && walletBalance && (
+                  <div
+                    className={`mb-2 p-2 rounded-xl text-[10px] font-mono flex items-center justify-between border ${
+                      walletBalance.usdc >= currentAmount
+                        ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+                        : 'bg-amber-500/10 border-amber-500/30 text-amber-300'
+                    }`}
+                  >
+                    <span className="flex items-center gap-1">
+                      {walletBalance.usdc >= currentAmount ? (
+                        <Check className="w-3 h-3 text-[#00D69F]" />
+                      ) : (
+                        <AlertCircle className="w-3 h-3 text-amber-400" />
+                      )}
+                      <span>Balance: {walletBalance.formattedUsdc}</span>
+                    </span>
+                    <span className="font-bold">
+                      {walletBalance.usdc >= currentAmount
+                        ? '✓ Ready to Buy'
+                        : `Need +$${(currentAmount - walletBalance.usdc).toFixed(2)} USDC`}
+                    </span>
+                  </div>
+                )}
+
+                {/* Action Buttons */}
+                <div className="mt-auto space-y-2">
+                  {/* Primary 1-Click Live Execution */}
+                  <button
+                    type="button"
+                    onClick={() => handleLiveBuy(etf.id)}
+                    disabled={sim?.loading}
+                    className="w-full py-2.5 rounded-xl bg-gradient-to-r from-[#146EF5] via-[#0D63F8] to-[#00D69F] hover:from-[#257BF6] hover:to-[#14F195] text-white font-bold text-xs transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-500/25 active:scale-98 border border-blue-400/30"
+                  >
+                    <Zap className={`w-3.5 h-3.5 text-[#00D69F] ${sim?.loading ? 'animate-bounce' : ''}`} />
+                    <span>
+                      {sim?.loading
+                        ? 'Awaiting Wallet Approval...'
+                        : `1-Click Buy $${currentAmount} ETF`}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleCopyBlink(etf.id)}
+                    className="w-full py-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-slate-200 hover:text-white font-semibold text-xs transition-all flex items-center justify-center gap-2 border border-white/10"
+                  >
+                    {copiedId === etf.id ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-[#00D69F]" />
+                        <span className="text-[#00D69F] font-bold">Share Link Copied!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Share2 className="w-3.5 h-3.5 text-slate-400" />
+                        <span>Copy Share Link</span>
+                      </>
+                    )}
+                  </button>
+
+                  <div className="grid grid-cols-3 gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setSelectedQrEtf({
+                          id: etf.id,
+                          name: etf.name,
+                          url: `${origin.includes('localhost') ? 'https://pocketetf.vercel.app' : origin}/etf/${etf.id}`,
+                        })
+                      }
+                      className="py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-[10px] font-semibold text-[#00D69F] hover:text-white transition-all flex items-center justify-center gap-1 font-mono"
+                      title="Scan with phone camera or Phantom mobile"
+                    >
+                      <Smartphone className="w-3 h-3 text-[#00D69F]" />
+                      <span>QR Mobile</span>
+                    </button>
+
+                    <a
+                      href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(
+                        `Invest in ${etf.name} with 1-click on @solana via @PocketETF:`
+                      )}&url=${encodeURIComponent(
+                        `${origin.includes('localhost') ? 'https://pocketetf.vercel.app' : origin}/etf/${etf.id}`
+                      )}&hashtags=Solana,Blinks,PocketETF`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="py-1.5 rounded-lg bg-[#146EF5]/15 hover:bg-[#146EF5]/25 border border-[#146EF5]/30 text-[10px] font-semibold text-blue-300 hover:text-white transition-all flex items-center justify-center gap-1 font-mono"
+                    >
+                      <Share2 className="w-3 h-3 text-[#146EF5]" />
+                      <span>Post to 𝕏</span>
+                    </a>
+
+                    <Link
+                      href={`/etf/${etf.id}`}
+                      className="py-1.5 rounded-lg bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.06] hover:border-emerald-500/40 text-[10px] font-semibold text-slate-300 hover:text-white transition-all flex items-center justify-center gap-1 font-mono"
+                    >
+                      <span>Details</span>
+                      <ExternalLink className="w-3 h-3 text-[#00D69F]" />
+                    </Link>
+                  </div>
+
+                  {sim?.result?.signature && (
+                    <div className="p-2.5 rounded-lg bg-emerald-950/60 border border-emerald-500/40 text-[10px] text-emerald-300 font-mono break-all animate-fadeIn">
+                      <div className="font-bold flex items-center gap-1.5 mb-1 text-emerald-400">
+                        <Check className="w-3.5 h-3.5" />
+                        <span>Execution Confirmed!</span>
+                      </div>
+                      <a
+                        href={`https://solscan.io/tx/${sim.result.signature}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[#00D69F] hover:underline flex items-center gap-1 pt-1 font-mono text-[9px]"
+                      >
+                        <span>View on Solscan</span>
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    </div>
+                  )}
+
+                  {sim?.result && !sim?.result?.signature && (
+                    <div className="p-2 rounded-lg bg-slate-900/60 border border-blue-500/30 text-[10px] text-slate-300 font-mono break-all animate-fadeIn">
+                      <div className="font-bold flex items-center gap-1 mb-0.5 text-blue-400">
+                        <Check className="w-3 h-3" />
+                        <span>v0 Transaction Assembled (Dry Run):</span>
+                      </div>
+                      <p className="text-slate-400 text-[9px]">{sim.result.message}</p>
+                    </div>
+                  )}
+
+                  {sim?.error && (
+                    <div className="p-2 rounded-lg bg-red-950/40 border border-red-500/30 text-[10px] text-red-300 font-mono animate-fadeIn">
+                      <div className="font-bold flex items-center gap-1 mb-0.5">
+                        <Info className="w-3 h-3 text-red-400" />
+                        <span>Notice:</span>
+                      </div>
+                      <p className="text-red-200 text-[9px]">{sim.error}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* Expanded Token Catalog Directory */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 border-t border-white/[0.06]">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
+          <div>
+            <div className="text-xs font-mono font-bold text-cyan-400 tracking-widest uppercase mb-1 flex items-center gap-1.5">
+              <Database className="w-3.5 h-3.5" />
+              <span>Verified Asset Directory</span>
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-black text-white">
+              {TOKEN_CATALOG.length} Tokenized Stocks, Indices &amp; RWAs
+            </h2>
+            <p className="text-xs text-slate-400 mt-1 max-w-xl">
+              All assets are available for composition in the Creator Studio with verified Solana SPL mints.
+            </p>
+          </div>
+
+          <div className="relative w-full md:w-72">
+            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-3" />
+            <input
+              type="text"
+              value={catalogSearch}
+              onChange={(e) => setCatalogSearch(e.target.value)}
+              placeholder="Search ticker or company..."
+              className="w-full pl-9 pr-3 py-2 rounded-xl bg-black/40 border border-white/10 text-xs text-white focus:outline-none focus:border-[#146EF5] font-mono"
+            />
+          </div>
+        </div>
+
+        {/* Token Catalog Grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+          {filteredCatalog.slice(0, 18).map((token) => (
+            <div
+              key={token.ticker}
+              className="p-3 rounded-xl bg-black/40 border border-white/[0.04] hover:border-[#146EF5]/40 transition-colors"
+            >
+              <div className="flex items-center justify-between mb-1">
+                <span className="font-mono font-bold text-sm text-white">{token.ticker}</span>
+                <span
+                  className={`text-[10px] font-mono ${
+                    token.change24h?.startsWith('+') ? 'text-[#00D69F]' : 'text-red-400'
+                  }`}
+                >
+                  {token.change24h}
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-400 truncate mb-2">{token.name}</p>
+              <div className="flex items-center justify-between text-[10px] font-mono text-slate-500 pt-1 border-t border-white/[0.04]">
+                <span className="text-slate-300 font-semibold">
+                  {livePrices[token.ticker]?.formatted || token.underlyingPrice || 'Unavailable'}
+                </span>
+                <span className="text-[#38BDF8] font-semibold truncate max-w-[65px]">
+                  {token.category.split(' ')[0]}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="text-center mt-8">
+          <Link
+            href="/studio"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.08] border border-white/10 text-xs font-semibold text-slate-200 transition-all hover:border-[#146EF5]/50"
+          >
+            <span>Compose Any Asset in Creator Studio</span>
+            <ArrowRight className="w-3.5 h-3.5 text-[#00D69F]" />
           </Link>
         </div>
       </section>
-      <aside className="border border-amber-500/30 bg-amber-500/5 rounded-xl p-4 text-sm text-amber-100">
-        You approve swaps with your own wallet. PocketETF never holds your
-        funds. Review token identities, minimum receipts and fees before
-        signing.
-      </aside>
-      <section id="etfs" className="space-y-6">
-        <h2 className="text-2xl font-bold">Curated baskets</h2>
-        <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-5">
-          {Object.values(CURATED_ETFS).map((etf) => (
-            <article
-              key={etf.id}
-              className="fintech-card fintech-card-hover rounded-2xl p-6 space-y-5"
-            >
-              <img
-                src={etf.iconPath}
-                alt=""
-                width={64}
-                height={64}
-                className="rounded-xl"
-              />
-              <div>
-                <p className="text-xs text-emerald-300 mb-2">{etf.category}</p>
-                <h3 className="text-xl font-bold">{etf.name}</h3>
-              </div>
-              <div className="space-y-2">
-                {etf.targetAssets.map((a) => (
-                  <div key={a.mint} className="flex justify-between text-sm">
-                    <span>{a.tokenSymbol}</span>
-                    <span>{a.weightPercent}%</span>
-                  </div>
-                ))}
-              </div>
-              <p className="text-xs text-slate-400">
-                {etf.targetAssets.some((a) => a.kind === "equity")
-                  ? "Verified tokenized assets"
-                  : "Verified crypto tokens · wSOL stays wrapped"}
-              </p>
-              <Link
-                href={"/etf/" + etf.id}
-                className="block text-center btn-cobalt rounded-xl py-3 font-semibold"
-              >
-                Review basket →
-              </Link>
-            </article>
-          ))}
+
+      {/* Protocol Architecture Deep-Dive */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 border-t border-white/[0.06]">
+        <div className="text-center max-w-3xl mx-auto mb-14">
+          <div className="text-xs font-mono font-bold text-[#00D69F] tracking-widest uppercase mb-2">
+            Execution Standards
+          </div>
+          <h2 className="text-3xl sm:text-4xl font-black text-white">
+            Built for Solana&apos;s Atomic Limits
+          </h2>
+          <p className="text-xs sm:text-sm text-slate-400 mt-2">
+            PocketETF solves the five fundamental failure points of multi-token DEX execution on Solana Blinks.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="fintech-card p-6 rounded-2xl">
+            <div className="w-10 h-10 rounded-xl bg-[#146EF5]/15 border border-[#146EF5]/30 flex items-center justify-center text-[#146EF5] mb-4">
+              <Cpu className="w-5 h-5" />
+            </div>
+            <h3 className="text-base font-bold text-white mb-2">Transaction Size Guard</h3>
+            <p className="text-xs text-slate-400 leading-relaxed">
+              PocketETF checks the actual compiled size, accounts, and compute against the wallet-supported v0 or v1 transaction limits. Baskets support up to eight verified assets when the route fits.
+            </p>
+          </div>
+
+          <div className="fintech-card p-6 rounded-2xl">
+            <div className="w-10 h-10 rounded-xl bg-[#00D69F]/15 border border-[#00D69F]/30 flex items-center justify-center text-[#00D69F] mb-4">
+              <Zap className="w-5 h-5" />
+            </div>
+            <h3 className="text-base font-bold text-white mb-2">Simulated Compute Budget</h3>
+            <p className="text-xs text-slate-400 leading-relaxed">
+              PocketETF simulates the combined transaction and sets a bounded compute budget and priority fee. Preview errors stop the trade; network inclusion is never guaranteed.
+            </p>
+          </div>
+
+          <div className="fintech-card p-6 rounded-2xl">
+            <div className="w-10 h-10 rounded-xl bg-[#38BDF8]/15 border border-[#38BDF8]/30 flex items-center justify-center text-[#38BDF8] mb-4">
+              <ShieldCheck className="w-5 h-5" />
+            </div>
+            <h3 className="text-base font-bold text-white mb-2">Idempotent ATAs</h3>
+            <p className="text-xs text-slate-400 leading-relaxed">
+              If an investor wallet lacks the Associated Token Account for an equity, the transfer reverts.
+              PocketETF pre-initializes idempotent token accounts so both new and existing holders execute smoothly.
+            </p>
+          </div>
         </div>
       </section>
-      <section className="space-y-5">
-        <h2 className="text-2xl font-bold">Know what you own</h2>
-        <p className="text-sm text-slate-400">
-          {TOKEN_CATALOG.length} issuer/crypto identities checked against
-          on-chain mint metadata. Open a basket to inspect provenance, token
-          program and decimals. Identity verification does not remove issuer or
-          market risk.
-        </p>
-        <div className="flex gap-2 flex-wrap">
-          {TOKEN_CATALOG.map((a) => (
-            <a
-              href={a.provenanceUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              key={a.mint}
-              className="rounded-full border border-slate-700 px-3 py-2 text-xs"
-            >
-              {a.tokenSymbol} ↗
-            </a>
-          ))}
-        </div>
-      </section>
+
+      {/* PocketETF vs The World Comparison Matrix */}
+      <ComparisonMatrix />
+
+      {/* Protocol FAQ & Knowledge Base */}
       <FAQSection />
+
+      {/* Solana Action JSON Inspector Modal */}
+      {activeJsonETF && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
+          <div className="fintech-card bg-[#0b0c14] border border-[#146EF5]/40 rounded-2xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl">
+            <div className="p-4 border-b border-white/10 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Code2 className="w-4 h-4 text-[#00D69F]" />
+                <h4 className="text-xs sm:text-sm font-bold text-white font-mono">
+                  Solana Action GET Spec: {activeJsonETF.name}
+                </h4>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActiveJsonETF(null)}
+                className="text-slate-400 hover:text-white text-xs px-2.5 py-1 rounded-md bg-white/5 font-mono"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="p-4 overflow-y-auto flex-1 font-mono text-xs text-slate-300">
+              <pre className="bg-black/60 p-4 rounded-xl border border-white/5 overflow-x-auto text-[11px] leading-relaxed">
+                {JSON.stringify(
+                  {
+                    type: 'action',
+                    icon: `${origin}${activeJsonETF.iconPath}`,
+                    title: `PocketETF: ${activeJsonETF.name}`,
+                    description: activeJsonETF.description,
+                    label: 'Buy PocketETF',
+                    disabled: false,
+                    links: {
+                      actions: [
+                        {
+                          label: '$10 USDC',
+                          href: `${origin}/api/actions/etf/${activeJsonETF.id}?amount=10`,
+                        },
+                        {
+                          label: '$50 USDC',
+                          href: `${origin}/api/actions/etf/${activeJsonETF.id}?amount=50`,
+                        },
+                        {
+                          label: '$100 USDC',
+                          href: `${origin}/api/actions/etf/${activeJsonETF.id}?amount=100`,
+                        },
+                        {
+                          label: 'Buy Custom Amount',
+                          href: `${origin}/api/actions/etf/${activeJsonETF.id}?amount={amount}`,
+                          parameters: [
+                            {
+                              name: 'amount',
+                              label: 'USDC Amount ($)',
+                              required: true,
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  },
+                  null,
+                  2
+                )}
+              </pre>
+            </div>
+
+            <div className="p-4 border-t border-white/10 flex justify-between items-center bg-black/40 text-xs font-mono">
+              <span className="text-slate-400">Spec Version: 2.1.3</span>
+              <button
+                type="button"
+                onClick={() => {
+                  navigator.clipboard.writeText(`${origin}/api/actions/etf/${activeJsonETF.id}`);
+                  alert('Action endpoint copied to clipboard!');
+                }}
+                className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-[#146EF5] to-[#0D63F8] hover:from-[#257BF6] hover:to-[#146EF5] text-white font-semibold transition-all shadow-md shadow-blue-500/25 border border-blue-400/25"
+              >
+                Copy Action Endpoint
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* How It Works Protocol Guide Modal */}
+      {showBlinkGuide && (
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="fintech-card bg-[#0A1128] border border-[#146EF5]/40 rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150">
+            <div className="p-5 border-b border-white/10 flex items-center justify-between bg-black/30">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-[#146EF5]/20 border border-[#146EF5]/40 flex items-center justify-center text-[#00D69F]">
+                  <BookOpen className="w-4 h-4 text-[#00D69F]" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-white">How PocketETF Works</h4>
+                  <p className="text-[11px] text-slate-400 font-mono">1-Click Solana Index Trading &amp; Social Blinks</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowBlinkGuide(false)}
+                className="text-slate-400 hover:text-white text-xs px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 font-mono transition-all"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="p-6 overflow-y-auto space-y-6 text-xs text-slate-300">
+              {/* 1. What is PocketETF & Blinks */}
+              <div className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.08] space-y-2">
+                <div className="flex items-center gap-2 text-white font-bold text-sm">
+                  <Zap className="w-4 h-4 text-[#00D69F]" />
+                  <span>1. 1-Click Thematic Index Swaps</span>
+                </div>
+                <p className="text-slate-400 leading-relaxed">
+                  PocketETF packages diversified thematic equity, semiconductor, and commodity baskets into atomic Solana transactions executed directly on Solana Mainnet via <strong>Jupiter DEX aggregation</strong>.
+                </p>
+                <p className="text-slate-400 leading-relaxed">
+                  When shared on <strong>Twitter/𝕏, Discord, or Telegram</strong>, Action-compatible wallets automatically unfurl the link into an interactive <strong>Blink (Blockchain Link)</strong> card. Anyone can buy the entire basket in 1 click without leaving their social feed.
+                </p>
+              </div>
+
+              {/* 2. Built-in In-App Preview & Social Feed Mockup */}
+              <div className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.08] space-y-2">
+                <div className="flex items-center gap-2 text-white font-bold text-sm">
+                  <Sparkles className="w-4 h-4 text-[#38BDF8]" />
+                  <span>2. Interactive Preview &amp; 𝕏 Feed Mockup</span>
+                </div>
+                <p className="text-slate-400 leading-relaxed">
+                  PocketETF features a native, real-time Action preview engine. You can evaluate and experience the complete social Blink flow directly in-app:
+                </p>
+                <ol className="list-decimal list-inside space-y-1 text-slate-300 font-mono text-[11px] bg-black/40 p-3 rounded-lg border border-white/5">
+                  <li>Navigate to the <Link href="/studio" className="text-[#00D69F] underline font-bold">Creator Studio</Link> or any ETF detail page.</li>
+                  <li>Toggle between <strong>Widget View</strong> and the authentic <strong>𝕏 / Twitter Feed Mockup</strong>.</li>
+                  <li>Click preset allocation buttons ($5, $10, $25, $50, $100) or enter a custom amount.</li>
+                  <li>View live Jupiter DEX route aggregation, Pyth NAV confidence intervals, and 1232B MTU safety guards.</li>
+                </ol>
+                <p className="text-[11px] text-emerald-400 font-mono">
+                  ✓ Experience the exact social Blink UI and test Jupiter routing live in-app!
+                </p>
+              </div>
+
+              {/* 3. Mobile QR Scanner (Phantom & Backpack Mobile) */}
+              <div className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.08] space-y-2">
+                <div className="flex items-center gap-2 text-white font-bold text-sm">
+                  <Smartphone className="w-4 h-4 text-[#146EF5]" />
+                  <span>3. Scan to Trade on Mobile (Phantom / Backpack)</span>
+                </div>
+                <p className="text-slate-400 leading-relaxed">
+                  To trade on your phone with zero desktop extension setup:
+                </p>
+                <ol className="list-decimal list-inside space-y-1 text-slate-300 font-mono text-[11px] bg-black/40 p-3 rounded-lg border border-white/5">
+                  <li>Click <strong>&quot;QR Mobile&quot;</strong> on any ETF card or detail page.</li>
+                  <li>Scan the QR code with your phone camera or the <strong>Phantom / Backpack</strong> in-app scanner.</li>
+                  <li>The ETF opens directly inside your mobile wallet browser with your wallet connected for 1-click execution.</li>
+                </ol>
+              </div>
+
+              {/* 4. Wallet & Funds: Why Phantom warns */}
+              <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 space-y-2">
+                <div className="flex items-center gap-2 text-amber-300 font-bold text-sm">
+                  <AlertCircle className="w-4 h-4 text-amber-400" />
+                  <span>4. Zero-Gas Safety Guardrail (USDC Requirement)</span>
+                </div>
+                <p className="text-amber-200/90 leading-relaxed">
+                  PocketETF executes real, live swaps on Solana Mainnet using <strong>USDC</strong> (<code className="font-mono text-[10px] bg-black/40 px-1 py-0.5 rounded">EPjFWdd...wyTDt1v</code>).
+                </p>
+                <p className="text-slate-300 leading-relaxed">
+                  If your wallet does not hold sufficient USDC, our pre-flight guardrail detects this immediately and halts execution to protect you from spending unnecessary SOL gas fees.
+                </p>
+              </div>
+            </div>
+
+            <div className="p-4 border-t border-white/10 flex justify-between items-center bg-black/40 text-xs font-mono">
+              <span className="text-slate-400">PocketETF Protocol v1.0</span>
+              <button
+                type="button"
+                onClick={() => setShowBlinkGuide(false)}
+                className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#146EF5] to-[#00D69F] text-white font-bold hover:scale-105 transition-all shadow-md shadow-blue-500/25"
+              >
+                Got It!
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reusable Mobile QR Modal */}
+      {selectedQrEtf && (
+        <MobileQRModal
+          isOpen={!!selectedQrEtf}
+          onClose={() => setSelectedQrEtf(null)}
+          etfId={selectedQrEtf.id}
+          etfName={selectedQrEtf.name}
+          url={selectedQrEtf.url}
+        />
+      )}
+      <Dialog open={!!activeTrade} onClose={()=>setActiveTrade(null)} title={activeTrade?.etf.name || 'Review trade'}>
+        {activeTrade && <TradePanel key={activeTrade.etf.id+activeTrade.amount} etf={activeTrade.etf} initialAmount={activeTrade.amount} onComplete={signature=>{setSimulationState(prev=>({...prev,[activeTrade.etf.id]:{loading:false,result:{signature}}}));}} />}
+      </Dialog>
     </div>
   );
 }

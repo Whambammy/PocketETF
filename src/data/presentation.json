@@ -1,0 +1,348 @@
+{
+  "assets": [
+    {
+      "ticker": "NVDA",
+      "name": "NVIDIA Corporation",
+      "color": "#10B981",
+      "category": "Semiconductors & AI"
+    },
+    {
+      "ticker": "TSM",
+      "name": "Taiwan Semiconductor Mfg",
+      "color": "#06B6D4",
+      "category": "Semiconductors & AI"
+    },
+    {
+      "ticker": "AMD",
+      "name": "Advanced Micro Devices",
+      "color": "#EF4444",
+      "category": "Semiconductors & AI"
+    },
+    {
+      "ticker": "AVGO",
+      "name": "Broadcom Inc.",
+      "color": "#F59E0B",
+      "category": "Semiconductors & AI"
+    },
+    {
+      "ticker": "PLTR",
+      "name": "Palantir Technologies",
+      "color": "#6366F1",
+      "category": "Semiconductors & AI"
+    },
+    {
+      "ticker": "AAPL",
+      "name": "Apple Inc.",
+      "color": "#94A3B8",
+      "category": "Mega-Cap Tech"
+    },
+    {
+      "ticker": "MSFT",
+      "name": "Microsoft Corporation",
+      "color": "#38BDF8",
+      "category": "Mega-Cap Tech"
+    },
+    {
+      "ticker": "GOOGL",
+      "name": "Alphabet Inc.",
+      "color": "#60A5FA",
+      "category": "Mega-Cap Tech"
+    },
+    {
+      "ticker": "AMZN",
+      "name": "Amazon.com Inc.",
+      "color": "#F97316",
+      "category": "Mega-Cap Tech"
+    },
+    {
+      "ticker": "META",
+      "name": "Meta Platforms Inc.",
+      "color": "#0284C7",
+      "category": "Mega-Cap Tech"
+    },
+    {
+      "ticker": "TSLA",
+      "name": "Tesla Inc.",
+      "color": "#E11D48",
+      "category": "Mega-Cap Tech"
+    },
+    {
+      "ticker": "SPY",
+      "name": "SPDR S&P 500 ETF Trust",
+      "color": "#F59E0B",
+      "category": "Indices & Benchmarks"
+    },
+    {
+      "ticker": "QQQ",
+      "name": "Invesco QQQ Trust (Nasdaq-100)",
+      "color": "#8B5CF6",
+      "category": "Indices & Benchmarks"
+    },
+    {
+      "ticker": "SMH",
+      "name": "VanEck Semiconductor ETF",
+      "color": "#10B981",
+      "category": "Indices & Benchmarks"
+    },
+    {
+      "ticker": "IWM",
+      "name": "iShares Russell 2000 Small-Cap",
+      "color": "#EC4899",
+      "category": "Indices & Benchmarks"
+    },
+    {
+      "ticker": "VTI",
+      "name": "Vanguard Total Stock Market",
+      "color": "#14F195",
+      "category": "Indices & Benchmarks"
+    },
+    {
+      "ticker": "GLD",
+      "name": "SPDR Gold Shares (Tokenized Gold)",
+      "color": "#FBBF24",
+      "category": "Commodities & Yield"
+    },
+    {
+      "ticker": "SLV",
+      "name": "iShares Silver Trust",
+      "color": "#CBD5E1",
+      "category": "Commodities & Yield"
+    },
+    {
+      "ticker": "TLT",
+      "name": "iShares 20+ Year Treasury Bond",
+      "color": "#3B82F6",
+      "category": "Commodities & Yield"
+    },
+    {
+      "ticker": "USDY",
+      "name": "Ondo US Dollar Yield (Treasuries)",
+      "color": "#10B981",
+      "category": "Commodities & Yield"
+    },
+    {
+      "ticker": "USO",
+      "name": "United States Oil Fund",
+      "color": "#A16207",
+      "category": "Commodities & Yield"
+    },
+    {
+      "ticker": "COIN",
+      "name": "Coinbase Global Inc.",
+      "color": "#2563EB",
+      "category": "Web3 Equities"
+    },
+    {
+      "ticker": "MSTR",
+      "name": "MicroStrategy (Backpack / Sunrise)",
+      "color": "#D97706",
+      "category": "Web3 Equities"
+    },
+    {
+      "ticker": "SOL",
+      "name": "Wrapped Solana (L1 Proxy)",
+      "color": "#9945FF",
+      "category": "Web3 Equities"
+    },
+    {
+      "ticker": "JUP",
+      "name": "Jupiter (Solana DEX Engine)",
+      "color": "#00F0FF",
+      "category": "Web3 Equities"
+    }
+  ],
+  "baskets": [
+    {
+      "id": "silicon-ai",
+      "name": "Silicon AI Supercycle",
+      "symbol": "PETF-AI",
+      "tagline": "Leading AI Hardware & Foundry Pioneers",
+      "description": "1-Click execution for 60% NVIDIA (NVDA) and 40% Taiwan Semiconductor (TSM) via Jupiter DEX aggregation.",
+      "iconPath": "/etfs/silicon-ai.png",
+      "category": "AI & Semiconductors",
+      "colorGradient": {
+        "from": "#10B981",
+        "to": "#06B6D4"
+      },
+      "metrics": {
+        "aumSimulated": "?",
+        "benchmarkYield": "?",
+        "volatility": "High"
+      },
+      "weights": [
+        {
+          "ticker": "NVDA",
+          "weightPercent": 60
+        },
+        {
+          "ticker": "TSM",
+          "weightPercent": 40
+        }
+      ]
+    },
+    {
+      "id": "mag-titans",
+      "name": "Magnificent Tech Titans",
+      "symbol": "PETF-TITAN",
+      "tagline": "The Dominant Innovation Engines",
+      "description": "Instant allocation across 50% Apple (AAPL) and 50% Microsoft (MSFT).",
+      "iconPath": "/etfs/mag-titans.png",
+      "category": "Mega-Cap Tech",
+      "colorGradient": {
+        "from": "#8B5CF6",
+        "to": "#EC4899"
+      },
+      "metrics": {
+        "aumSimulated": "?",
+        "benchmarkYield": "?",
+        "volatility": "Moderate"
+      },
+      "weights": [
+        {
+          "ticker": "AAPL",
+          "weightPercent": 50
+        },
+        {
+          "ticker": "MSFT",
+          "weightPercent": 50
+        }
+      ]
+    },
+    {
+      "id": "spy-benchmark",
+      "name": "S&P 500 Benchmark Proxy",
+      "symbol": "PETF-SPY",
+      "tagline": "The Gold Standard US Market Benchmark",
+      "description": "100% S&P 500 Index Proxy (SPY) tokenized equity exposure in a single Solana transaction.",
+      "iconPath": "/etfs/spy-benchmark.png",
+      "category": "Broad Market",
+      "colorGradient": {
+        "from": "#F59E0B",
+        "to": "#EF4444"
+      },
+      "metrics": {
+        "aumSimulated": "?",
+        "benchmarkYield": "?",
+        "volatility": "Low"
+      },
+      "weights": [
+        {
+          "ticker": "SPY",
+          "weightPercent": 100
+        }
+      ]
+    },
+    {
+      "id": "nasdaq-growth",
+      "name": "Nasdaq-100 Growth Titans",
+      "symbol": "PETF-QQQ",
+      "tagline": "High-Beta Consumer Tech & Cloud Leaders",
+      "description": "Balanced growth exposure: 60% Nasdaq-100 (QQQ) and 40% Amazon (AMZN).",
+      "iconPath": "/etfs/nasdaq-growth.png",
+      "category": "Broad Market",
+      "colorGradient": {
+        "from": "#0284C7",
+        "to": "#6366F1"
+      },
+      "metrics": {
+        "aumSimulated": "?",
+        "benchmarkYield": "?",
+        "volatility": "Moderate"
+      },
+      "weights": [
+        {
+          "ticker": "QQQ",
+          "weightPercent": 60
+        },
+        {
+          "ticker": "AMZN",
+          "weightPercent": 40
+        }
+      ]
+    },
+    {
+      "id": "hard-assets",
+      "name": "All-Weather Gold & Treasuries",
+      "symbol": "PETF-SAFE",
+      "tagline": "Inflation Hedge & Risk-Off Capital Preservation",
+      "description": "Defensive wealth preservation: 50% Physical Gold (GLD) and 50% 20+ Year US Treasuries (TLT).",
+      "iconPath": "/etfs/hard-assets.png",
+      "category": "Growth & Commodities",
+      "colorGradient": {
+        "from": "#FBBF24",
+        "to": "#3B82F6"
+      },
+      "metrics": {
+        "aumSimulated": "?",
+        "benchmarkYield": "?",
+        "volatility": "Low"
+      },
+      "weights": [
+        {
+          "ticker": "GLD",
+          "weightPercent": 50
+        },
+        {
+          "ticker": "TLT",
+          "weightPercent": 50
+        }
+      ]
+    },
+    {
+      "id": "crypto-frontier",
+      "name": "Web3 & Solana Infrastructure",
+      "symbol": "PETF-WEB3",
+      "tagline": "Leading Crypto Economy & L1 Protocols",
+      "description": "Premier Solana ecosystem exposure: 50% Wrapped Solana (SOL) and 50% Jupiter DEX Engine (JUP).",
+      "iconPath": "/etfs/crypto-frontier.png",
+      "category": "Web3",
+      "colorGradient": {
+        "from": "#2563EB",
+        "to": "#9945FF"
+      },
+      "metrics": {
+        "aumSimulated": "?",
+        "benchmarkYield": "?",
+        "volatility": "High"
+      },
+      "weights": [
+        {
+          "ticker": "SOL",
+          "weightPercent": 50
+        },
+        {
+          "ticker": "JUP",
+          "weightPercent": 50
+        }
+      ]
+    },
+    {
+      "id": "backpack-titans",
+      "name": "Backpack 24/7 Equity Titans",
+      "symbol": "PETF-BPK",
+      "tagline": "1:1 Regulated Custody Tokenized Stocks",
+      "description": "Canonical tokenized equities: 50% NVIDIA (NVDA) and 50% MicroStrategy (MSTR) backed 1:1 by real shares in custody.",
+      "iconPath": "/etfs/mag-titans.png",
+      "category": "Mega-Cap Tech",
+      "colorGradient": {
+        "from": "#E11D48",
+        "to": "#6366F1"
+      },
+      "metrics": {
+        "aumSimulated": "?",
+        "benchmarkYield": "?",
+        "volatility": "Moderate"
+      },
+      "weights": [
+        {
+          "ticker": "NVDA",
+          "weightPercent": 50
+        },
+        {
+          "ticker": "MSTR",
+          "weightPercent": 50
+        }
+      ]
+    }
+  ]
+}

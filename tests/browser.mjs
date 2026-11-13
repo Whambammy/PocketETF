@@ -26,52 +26,60 @@ try {
   const response = await page.goto("http://127.0.0.1:3210");
   assert.equal(response.status(), 200);
   assert.match(response.headers()["content-security-policy"], /nonce-/);
-  await page.getByRole("heading", { name: /Your basket/ }).waitFor();
-  await page.getByRole("link", { name: "Review basket →" }).last().waitFor();
-  await page.screenshot({
-    caret: "initial",
-    path: ".test-artifacts/home-desktop.png",
-    fullPage: true,
-  });
-  await page.getByRole("link", { name: "Creator Studio", exact: true }).click();
-  await page.getByRole("heading", { name: "Creator Studio" }).waitFor();
-  await page.getByRole("button", { name: "Equal weights" }).click();
-  await page.getByRole("link", { name: "Review and share basket →" }).click();
-  await page.getByRole("heading", { name: "Verified constituents" }).waitFor();
-  assert.ok(
-    new URL(page.url()).searchParams
-      .get("assets")
-      .includes("So11111111111111111111111111111111111111112:50"),
-  );
-  await page.getByRole("button", { name: "Open on mobile" }).click();
-  await page.getByRole("dialog").waitFor();
-  await page.keyboard.press("Escape");
-  assert.equal(await page.getByRole("dialog").count(), 0);
-  await page
-    .getByRole("button", { name: "Connect wallet", exact: true })
-    .first()
-    .click();
-  await page
-    .getByText(
-      "Open this site in your wallet browser or install a supported wallet extension.",
-    )
-    .waitFor();
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("http://127.0.0.1:3210/etf/crypto-frontier");
-  await page.getByRole("heading", { name: "Trade basket" }).waitFor();
-  assert.ok(
-    await page.evaluate(
-      () => document.documentElement.scrollWidth <= innerWidth,
-    ),
-  );
-  await page.screenshot({
-    caret: "initial",
-    path: ".test-artifacts/basket-mobile.png",
-    fullPage: true,
-  });
-  await page.goto("http://127.0.0.1:3210/portfolio");
-  await page.getByRole("heading", { name: "Portfolio & history" }).waitFor();
-  await page.getByText("Connect a wallet to read holdings").waitFor();
+  await page.getByRole('heading',{level:1}).filter({hasText:'Stock ETFs'}).waitFor();
+  await page.locator('#etfs').getByRole('heading',{name:'Curated PocketETFs'}).waitFor();
+  assert.equal(await page.locator('#compare tbody tr').count(),8);
+  assert.ok(await page.locator('#compare table').isVisible());
+  await page.screenshot({path:'.test-artifacts/restored-home-desktop.png',caret:'initial'});
+  await page.locator('#compare').screenshot({path:'.test-artifacts/restored-comparison-desktop.png',caret:'initial'});
+  await page.locator('header nav a[href="/compare"]').click();
+  await page.waitForURL('**/compare');
+  assert.equal(await page.locator('#compare tbody tr').count(),8);
+  await page.locator('header nav a[href="/studio"]').click();
+  await page.getByRole('heading',{name:'Build a Custom Stock ETF Blink'}).waitFor();
+  await page.getByRole('button',{name:'Widget View'}).click();
+  await page.getByRole('button',{name:/Feed View/}).click();
+  const shareText=await page.getByText(/^http:\/\/127\.0\.0\.1:3210\/etf\/custom\?/).first().textContent();
+  const share=new URL(shareText.trim());
+  assert.ok(share.searchParams.get('assets').includes('Xsc9qvGR1efVDFGLrVsmkzv3qi45LTBjeUKSPmx9qEh:60'));
+  // Existing weight controls must work for the expanded eight-asset basket limit.
+  for (const ticker of ['SOL', 'JUP', 'AAPL', 'MSFT', 'AMD', 'GOOGL']) {
+    await page.getByRole('button',{name:/Add Asset from Catalog/}).click();
+    await page.getByPlaceholder('Search catalog...').fill(ticker);
+    await page.getByRole('button').filter({has:page.getByText(ticker,{exact:true})}).click();
+  }
+  await page.getByRole('button',{name:'Equal Split',exact:true}).click();
+  const splitLink=new URL((await page.getByText(/^http:\/\/127\.0\.0\.1:3210\/etf\/custom\?/).first().textContent()).trim());
+  const weights=splitLink.searchParams.get('assets').split(',').map(pair=>Number(pair.split(':')[1]));
+  assert.equal(weights.length,8);
+  assert.equal(weights.reduce((sum,value)=>sum+value,0),100);
+  assert.ok(weights.every(value=>value===12||value===13));
+  await page.locator('input[type="range"]').first().fill('99');
+  await page.getByRole('button',{name:'Balance',exact:true}).click();
+  const balancedLink=new URL((await page.getByText(/^http:\/\/127\.0\.0\.1:3210\/etf\/custom\?/).first().textContent()).trim());
+  assert.equal(balancedLink.searchParams.get('assets').split(',').reduce((sum,pair)=>sum+Number(pair.split(':')[1]),0),100);
+  await page.goto(share.href);
+  await page.getByRole('button',{name:'Trade on Mobile (QR)'}).click();
+  await page.getByRole('dialog',{name:'Trade on mobile'}).waitFor();
+  await page.keyboard.press('Escape');
+  assert.equal(await page.getByRole('dialog').count(),0);
+  await page.getByRole('button',{name:/^Connect Wallet$/i}).first().click();
+  await page.getByText('Open this site in your wallet browser or install a supported wallet extension.').waitFor();
+  await page.getByRole('dialog',{name:'Connect Wallet'}).getByRole('button',{name:'Close dialog'}).click();
+  await page.setViewportSize({width:390,height:844});
+  await page.goto('http://127.0.0.1:3210');
+  await page.getByRole('button',{name:'Open Navigation Menu'}).click();
+  await page.getByRole('link',{name:/Compare vs. World/}).click();
+  await page.waitForURL('**/compare');
+  await page.getByRole('button',{name:'EVM DeFi',exact:true}).click();
+  await page.locator('#compare').screenshot({path:'.test-artifacts/restored-comparison-mobile.png',caret:'initial'});
+  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+  await page.goto('http://127.0.0.1:3210/etf/crypto-frontier');
+  await page.getByRole('button',{name:/Execute 1-Click Buy/}).waitFor();
+  await page.screenshot({path:'.test-artifacts/restored-basket-mobile.png',caret:'initial',fullPage:true});
+  await page.goto('http://127.0.0.1:3210/portfolio');
+  await page.getByRole('heading',{name:'Portfolio & history'}).waitFor();
+  await page.getByText('Connect a wallet to read holdings').waitFor();
   const rejected = await page.request.post(
     "http://127.0.0.1:3210/api/trades/prepare",
     {
@@ -211,12 +219,14 @@ try {
     await walletPage.route("**/api/trades/status*", (route) =>
       route.fulfill({ json: { success: true, status: "finalized" } }),
     );
+    await walletPage.route('**/api/wallet/balance*',route=>route.fulfill({json:{success:true,account:signer.address,sol:1,usdc:1000,formattedSol:'1 SOL',formattedUsdc:'$1000.00',holdings:[],prices:{},valuation:{value:1000,knownValue:1000,missing:[]},observedAt:new Date().toISOString()}}));
     await walletPage.goto("http://127.0.0.1:3210/etf/crypto-frontier");
     await walletPage
-      .getByRole("button", { name: "Connect wallet", exact: true })
+      .getByRole("button", { name: /^Connect Wallet$/i })
       .first()
       .click();
     await walletPage.getByRole("button", { name: "Regression Wallet" }).click();
+    await walletPage.getByRole('button',{name:/Execute 1-Click Buy/}).click();
     await walletPage.getByRole("button", { name: "Preview buy" }).click();
     await walletPage
       .getByRole("heading", { name: "Review before signing" })
@@ -242,7 +252,7 @@ try {
     await walletContext.close();
   }
   console.log(
-    "Browser smoke checks passed: desktop/mobile, CSP hydration, custom mint round trip, dialog dismissal, wallet discovery, portfolio and invalid-trade rejection.",
+    "Restored UI browser checks passed: original homepage/header, desktop comparison, mobile navigation/comparison, original Creator Studio, custom mint links, QR modal, portfolio and invalid-trade rejection.",
   );
   console.log(
     "Mock Wallet Standard v0/v1 flows passed: capability selection, preview invalidation, signing, submission, finalized status and history. No real transactions were submitted.",

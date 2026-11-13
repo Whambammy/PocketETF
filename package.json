@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "audit": "npm audit",
-    "test": "tsx --test tests/security.test.ts tests/trading.test.ts",
+    "test": "tsx --test tests/security.test.ts tests/trading.test.ts tests/ui.test.ts",
     "test:browser": "node --import tsx tests/browser.mjs",
     "sync:assets": "node scripts/sync-assets.mjs && node scripts/sync-pyth.mjs",
     "typecheck": "tsc --noEmit --incremental false"

@@ -10,13 +10,17 @@ const to64 = (b: Uint8Array) =>
 export function TradePanel({
   etf,
   query = "",
+  initialAmount = "10",
+  onComplete,
 }: {
   etf: ETFDefinition;
   query?: string;
+  initialAmount?: string;
+  onComplete?: (signature: string) => void;
 }) {
   const wallet = useWallet();
   const [mode, setMode] = useState<"buy" | "sell" | "rebalance">("buy");
-  const [amount, setAmount] = useState("10");
+  const [amount, setAmount] = useState(initialAmount);
   const [slippage, setSlippage] = useState(50);
   const [preview, setPreview] = useState<TradePreview | null>(null);
   const [busy, setBusy] = useState(false);
@@ -172,6 +176,7 @@ export function TradePanel({
                 : "Transaction confirmed.",
             );
             window.dispatchEvent(new Event("pocketetf-balance"));
+            onComplete?.(data.signature);
             return;
           }
         }

@@ -10,9 +10,9 @@ export function proxy(request: NextRequest) {
       nonce +
       "' 'strict-dynamic'" +
       (dev ? " 'unsafe-eval'" : ""),
-    "style-src 'self' 'unsafe-inline'",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "img-src 'self' data: https://i.imgur.com https://i.postimg.cc https://xstocks-metadata.backed.fi",
-    "font-src 'self'",
+    "font-src 'self' https://fonts.gstatic.com",
     "connect-src 'self'" + (dev ? " ws://localhost:* ws://127.0.0.1:*" : ""),
     "object-src 'none'",
     "base-uri 'none'",

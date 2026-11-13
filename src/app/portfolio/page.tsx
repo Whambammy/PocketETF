@@ -1,4 +1,4 @@
-import { PortfolioView } from "@/components/PortfolioDrawer";
+import { PortfolioView } from "@/components/PortfolioView";
 export const metadata = { title: "Portfolio & history" };
 export default function PortfolioPage() {
   return (
